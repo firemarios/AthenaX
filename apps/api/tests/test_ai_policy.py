@@ -1,0 +1,359 @@
+"""AI module (03) + Policy/Simulation modules (05/06/08)."""
+from __future__ import annotations
+
+import asyncio
+import json
+
+import pytest
+
+from services.ai_engine.policy_planner import plan_policy_simulation
+from services.reporting_engine.economics import compute_economics
+
+
+@pytest.fixture(autouse=True)
+def _no_live_extras(monkeypatch):
+    """Keep these unit tests offline: no DB datasets, live statistics or web search."""
+
+    async def _empty(*args, **kwargs):
+        return []
+
+    monkeypatch.setattr("app.services.intelligence.statistics_records", _empty)
+    monkeypatch.setattr("app.services.intelligence.web_records", _empty)
+    monkeypatch.setattr("app.services.intelligence.govtech_records", _empty)
+    monkeypatch.setattr("app.repositories.datasets.search_relevant_datasets", _empty)
+    yield
+
+
+async def _fake_answer(question, records=None, city=None):
+    return {
+        "summary": "Σύνοψη",
+        "detailed_result": "Λεπτομερής απάντηση",
+        "sources": [],
+        "limitations": [],
+    }
+
+
+class _FakeAIConnector:
+    name = "openmeteo"
+    source_url = "https://api.open-meteo.com/v1/forecast"
+
+    async def search(self, query=None, limit=30):
+        return [
+            {"title": "Athens weather", "lat": 37.98, "lon": 23.73, "provider": "Open-Meteo"},
+            {"title": "Thessaloniki weather", "lat": 40.64, "lon": 22.94, "provider": "Open-Meteo"},
+            {"title": "Weather bulletin (no coords)", "provider": "Open-Meteo"},
+        ]
+
+
+def test_ai_query_happy_path(client, monkeypatch):
+    monkeypatch.setattr(
+        "app.services.intelligence.select_connectors",
+        lambda question, enabled: [("openmeteo", _FakeAIConnector())],
+    )
+    monkeypatch.setattr("app.services.intelligence.answer_question", _fake_answer)
+
+    resp = client.post("/v1/ai/query", json={"question": "Πώς είναι ο καιρός στην Αθήνα;"})
+    body = resp.json()
+    assert resp.status_code == 200 and body["ok"] is True
+    assert body["data"]["summary"] == "Σύνοψη"
+    meta = body["meta"]
+    assert meta["record_count"] == 2
+    assert meta["sources"] == ["https://api.open-meteo.com/v1/forecast"]
+    assert meta["ui"]["show_map"] is True
+    assert meta["ui"]["empty_state"] is False
+    assert meta["ui"]["alert"] is None
+    assert meta["limitations"] == []
+    assert meta["ui"]["suggested_actions"]
+
+
+def test_ai_query_no_connectors_alert(client, monkeypatch):
+    monkeypatch.setattr("app.services.intelligence.select_connectors", lambda q, e: [])
+    monkeypatch.setattr("app.services.intelligence.answer_question", _fake_answer)
+
+    resp = client.post("/v1/ai/query", json={"question": "τίποτα"})
+    body = resp.json()
+    assert resp.status_code == 200 and body["ok"] is True
+    meta = body["meta"]
+    assert meta["ui"]["alert"] == "Δεν υπάρχουν ενεργοποιημένοι συνθέτες δεδομένων."
+    assert meta["ui"]["empty_state"] is True
+    assert meta["record_count"] == 0
+    assert meta["ui"]["alert"] in meta["limitations"]
+
+
+def test_ai_chat_alias(client, monkeypatch):
+    monkeypatch.setattr("app.services.intelligence.select_connectors", lambda q, e: [])
+    monkeypatch.setattr("app.services.intelligence.answer_question", _fake_answer)
+    resp = client.post("/v1/ai/chat", json={"question": "γεια"})
+    assert resp.status_code == 200 and resp.json()["ok"] is True
+
+
+def test_models_list(client):
+    resp = client.get("/v1/models")
+    body = resp.json()
+    assert resp.status_code == 200 and body["ok"] is True
+    assert len(body["data"]) == 4
+    spec = body["data"][0]
+    assert {"name", "version", "category", "description", "parameters"} <= set(spec)
+
+
+def test_policy_crud_flow(client):
+    created = client.post(
+        "/v1/policies",
+        json={
+            "title": "Πράσινη επένδυση",
+            "category": "environment",
+            "area": "exarchia",
+        },
+    )
+    assert created.status_code == 201
+    policy = created.json()["data"]
+    assert policy["id"]
+
+    listed = client.get("/v1/policies").json()
+    assert any(item["id"] == policy["id"] for item in listed["data"])
+
+    detail = client.get(f"/v1/policies/{policy['id']}")
+    assert detail.status_code == 200
+
+    variant = client.post(
+        f"/v1/policies/{policy['id']}/variants",
+        json={"title": "Σενάριο Α", "parameters": {"budget": 100000}},
+    )
+    assert variant.status_code == 201
+    assert variant.json()["data"]["title"] == "Σενάριο Α"
+
+    assert client.get("/v1/policies/missing").status_code == 404
+
+
+def test_simulation_create_success(client):
+    resp = client.post("/v1/simulations", json={"model": "cost", "parameters": {}})
+    body = resp.json()
+    assert resp.status_code == 200 and body["ok"] is True
+    run = body["data"]
+    assert run["status"] == "succeeded"
+    assert run["model_name"] == "cost"
+    assert run["model_version"] == "1.0.0"
+    assert run["results"]["metrics"]
+    assert isinstance(run["passport"], dict)
+
+    detail = client.get(f"/v1/simulations/{run['id']}")
+    assert detail.status_code == 200
+    assert detail.json()["data"]["id"] == run["id"]
+
+    listing = client.get("/v1/simulations").json()
+    assert any(item["id"] == run["id"] for item in listing["data"])
+
+
+def test_simulation_unknown_model_failed(client):
+    resp = client.post("/v1/simulations", json={"model": "no-such-model", "parameters": {}})
+    body = resp.json()
+    assert resp.status_code == 200 and body["ok"] is True
+    assert body["data"]["status"] == "failed"
+
+
+def test_simulation_404(client):
+    resp = client.get("/v1/simulations/missing-run")
+    assert resp.status_code == 404
+    assert resp.json()["error"]["message"] == "Η προσομοίωση δεν βρέθηκε."
+
+
+def test_impact_report(client):
+    run = client.post("/v1/simulations", json={"model": "cost", "parameters": {}}).json()["data"]
+    resp = client.get(f"/v1/impact/{run['id']}")
+    body = resp.json()
+    assert resp.status_code == 200 and body["ok"] is True
+    assert len(body["data"]["dimensions"]) == 6
+    assert body["data"]["run_id"] == run["id"]
+    assert "summary" in body["data"]
+
+    assert client.get("/v1/impact/nope").status_code == 404
+
+
+def test_policy_factors_and_simulation_economics(client):
+    created = client.post(
+        "/v1/policies",
+        json={
+            "title": "Πράσινο σενάριο",
+            "category": "environment",
+            "area": "Εξάρχεια",
+            "budget_eur": 100000,
+            "factors": [
+                {
+                    "name": "park_count",
+                    "baseline": 8,
+                    "min": 0,
+                    "max": 30,
+                    "unit": "parks",
+                }
+            ],
+        },
+    )
+    assert created.status_code == 201
+    policy = created.json()["data"]
+    assert policy["budget_eur"] == 100000
+    assert policy["factors"][0]["name"] == "park_count"
+
+    resp = client.post(
+        "/v1/simulations",
+        json={
+            "model": "greenspace",
+            "policy_id": policy["id"],
+            "area": "Εξάρχεια",
+            "compare_baseline": True,
+            "parameters": {"park_count": 12, "avg_park_m2": 5000, "population": 10000},
+        },
+    )
+    run = resp.json()["data"]
+    assert run["status"] == "succeeded"
+    assert run["parameters"]["area_id"] == "Εξάρχεια"
+    assert run["results"]["baseline"]
+
+    economics = run["results"]["economics"]
+    assert economics["capex_eur"] > 0
+    assert economics["budget_eur"] == 100000
+    assert economics["verdict"] in {"yes", "marginal", "no", "unknown"}
+    assert economics["cost_breakdown"]
+
+
+class _FakePlannerProvider:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+    async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
+        return self.content
+
+
+def test_policy_planner_calculates_model_factors_and_tax():
+    claim = {
+        "model": "greenspace",
+        "parameters": {"park_count": 14, "avg_park_m2": 6200, "population": 12000},
+        "factors": [
+            {
+                "name": "new_buildings",
+                "label": {"el": "Νέα κτίρια", "en": "New buildings"},
+                "value": 40,
+                "unit": "buildings",
+                "reason": {"el": "Από το κείμενο", "en": "From the text"},
+            }
+        ],
+        "tax": {
+            "new_buildings": 40,
+            "tax_change_pct": 5,
+            "annual_tax_revenue_eur": 67200,
+            "rationale": {"el": "Νέες οικοδομές", "en": "New buildings"},
+        },
+        "report": {
+            "summary": {"el": "Σύνοψη", "en": "Summary"},
+            "findings": [{"el": "Εύρημα", "en": "Finding"}],
+            "risks": [{"el": "Κίνδυνος", "en": "Risk"}],
+        },
+        "confidence": 0.81,
+        "assumptions": [{"el": "Υπόθεση", "en": "Assumption"}],
+    }
+    plan = asyncio.run(
+        plan_policy_simulation(
+            title="Πράσινο σενάριο",
+            changes="40 νέα κτίρια και 5% αύξηση φόρου",
+            category="environment",
+            area="Εξάρχεια",
+            factors=[{"name": "new_buildings", "baseline": 25}],
+            provider=_FakePlannerProvider(json.dumps(claim)),
+        )
+    )
+    assert plan["ai_used"] is True
+    assert plan["model"] == "greenspace"
+    assert plan["parameters"]["area_id"] == "Εξάρχεια"
+    assert plan["parameters"]["park_count"] == 14
+    assert plan["tax"]["annual_tax_revenue_eur"] == 67200
+    assert plan["report"]["findings"][0]["en"] == "Finding"
+    assert plan["confidence"] == 0.81
+
+
+def test_policy_planner_falls_back_without_failing():
+    class _BrokenProvider:
+        async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
+            raise RuntimeError("provider down")
+
+    plan = asyncio.run(
+        plan_policy_simulation(
+            title="Νέα κτίρια",
+            category="housing",
+            area="Κυψέλη",
+            factors=[{"name": "new_buildings", "baseline": 10}],
+            provider=_BrokenProvider(),
+        )
+    )
+    assert plan["ai_used"] is False
+    assert plan["model"] == "accessibility"
+    assert plan["tax"]["annual_tax_revenue_eur"] == 16000
+    assert plan["report"]["summary"]["en"]
+
+
+def test_simulation_use_ai_persists_plan_and_tax(client, monkeypatch):
+    policy = client.post(
+        "/v1/policies",
+        json={
+            "title": "Νέα κτίρια στην Κυψέλη",
+            "changes": "40 νέα κτίρια με 5% αύξηση φόρου",
+            "category": "housing",
+            "area": "Κυψέλη",
+            "budget_eur": 200000,
+            "factors": [{"name": "new_buildings", "baseline": 40}],
+        },
+    ).json()["data"]
+
+    async def _fake_plan(**kwargs):
+        return {
+            "ai_used": True,
+            "model": "accessibility",
+            "parameters": {
+                "area_id": kwargs["area"],
+                "max_walk_m": 600,
+                "facility_count": 12,
+                "population": 15000,
+            },
+            "factors": [],
+            "tax": {
+                "new_buildings": 40,
+                "tax_change_pct": 5,
+                "annual_tax_revenue_eur": 67200,
+                "rationale": {"el": "Νέα κτίρια", "en": "New buildings"},
+            },
+            "report": {
+                "summary": {"el": "Σύνοψη", "en": "Summary"},
+                "findings": [],
+                "risks": [],
+            },
+            "confidence": 0.8,
+            "assumptions": [],
+            "limitations": [],
+        }
+
+    monkeypatch.setattr("app.api.v1.simulations.plan_policy_simulation", _fake_plan)
+    resp = client.post(
+        "/v1/simulations",
+        json={"policy_id": policy["id"], "use_ai": True, "parameters": {}, "compare_baseline": True},
+    )
+    run = resp.json()["data"]
+    assert run["status"] == "succeeded"
+    assert run["model_name"] == "accessibility"
+    assert run["results"]["ai"]["tax"]["annual_tax_revenue_eur"] == 67200
+    assert run["parameters"]["area_id"] == "Κυψέλη"
+    assert run["results"]["economics"]["annual_tax_revenue_eur"] == 67200
+    assert run["results"]["economics"]["new_buildings"] == 40
+
+
+def test_economics_includes_new_building_tax_revenue():
+    economics = compute_economics(
+        "cost",
+        {},
+        {},
+        None,
+        budget_eur=100000,
+        annual_tax_revenue_eur=64000,
+        new_buildings=40,
+    )
+    assert economics["annual_tax_revenue_eur"] == 64000
+    assert economics["new_buildings"] == 40
+    assert economics["annual_benefit_eur"] >= 64000
+    assert any(line["label"]["en"] == "Property tax from new buildings" for line in economics["benefit_breakdown"])

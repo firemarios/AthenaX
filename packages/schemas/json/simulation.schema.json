@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://policylab.local/schemas/simulation.schema.json",
+  "title": "SimulationRun",
+  "description": "POLICYLAB simulation run entity (matches the TS SimulationRun type).",
+  "type": "object",
+  "required": [
+    "id",
+    "model_name",
+    "model_version",
+    "parameters",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "policy_id": { "type": ["string", "null"] },
+    "model_name": { "type": "string", "minLength": 1 },
+    "model_version": { "type": "string", "minLength": 1 },
+    "parameters": { "type": "object" },
+    "results": {
+      "type": ["object", "null"],
+      "required": ["metrics"],
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "baseline": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "uncertainty": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "running", "succeeded", "failed"]
+    },
+    "passport": {
+      "type": ["object", "null"],
+      "required": [
+        "model_name",
+        "model_version",
+        "data_sources",
+        "assumptions",
+        "reliability_limits",
+        "uncertainty",
+        "executed_at",
+        "inputs_checksum"
+      ],
+      "properties": {
+        "model_name": { "type": "string" },
+        "model_version": { "type": "string" },
+        "data_sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string" },
+              "retrieved_at": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "assumptions": { "type": "array", "items": { "type": "string" } },
+        "reliability_limits": { "type": "string" },
+        "uncertainty": { "type": "string" },
+        "validated_by": { "type": ["string", "null"] },
+        "executed_at": { "type": "string" },
+        "seed": { "type": ["integer", "null"] },
+        "inputs_checksum": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "created_at": { "type": "string", "minLength": 1 },
+    "error": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

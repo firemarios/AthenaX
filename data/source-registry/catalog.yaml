@@ -1,0 +1,148 @@
+# POLICYLAB source registry — loaded by apps/api on startup (non-fatal if DB down).
+# Keys MUST match services/connector_kit/catalog.py CONNECTOR_CLASSES (contract §5.2).
+
+sources:
+  - name: ckan
+    display_name: "data.gov.gr — Εθνικά ανοικτά δεδομένα"
+    source_type: open_data
+    base_url: "https://data.gov.gr"
+    endpoint_url: "https://data.gov.gr/api/3/action/package_search"
+    license: "Διάφορες — ελέγχεται ανά dataset"
+    update_frequency: daily
+    reliability: 0.9
+    enabled: true
+    priority: P0
+    config:
+      rows: 50
+
+  - name: diavgeia
+    display_name: "Διαύγεια — Δημόσιες αποφάσεις"
+    source_type: govtech
+    base_url: "https://diavgeia.gov.gr"
+    endpoint_url: "https://diavgeia.gov.gr/luminapi/opendata/search"
+    license: "Ελεύθερη χρήση δημοσίων αποφάσεων"
+    update_frequency: daily
+    reliability: 0.95
+    enabled: true
+    priority: P0
+    config: {}
+
+  - name: athens
+    display_name: "Open Data Δήμου Αθηναίων"
+    source_type: govtech
+    base_url: "https://data.cityofathens.gr"
+    endpoint_url: "https://data.gov.gr/api/3/action/package_search"
+    license: "Διάφορες — ελέγχεται ανά dataset"
+    update_frequency: weekly
+    reliability: 0.85
+    enabled: true
+    priority: P0
+    config:
+      q: "Αθήνα"
+      rows: 50
+
+  - name: kimdis
+    display_name: "ΚΗΜΔΗΣ — Συμβάσεις και προμήθειες"
+    source_type: govtech
+    base_url: "https://kimdis.mou.gr"
+    endpoint_url: "https://kimdis.mou.gr"
+    license: "Δημόσια πληροφορία"
+    update_frequency: weekly
+    reliability: 0.8
+    enabled: true
+    priority: P1
+    config: {}
+
+  - name: elstat
+    display_name: "ΕΛΣΤΑΤ — Δημογραφικά και οικονομικά δεδομένα"
+    source_type: statistics
+    base_url: "https://www.statistics.gr"
+    endpoint_url: "https://www.statistics.gr/en"
+    license: "Ελεύθερη χρήση με αναφορά πηγής"
+    update_frequency: monthly
+    reliability: 0.95
+    enabled: true
+    priority: P0
+    config: {}
+
+  - name: eurostat
+    display_name: "Eurostat — Ευρωπαϊκοί δείκτες"
+    source_type: statistics
+    base_url: "https://ec.europa.eu/eurostat"
+    endpoint_url: "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"
+    license: "CC BY 4.0 (EU)"
+    update_frequency: daily
+    reliability: 0.97
+    enabled: true
+    priority: P0
+    config: {}
+
+  - name: overpass
+    display_name: "OpenStreetMap (Overpass API)"
+    source_type: geospatial
+    base_url: "https://www.openstreetmap.org"
+    endpoint_url: "https://overpass-api.de/api/interpreter"
+    license: "ODbL 1.0"
+    update_frequency: daily
+    reliability: 0.9
+    enabled: true
+    priority: P0
+    config: {}
+
+  - name: openmeteo
+    display_name: "Open-Meteo — Καιρός"
+    source_type: weather
+    base_url: "https://open-meteo.com"
+    endpoint_url: "https://api.open-meteo.com/v1/forecast"
+    license: "CC BY 4.0"
+    update_frequency: hourly
+    reliability: 0.9
+    enabled: true
+    priority: P1
+    config: {}
+
+  - name: data_europa
+    display_name: "data.europa.eu — Ευρωπαϊκός κατάλογος"
+    source_type: open_data
+    base_url: "https://data.europa.eu"
+    endpoint_url: "https://data.europa.eu/api/hub/search/search"
+    license: "Διάφορες — ελέγχεται ανά dataset"
+    update_frequency: daily
+    reliability: 0.9
+    enabled: true
+    priority: P0
+    config:
+      limit: 50
+
+  - name: wikipedia
+    display_name: "Wikipedia (Ελληνική) — Εγκυκλοπαιδικό πλαίσιο"
+    source_type: web
+    base_url: "https://el.wikipedia.org"
+    endpoint_url: "https://el.wikipedia.org/w/api.php"
+    license: "CC BY-SA 4.0"
+    update_frequency: daily
+    reliability: 0.6
+    enabled: true
+    priority: P1
+    config: {}
+
+  - name: websearch
+    display_name: "Διαδικτυακή αναζήτηση — DuckDuckGo"
+    source_type: web
+    base_url: "https://duckduckgo.com"
+    endpoint_url: "https://html.duckduckgo.com/html/"
+    license: "Ποικίλες — ελέγχεται ανά πηγή"
+    update_frequency: hourly
+    reliability: 0.55
+    enabled: true
+    priority: P2
+    config: {}
+
+# Seeded intervention areas for Policy Lab (points + radius, WGS84)
+city_areas:
+  - { id: "exarchia",   name_el: "Εξάρχεια",   name_en: "Exarchia",   lat: 37.9880, lon: 23.7330, radius_m: 700 }
+  - { id: "kolonaki",   name_el: "Κολωνάκι",   name_en: "Kolonaki",   lat: 37.9790, lon: 23.7430, radius_m: 700 }
+  - { id: "kerameikos", name_el: "Κεραμεικός",  name_en: "Kerameikos", lat: 37.9780, lon: 23.7170, radius_m: 700 }
+  - { id: "kypseli",    name_el: "Κυψέλη",      name_en: "Kypseli",    lat: 38.0000, lon: 23.7350, radius_m: 800 }
+  - { id: "pagkrati",   name_el: "Παγκράτι",    name_en: "Pagkrati",   lat: 37.9650, lon: 23.7480, radius_m: 700 }
+  - { id: "metaxourgio", name_el: "Μεταξουργείο", name_en: "Metaxourgeio", lat: 37.9850, lon: 23.7230, radius_m: 700 }

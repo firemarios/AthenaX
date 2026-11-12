@@ -1,0 +1,31 @@
+# POLICYLAB OpenTelemetry Collector — minimal config
+# Receiver: OTLP (gRPC 4317 / HTTP 4318) → Exporter: logging (stdout).
+# Off by default: nothing in the app exports traces unless POLICYLAB OTEL env vars are set
+# and the `opentelemetry-*` packages are installed (they are NOT part of requirements.txt).
+# See infrastructure/monitoring/README.md.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  logging:
+    loglevel: info
+    # In production replace with an OTLP/Jaeger/Tempo exporter — kept out of the MVP on purpose.
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging]
+    # Metrics/logs pipelines intentionally omitted for the MVP.

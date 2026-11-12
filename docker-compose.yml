@@ -1,0 +1,103 @@
+name: policylab
+
+# POLICYLAB — root compose file (owned by agent C / infra-docs).
+# Normative contracts: docs/architecture/contracts.md (esp. §1 env prefix, §9.3 infra notes).
+# Core path: db + api + web.  Optional path: `docker compose --profile full up -d` (adds redis + minio).
+# Code degrades gracefully when redis/minio are absent (in-memory rate limit, ./storage).
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: policylab
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - policylab_postgres_data:/var/lib/postgresql/data
+      # Agent B owns infrastructure/database/; we only mount its init scripts read-only.
+      - ./infrastructure/database/init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d policylab"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    # NOTE (contracts §9.3): no shared_preload_libraries, no pgvector — the image lacks it.
+    # `CREATE EXTENSION IF NOT EXISTS postgis;` only (init script under infrastructure/database).
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      POLICYLAB_ENV: development
+      POLICYLAB_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/policylab
+      POLICYLAB_CORS_ORIGINS: http://localhost:3000
+      POLICYLAB_LLM_BASE_URL: http://host.docker.internal:11434
+      POLICYLAB_LLM_PROVIDER: ollama
+      POLICYLAB_REDIS_URL: ""
+      POLICYLAB_S3_ENDPOINT_URL: ""
+      POLICYLAB_STORAGE_DIR: ./storage
+    extra_hosts:
+      # Lets the api container reach an Ollama running on the host (Linux included).
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # --- Optional services (profile "full") -----------------------------------
+  redis:
+    image: redis:7-alpine
+    profiles: ["full"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - policylab_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    profiles: ["full"]
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - policylab_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  policylab_postgres_data:
+  policylab_redis_data:
+  policylab_minio_data:
