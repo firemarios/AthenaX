@@ -1,18 +1,42 @@
 import type { ApiError, Envelope, Meta } from "@policylab/types";
 
+function trimBase(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function isLocalHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "[::1]" ||
+    hostname.endsWith(".localhost")
+  );
+}
+
 function readBase(): string {
+  let configured = "";
   try {
     if (
       typeof process !== "undefined" &&
       process.env &&
       process.env.NEXT_PUBLIC_API_BASE_URL
     ) {
-      return process.env.NEXT_PUBLIC_API_BASE_URL;
+      configured = trimBase(process.env.NEXT_PUBLIC_API_BASE_URL);
     }
   } catch {
     /* ignore */
   }
-  return "http://localhost:8000";
+
+  if (typeof window !== "undefined") {
+    const local = isLocalHost(window.location.hostname);
+    const configuredIsLocal =
+      /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(configured);
+    if (configured && (!configuredIsLocal || local)) return configured;
+    if (!local) return `${window.location.origin}/api`;
+  }
+
+  return configured || "http://localhost:8000";
 }
 
 /** Base URL of the POLICYLAB API (override with NEXT_PUBLIC_API_BASE_URL). */

@@ -12,6 +12,7 @@ import {
   ScrollReveal,
   ThemeProvider,
 } from "@policylab/ui";
+import { SiteLoader } from "./_shared/site-loader";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -70,6 +71,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <ThemeProvider>
           <I18nProvider>
+            <SiteLoader />
             <ErrorBoundary>
               <ScrollProgress />
               <LayoutShell>

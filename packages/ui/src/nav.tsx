@@ -511,10 +511,18 @@ export function Nav() {
   }, [pathname]);
 
   const moreActive = isAnyActive(pathname, MORE_LINKS);
+  const isHome = pathname === "/";
 
   return (
     <>
-      <header className="pl-enter sticky top-0 z-40 border-b border-white/40 bg-white/60 backdrop-blur-xl dark:border-white/10 dark:bg-black/40">
+      <header
+        className={cn(
+          "pl-enter sticky top-0 z-40 border-b backdrop-blur-xl",
+          isHome
+            ? "border-transparent bg-white/45 dark:bg-black/25"
+            : "border-white/40 bg-white/60 dark:border-white/10 dark:bg-black/40",
+        )}
+      >
         <div className="mx-auto flex h-16 w-full max-w-[96rem] items-center justify-between gap-3 px-4 sm:px-6">
           <Link
             href="/"
