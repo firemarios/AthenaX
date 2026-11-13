@@ -15,6 +15,7 @@ class CostModel:
             "el": "Εκτίμηση κόστους: αναμενόμενο, χαμηλό και υψηλό εύρος από μοναδικό κόστος και ποσότητα.",
             "en": "Cost estimate: expected / low / high ranges from unit cost and quantity.",
         },
+        label={"el": "Κόστος έργου", "en": "Project cost"},
         parameters=[
             {
                 "name": "unit_cost_eur",

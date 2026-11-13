@@ -7,20 +7,31 @@ import {
   CategoryScale,
   Chart as ChartJS,
   Legend,
+  LineElement,
   LinearScale,
+  PointElement,
   Tooltip,
   type ChartData,
   type ChartOptions,
 } from "chart.js";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Badge, StatCard, useI18n } from "@policylab/ui";
-import type { AISimulationPlan, PolicyEconomics } from "@policylab/types";
+import type { AIReportChart, AISimulationPlan, PolicyEconomics } from "@policylab/types";
 import { fmtConfidence, fmtEUR, fmtNum } from "./format";
 import { mutedText } from "./ui";
 
-ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip
+);
 
-const PALETTE = ["#4f46e5", "#059669", "#d97706", "#dc2626", "#0891b2", "#7c3aed"];
+const PALETTE = ["#007aff", "#34c759", "#ff9f0a", "#ff3b30", "#5ac8fa", "#af52de"];
 const CHART_FONT = "ui-sans-serif, system-ui, -apple-system, sans-serif";
 const AXIS_TICK = "#71717a";
 const GRID_LINE = "rgba(113, 113, 122, 0.18)";
@@ -120,7 +131,7 @@ const VERDICT_LABEL = {
   unknown: { el: "Ανεπαρκή δεδομένα", en: "Insufficient data" },
 };
 
-function metricLabel(key: string): { el: string; en: string } {
+export function metricLabel(key: string): { el: string; en: string } {
   return METRIC_LABELS[key] ?? { el: key, en: key };
 }
 
@@ -181,6 +192,142 @@ export function MetricComparisonChart({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function formatAIValue(
+  value: number,
+  format: AIReportChart["format"],
+  unit: string | undefined,
+  lang: "el" | "en"
+): string {
+  if (format === "currency") return fmtEUR(value, lang);
+  if (format === "percent") return `${fmtNum(value, lang)}%`;
+  const text = fmtNum(value, lang);
+  return unit ? `${text} ${unit}` : text;
+}
+
+export function AIChart({ chart }: { chart: AIReportChart }) {
+  const { t, lang } = useI18n();
+  const reduced = useReducedMotion();
+  const labels = chart.labels.map((label) => t(label));
+  const datasets = chart.datasets.filter((dataset) => dataset.data.length > 0);
+  if (labels.length === 0 || datasets.length === 0) return null;
+
+  const formatter = (value: number) => formatAIValue(value, chart.format, chart.unit, lang);
+  const palette = PALETTE;
+  const label = t(chart.title);
+
+  if (chart.type === "donut") {
+    const data: ChartData<"doughnut"> = {
+      labels,
+      datasets: [
+        {
+          data: datasets[0].data.slice(0, labels.length),
+          backgroundColor: labels.map(
+            (_, index) => datasets[0].color ?? palette[index % palette.length]
+          ),
+          borderWidth: 0,
+          hoverOffset: 6,
+        },
+      ],
+    };
+    const options: ChartOptions<"doughnut"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "68%",
+      animation: reduced ? false : { duration: 900, easing: "easeOutQuart" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...TOOLTIP_STYLE,
+          callbacks: { label: (context) => `${context.label}: ${formatter(Number(context.raw))}` },
+        },
+      },
+    };
+    return (
+      <div className="flex flex-col items-center gap-4 sm:flex-row">
+        <div className="relative h-52 w-52 shrink-0" role="img" aria-label={label}>
+          <Doughnut data={data} options={options} />
+        </div>
+        <ul className="w-full space-y-2">
+          {labels.slice(0, datasets[0].data.length).map((item, index) => (
+            <li key={`${item}-${index}`} className="flex items-center justify-between gap-3 text-sm">
+              <span className="flex min-w-0 items-center gap-2 text-zinc-700 dark:text-zinc-300">
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ background: datasets[0].color ?? palette[index % palette.length] }}
+                />
+                <span className="truncate">{item}</span>
+              </span>
+              <span className="shrink-0 font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                {formatter(datasets[0].data[index] ?? 0)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (chart.type === "line") {
+    const data: ChartData<"line"> = {
+      labels,
+      datasets: datasets.map((dataset, index) => ({
+        label: t(dataset.label),
+        data: dataset.data.slice(0, labels.length),
+        borderColor: dataset.color ?? palette[index % palette.length],
+        backgroundColor: dataset.color ?? palette[index % palette.length],
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        tension: 0.35,
+        fill: false,
+      })),
+    };
+    const options: ChartOptions<"line"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: reduced ? false : { duration: 850, easing: "easeOutQuart" },
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: datasets.length > 1 },
+        tooltip: {
+          ...TOOLTIP_STYLE,
+          callbacks: { label: (context) => `${context.dataset.label}: ${formatter(Number(context.raw))}` },
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: TICKS },
+        y: {
+          beginAtZero: true,
+          grid: { color: GRID_LINE },
+          border: { display: false },
+          ticks: { ...TICKS, callback: (value: string | number) => formatter(Number(value)) },
+        },
+      },
+    };
+    return (
+      <div className="h-64" role="img" aria-label={label}>
+        <Line data={data} options={options} />
+      </div>
+    );
+  }
+
+  const data: ChartData<"bar"> = {
+    labels,
+    datasets: datasets.map((dataset, index) => ({
+      label: t(dataset.label),
+      data: dataset.data.slice(0, labels.length),
+      backgroundColor: dataset.color ?? palette[index % palette.length],
+      borderRadius: 6,
+      maxBarThickness: 46,
+    })),
+  };
+  return (
+    <div className="h-64" role="img" aria-label={label}>
+      <Bar data={data} options={barOptions(reduced, formatter, chart.horizontal)} />
     </div>
   );
 }
@@ -267,7 +414,7 @@ export function DonutChart({
         <Doughnut data={data} options={options} />
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-xs text-zinc-500 dark:text-zinc-400">{t(centerLabel)}</span>
-          <span className="mt-1 text-lg font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+          <span className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
             {centerValue}
           </span>
         </div>
@@ -298,6 +445,15 @@ export function DonutChart({
 
 export function AIPlanPanel({ ai }: { ai: AISimulationPlan }) {
   const { t, lang } = useI18n();
+  const factors = ai.factors.filter((factor) => {
+    if (factor.value === null || factor.value === undefined || factor.value === "") return false;
+    return Number.isNaN(Number(factor.value)) || Number(factor.value) !== 0;
+  });
+  const hasTax =
+    ai.tax.annual_tax_revenue_eur !== null &&
+    (Number(ai.tax.annual_tax_revenue_eur) > 0 ||
+      Number(ai.tax.new_buildings) > 0 ||
+      Number(ai.tax.tax_change_pct) !== 0);
   return (
     <div className="space-y-5">
       <div className="pl-reveal flex flex-wrap items-center gap-2">
@@ -316,13 +472,13 @@ export function AIPlanPanel({ ai }: { ai: AISimulationPlan }) {
         {t(ai.report.summary)}
       </p>
 
-      {ai.factors.length > 0 ? (
+      {factors.length > 0 ? (
         <div className="pl-reveal" style={{ animationDelay: "160ms" }}>
           <h3 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             {t({ el: "Παράγοντες που υπολόγισε το AI", en: "Factors calculated by AI" })}
           </h3>
           <ul className="grid gap-2 sm:grid-cols-2">
-            {ai.factors.map((factor, index) => (
+            {factors.map((factor, index) => (
               <li
                 key={factor.name}
                 className="pl-reveal rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
@@ -332,7 +488,7 @@ export function AIPlanPanel({ ai }: { ai: AISimulationPlan }) {
                   <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {factor.label ? t(factor.label) : factor.name}
                   </p>
-                  <p className="text-sm font-bold tabular-nums text-indigo-600 dark:text-indigo-400">
+                  <p className="text-sm font-semibold tabular-nums text-blue-600 dark:text-blue-400">
                     {String(factor.value ?? "—")}{factor.unit ? ` ${factor.unit}` : ""}
                   </p>
                 </div>
@@ -347,7 +503,7 @@ export function AIPlanPanel({ ai }: { ai: AISimulationPlan }) {
         </div>
       ) : null}
 
-      {ai.tax.annual_tax_revenue_eur !== null ? (
+      {hasTax ? (
         <div className="pl-reveal grid gap-3 sm:grid-cols-3" style={{ animationDelay: "420ms" }}>
           <StatCard
             label={t({ el: "Νέα κτίρια", en: "New buildings" })}

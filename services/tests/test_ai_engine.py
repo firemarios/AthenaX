@@ -4,6 +4,8 @@ from __future__ import annotations
 import asyncio
 import json
 
+import httpx
+
 from services.ai_engine import evidence, rag
 from services.ai_engine.orchestrator import answer_question
 from services.ai_engine.providers import (
@@ -169,3 +171,78 @@ def test_get_provider_defaults_and_settings():
     assert provider.base_url == "https://llm.example/v1"
     assert provider.api_key == "secret"
     assert provider.model == "some-model"
+
+def test_kilo_provider_uses_gateway_payload_and_headers():
+    seen: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        seen["headers"] = request.headers
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": "ok"}}]},
+        )
+
+    provider = OpenAICompatibleProvider(
+        base_url="https://ai-gateway.kilo.ai/api/v1",
+        model="nvidia/nemotron-3.5-super-vl:free",
+        api_key="anonymous",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = asyncio.run(provider.chat([{"role": "user", "content": "hi"}]))
+
+    assert result == "ok"
+    assert seen["url"] == "https://ai-gateway.kilo.ai/api/v1/chat/completions"
+    assert provider.timeout == 600.0
+    assert seen["payload"]["model"] == "nvidia/nemotron-3.5-super-vl:free"
+    assert seen["payload"]["max_tokens"] == 256_000
+    assert seen["payload"]["reasoning"] == {"enabled": True, "effort": "xhigh"}
+    assert seen["payload"]["tool_choice"] == "none"
+    assert "temperature" not in seen["payload"]
+    assert seen["headers"]["authorization"] == "Bearer anonymous"
+    assert seen["headers"]["x-kilocode-feature"] == "cli"
+    assert seen["headers"]["x-session-id"].startswith("ses_")
+    assert seen["headers"]["user-agent"].startswith("Kilo-Code/7.8.12")
+
+
+def test_kilo_provider_streams_with_usage_and_ignores_reasoning_chunks():
+    seen: dict = {}
+    body = (
+        'data: {"choices":[{"delta":{"reasoning_content":"thinking"}}]}\n\n'
+        'data: {"choices":[{"delta":{"content":"hello"}}]}\n\n'
+        'data: {"choices":[],"usage":{"total_tokens":12}}\n\n'
+        "data: [DONE]\n\n"
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["headers"] = request.headers
+        seen["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            content=body.encode("utf-8"),
+            headers={"content-type": "text/event-stream"},
+        )
+
+    provider = OpenAICompatibleProvider(
+        base_url="https://ai-gateway.kilo.ai/api/v1",
+        model="nvidia/nemotron-3.5-super-vl:free",
+        api_key="anonymous",
+        transport=httpx.MockTransport(handler),
+    )
+
+    async def collect() -> list[str]:
+        return [
+            chunk
+            async for chunk in provider.stream_chat(
+                [{"role": "user", "content": "hi"}]
+            )
+        ]
+
+    assert asyncio.run(collect()) == ["hello"]
+    assert seen["payload"]["stream"] is True
+    assert seen["payload"]["stream_options"] == {"include_usage": True}
+    assert seen["payload"]["max_tokens"] == 256_000
+    assert seen["payload"]["reasoning"] == {"enabled": True, "effort": "xhigh"}
+    assert seen["headers"]["x-session-id"].startswith("ses_")

@@ -1,8 +1,11 @@
 """LLM providers (contract §4): Ollama + OpenAI-compatible over httpx with tenacity retries."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import time
+import uuid
 from typing import Any
 
 import httpx
@@ -13,6 +16,13 @@ from services.connector_kit.helpers import make_client
 logger = logging.getLogger("policylab.ai.providers")
 
 DEFAULT_TIMEOUT = 90.0
+KILO_TIMEOUT = 600.0
+KILO_MAX_TOKENS = 256_000
+KILO_REASONING_EFFORT = "xhigh"
+KILO_RETRY_SECONDS = 300.0
+KILO_USER_AGENT = (
+    "Kilo-Code/7.8.12 ai-sdk/provider-utils/4.0.23 runtime/bun/1.4.2"
+)
 
 _RETRY = dict(
     wait=wait_exponential(multiplier=0.3, max=6.0),
@@ -23,7 +33,7 @@ _RETRY = dict(
 
 def _is_retryable(exc: BaseException) -> bool:
     if isinstance(exc, httpx.HTTPStatusError):
-        return exc.response.status_code >= 500
+        return exc.response.status_code == 429 or exc.response.status_code >= 500
     return isinstance(exc, (httpx.TransportError, httpx.TimeoutException))
 
 
@@ -33,6 +43,10 @@ def _url(base: str, path: str) -> str:
     if path.startswith("/v1/") and base.endswith("/v1"):
         return base + path[3:]
     return base + path
+
+
+def _new_session_id() -> str:
+    return "ses_" + uuid.uuid4().hex[:24]
 
 
 class LLMProvider:
@@ -190,15 +204,47 @@ class OpenAICompatibleProvider(LLMProvider):
         *,
         api_key: str | None = None,
         transport: Any = None,
-        timeout: float = DEFAULT_TIMEOUT,
+        timeout: float | None = None,
+        reasoning_enabled: bool | None = None,
+        reasoning_effort: str = KILO_REASONING_EFFORT,
+        max_output_tokens: int | None = None,
     ) -> None:
-        super().__init__(transport=transport, timeout=timeout)
-        self.base_url = (base_url or "https://api.openai.com/v1").rstrip("/")
+        resolved_base = (base_url or "https://api.openai.com/v1").rstrip("/")
+        self.is_kilo = "kilo.ai" in resolved_base
+        resolved_timeout = (
+            timeout
+            if timeout is not None
+            else (KILO_TIMEOUT if self.is_kilo else DEFAULT_TIMEOUT)
+        )
+        super().__init__(transport=transport, timeout=resolved_timeout)
+        self.base_url = resolved_base
         self.model = model or "gpt-4o-mini"
         self.embedding_model = embedding_model or "text-embedding-3-small"
         self.api_key = api_key or None
+        self.reasoning_enabled = (
+            self.is_kilo if reasoning_enabled is None else reasoning_enabled
+        )
+        self.reasoning_effort = reasoning_effort or KILO_REASONING_EFFORT
+        self.max_output_tokens = (
+            max_output_tokens
+            if max_output_tokens is not None
+            else (KILO_MAX_TOKENS if self.is_kilo else None)
+        )
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(self, session_id: str | None = None) -> dict[str, str]:
+        if self.is_kilo:
+            headers = {
+                "Accept": "*/*",
+                "Content-Type": "application/json",
+                "User-Agent": KILO_USER_AGENT,
+                "x-kilocode-feature": "cli",
+            }
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
+            if session_id:
+                headers["x-session-id"] = session_id
+            return headers
+
         headers = {
             "Content-Type": "application/json",
             "Accept": "*/*",
@@ -206,9 +252,43 @@ class OpenAICompatibleProvider(LLMProvider):
         }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        if "kilo.ai" in (self.base_url or ""):
-            headers["x-kilocode-feature"] = "cli"
         return headers
+
+    def _payload(
+        self,
+        messages: list[dict],
+        *,
+        temperature: float,
+        max_tokens: int,
+        stream: bool,
+    ) -> dict[str, Any]:
+        if self.is_kilo:
+            payload: dict[str, Any] = {
+                "model": self.model,
+                "max_tokens": self.max_output_tokens or max_tokens,
+                "messages": messages,
+                "tool_choice": "none",
+            }
+        else:
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": self.max_output_tokens or max_tokens,
+            }
+
+        if self.reasoning_enabled:
+            payload["reasoning"] = {
+                "enabled": True,
+                "effort": self.reasoning_effort,
+            }
+
+        if stream:
+            payload["stream"] = True
+            if self.is_kilo:
+                payload["stream_options"] = {"include_usage": True}
+
+        return payload
 
     @retry(retry=retry_if_exception(_is_retryable), **_RETRY)
     async def chat(
@@ -218,17 +298,17 @@ class OpenAICompatibleProvider(LLMProvider):
         temperature: float = 0.3,
         max_tokens: int = 2048,
     ) -> str:
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
+        payload = self._payload(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=False,
+        )
         async with make_client(transport=self.transport, timeout=self.timeout) as client:
             resp = await client.post(
                 _url(self.base_url, "/v1/chat/completions"),
                 json=payload,
-                headers=self._headers(),
+                headers=self._headers(_new_session_id()),
             )
             resp.raise_for_status()
             data = resp.json()
@@ -244,26 +324,26 @@ class OpenAICompatibleProvider(LLMProvider):
                 return str(first.get("text") or "")
         return ""
 
-    async def stream_chat(
+    async def _stream_once(
         self,
         messages: list[dict],
         *,
-        temperature: float = 0.3,
-        max_tokens: int = 2048,
+        temperature: float,
+        max_tokens: int,
+        session_id: str,
     ):
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": True,
-        }
+        payload = self._payload(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True,
+        )
         async with make_client(transport=self.transport, timeout=self.timeout) as client:
             async with client.stream(
                 "POST",
                 _url(self.base_url, "/v1/chat/completions"),
                 json=payload,
-                headers=self._headers(),
+                headers=self._headers(session_id),
             ) as resp:
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
@@ -286,6 +366,41 @@ class OpenAICompatibleProvider(LLMProvider):
                     text = delta.get("content") if isinstance(delta, dict) else None
                     if isinstance(text, str) and text:
                         yield text
+
+    async def stream_chat(
+        self,
+        messages: list[dict],
+        *,
+        temperature: float = 0.3,
+        max_tokens: int = 2048,
+    ):
+        deadline = time.monotonic() + KILO_RETRY_SECONDS if self.is_kilo else 0.0
+        emitted = False
+        delay = 0.5
+
+        while True:
+            session_id = _new_session_id()
+            try:
+                async for text in self._stream_once(
+                    messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    session_id=session_id,
+                ):
+                    emitted = True
+                    yield text
+                return
+            except Exception as exc:  # noqa: BLE001
+                if (
+                    emitted
+                    or not self.is_kilo
+                    or time.monotonic() >= deadline
+                    or not _is_retryable(exc)
+                ):
+                    raise
+                logger.warning("kilo stream retry in %.1fs: %s", delay, exc)
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, 5.0)
 
     async def ping(self) -> bool:
         try:

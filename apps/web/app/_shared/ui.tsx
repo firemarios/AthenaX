@@ -1,28 +1,28 @@
 "use client";
 
-import { useI18n } from "@policylab/ui";
+import { Breadcrumbs, useI18n, type BreadcrumbItem } from "@policylab/ui";
 import type { Quality } from "@policylab/types";
 import { pctValue } from "./format";
 
 export const btnPrimary =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-primary/90 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0";
 
 export const btnSecondary =
-  "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200/80 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-zinc-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800";
 
 export const inputCls =
-  "w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500";
+  "w-full rounded-xl border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500";
 
 export const labelCls =
   "mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300";
 
 export const cardCls =
-  "rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5";
+  "rounded-2xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5";
 
 export const mutedText = "text-sm text-zinc-600 dark:text-zinc-400";
 
 export const headingCls =
-  "text-lg font-semibold text-zinc-900 dark:text-zinc-100";
+  "text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100";
 
 export function useBi() {
   const { t, lang, setLang } = useI18n();
@@ -49,15 +49,20 @@ export function PageHeader({
   title,
   description,
   actions,
+  breadcrumbs,
 }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
 }) {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
+        {breadcrumbs && breadcrumbs.length > 0 ? (
+          <Breadcrumbs items={breadcrumbs} />
+        ) : null}
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
           {title}
         </h1>
         {description ? (
@@ -100,11 +105,11 @@ export function LoadingBlock({ rows = 5 }: { rows?: number }) {
   return (
     <div aria-busy="true" aria-live="polite" className="space-y-3">
       <span className="sr-only">{t(STR.loading)}</span>
-      <div className="h-8 w-2/3 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+      <div className="pl-shimmer h-8 w-2/3 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
-          className="h-4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"
+          className="pl-shimmer h-4 rounded bg-zinc-200 dark:bg-zinc-800"
           style={{ width: `${95 - (i % 4) * 12}%` }}
         />
       ))}
@@ -114,7 +119,7 @@ export function LoadingBlock({ rows = 5 }: { rows?: number }) {
 
 export function PageFallback({ rows = 8 }: { rows?: number }) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <LoadingBlock rows={rows} />
     </div>
   );
@@ -162,7 +167,7 @@ export function QualityBar({ label, value }: { label: string; value: number | nu
         className="h-1.5 w-full min-w-16 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700"
       >
         {known ? (
-          <div className="h-full rounded-full bg-indigo-600" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
         ) : null}
       </div>
       <span className="w-10 shrink-0 text-right text-xs font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
@@ -237,7 +242,7 @@ export function Tabs({
     <div
       role="tablist"
       aria-label={label}
-      className="flex flex-wrap gap-1 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 p-1"
+      className="flex flex-wrap gap-1 rounded-full border border-zinc-200/80 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-950"
     >
       {tabs.map((tab) => {
         const selected = tab.id === active;
@@ -248,7 +253,7 @@ export function Tabs({
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(tab.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+            className={`rounded-full px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               selected
                 ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
@@ -314,10 +319,10 @@ export function NoticeBox({
 }) {
   const tones =
     tone === "warning"
-      ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100"
-      : "border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-100";
+      ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/15 dark:text-amber-300"
+      : "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/15 dark:text-blue-300";
   return (
-    <div className={`relative rounded-xl border p-4 text-sm ${tones} ${className}`}>
+    <div className={`relative rounded-2xl border p-4 text-sm ${tones} ${className}`}>
       {onDismiss ? (
         <button
           type="button"

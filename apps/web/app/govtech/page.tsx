@@ -201,7 +201,7 @@ export default function GovTechPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader title={t(STR.title)} description={t(STR.desc)} />
 
       <Tabs tabs={tabs} active={tab} onChange={setTab} label={t(STR.title)} />
@@ -265,7 +265,7 @@ export default function GovTechPage() {
                           href={d.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         >
                           {t(STR.view)}
                         </a>
@@ -359,7 +359,7 @@ export default function GovTechPage() {
                                 href={p.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                               >
                                 {t({ el: "Πηγή ↗", en: "Source ↗" })}
                               </a>
@@ -388,12 +388,12 @@ export default function GovTechPage() {
                                   );
                                 }
                                 return (
-                                  <ol className="space-y-3 border-l-2 border-indigo-200 dark:border-indigo-900 pl-4">
+                                  <ol className="space-y-3 border-l-2 border-blue-200 dark:border-blue-900 pl-4">
                                     {list.map((dec) => (
                                       <li key={dec.id} className="relative">
                                         <span
                                           aria-hidden="true"
-                                          className="absolute -left-[1.4rem] top-1.5 h-2.5 w-2.5 rounded-full bg-indigo-600"
+                                          className="absolute -left-[1.4rem] top-1.5 h-2.5 w-2.5 rounded-full bg-blue-600"
                                         />
                                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
                                           {dec.date ? fmtDate(dec.date, lang) : t(STR.noDate)}
@@ -402,7 +402,7 @@ export default function GovTechPage() {
                                           href={dec.url}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="text-sm font-medium text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                          className="text-sm font-medium text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                         >
                                           {dec.title}
                                         </a>

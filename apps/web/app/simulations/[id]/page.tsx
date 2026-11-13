@@ -6,7 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Badge, Skeleton, useI18n } from "@policylab/ui";
 import type { Passport, SimulationRun } from "@policylab/types";
 import { doPost, useApi } from "@/_shared/hooks";
-import { AIPlanPanel, EconomicsPanel, MetricComparisonChart } from "@/_shared/charts";
+import { EconomicsPanel, MetricComparisonChart, metricLabel } from "@/_shared/charts";
+import { AIReportView } from "@/_shared/ai-report";
 import { fmtDateTime, fmtNum, fmtRange } from "@/_shared/format";
 import {
   ErrorPanel,
@@ -73,7 +74,19 @@ const STR = {
   worse: { el: "χείρον", en: "worse" },
   neutral: { el: "όμοιο", en: "unchanged" },
   params: { el: "Παράμετροι εισόδου", en: "Input parameters" },
+  runId: { el: "Κωδικός εκτέλεσης", en: "Run ID" },
 };
+
+const MODEL_LABELS: Record<string, { el: string; en: string }> = {
+  accessibility: { el: "Προσβασιμότητα πεζών", en: "Walk accessibility" },
+  greenspace: { el: "Πράσινο & πάρκα", en: "Green space & parks" },
+  traffic_sumo: { el: "Κυκλοφορία", en: "Traffic" },
+  cost: { el: "Κόστος έργου", en: "Project cost" },
+};
+
+function modelLabel(name: string): { el: string; en: string } {
+  return MODEL_LABELS[name] ?? { el: name, en: name };
+}
 
 const LOWER_IS_BETTER = [
   "cost",
@@ -136,11 +149,11 @@ function logsOf(run: SimulationRun): string[] {
 function PassportCard({ passport }: { passport: Passport }) {
   const { t, lang } = useI18n();
   return (
-    <SectionCard className="border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200 dark:ring-indigo-900">
+    <SectionCard className="border-blue-300 dark:border-blue-700 ring-1 ring-blue-200 dark:ring-blue-900">
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <span
           aria-hidden="true"
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white"
         >
           P
         </span>
@@ -168,7 +181,7 @@ function PassportCard({ passport }: { passport: Passport }) {
                             href={src.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-indigo-600 underline underline-offset-2 hover:text-indigo-500 dark:text-indigo-400"
+                            className="text-blue-600 underline underline-offset-2 hover:text-blue-500 dark:text-blue-400"
                           >
                             {src.url}
                           </a>
@@ -258,7 +271,7 @@ function SimulationDetailView() {
 
   if (run.loading) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
         <span className="sr-only">{t(STR.loading)}</span>
         <Skeleton rows={8} />
       </div>
@@ -267,12 +280,12 @@ function SimulationDetailView() {
 
   if (run.error || !data) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
         <ErrorPanel message={run.error ?? t(STR.notFound)} onRetry={run.reload} />
         <p className="mt-4">
           <Link
             href="/policies"
-            className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
           >
             {t(STR.backList)}
           </Link>
@@ -302,12 +315,33 @@ function SimulationDetailView() {
   const metricKeys = Object.keys(metrics);
   const warnings = warningsOf(data);
   const logs = logsOf(data);
+  const displayModel = modelLabel(data.model_name);
+  const area = data.parameters?.area_id;
+  const scenarioTitle = ai?.title
+    ? t(ai.title)
+    : data.policy_id
+      ? t({ el: "Προσομοίωση πολιτικής", en: "Policy simulation" })
+      : `${t(STR.run)} · ${t(displayModel)}`;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader
-        title={`${t(STR.run)} · ${data.model_name}`}
-        description={`${t(STR.model)}: ${data.model_name} · ${t(STR.version)} ${data.model_version}`}
+        title={scenarioTitle}
+        description={`${t(displayModel)} · ${t(STR.version)} ${data.model_version}${
+          area ? ` · ${String(area)}` : ""
+        }`}
+        breadcrumbs={[
+          { label: t({ el: "Πολιτικές", en: "Policies" }), href: "/policies" },
+          ...(data.policy_id
+            ? [
+                {
+                  label: t({ el: "Πολιτική", en: "Policy" }),
+                  href: `/policies/${data.policy_id}`,
+                },
+              ]
+            : []),
+          { label: t(STR.run) },
+        ]}
         actions={
           <Badge tone={statusToneMap[data.status] ?? "neutral"}>
             {t(statusLabels[data.status] ?? { el: data.status, en: data.status })}
@@ -316,6 +350,9 @@ function SimulationDetailView() {
       />
 
       <div className="mb-6 flex flex-wrap gap-3">
+        <Link href="/simulations" className={btnSecondary}>
+          {t({ el: "Όλες οι προσομοιώσεις", en: "All simulations" })}
+        </Link>
         {data.policy_id ? (
           <Link href={`/policies/${data.policy_id}`} className={btnSecondary}>
             {t(STR.backPolicy)}
@@ -340,21 +377,39 @@ function SimulationDetailView() {
         ) : null}
       </div>
 
+      <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <span>
+          {t(STR.created)}: {fmtDateTime(data.created_at, lang)}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {t(STR.runId)}:
+          <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            {data.id}
+          </code>
+        </span>
+        {area ? <span>{String(area)}</span> : null}
+        {data.passport?.seed !== null && data.passport?.seed !== undefined ? (
+          <span>
+            {t(STR.seed)}: {data.passport.seed}
+          </span>
+        ) : null}
+      </div>
+
       {rerunning && data.results?.ai ? (
         <div
           role="status"
           aria-live="polite"
-          className="pl-reveal mb-6 rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 dark:border-indigo-800 dark:bg-indigo-950/30"
+          className="pl-reveal mb-6 rounded-xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-800 dark:bg-blue-950/30"
         >
-          <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-300">
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
             <span className="flex gap-1" aria-hidden="true">
-              <span className="pl-ai-dot h-2 w-2 rounded-full bg-indigo-500" />
-              <span className="pl-ai-dot h-2 w-2 rounded-full bg-indigo-500" style={{ animationDelay: "0.18s" }} />
-              <span className="pl-ai-dot h-2 w-2 rounded-full bg-indigo-500" style={{ animationDelay: "0.36s" }} />
+              <span className="pl-ai-dot h-2 w-2 rounded-full bg-blue-500" />
+              <span className="pl-ai-dot h-2 w-2 rounded-full bg-blue-500" style={{ animationDelay: "0.18s" }} />
+              <span className="pl-ai-dot h-2 w-2 rounded-full bg-blue-500" style={{ animationDelay: "0.36s" }} />
             </span>
             {t(STR.rerunningAi)}
           </div>
-          <p className="mt-1 text-xs text-indigo-700/80 dark:text-indigo-300/80">{t(STR.rerunAiWait)}</p>
+          <p className="mt-1 text-xs text-blue-700/80 dark:text-blue-300/80">{t(STR.rerunAiWait)}</p>
           <div className="mt-3 space-y-2" aria-hidden="true">
             <div className="pl-ai-shimmer h-2.5 w-full rounded-full" />
             <div className="pl-ai-shimmer h-2.5 w-4/5 rounded-full" style={{ animationDelay: "0.15s" }} />
@@ -386,7 +441,7 @@ function SimulationDetailView() {
       <div className="space-y-6">
         {ai ? (
           <SectionCard title={t(STR.aiReport)}>
-            <AIPlanPanel ai={ai} />
+            <AIReportView ai={ai} modelLabel={t(displayModel)} />
           </SectionCard>
         ) : null}
 
@@ -434,7 +489,7 @@ function SimulationDetailView() {
                         className="border-b border-zinc-100 dark:border-zinc-800/60"
                       >
                         <th scope="row" className="py-2 pr-3 text-left font-medium text-zinc-800 dark:text-zinc-200">
-                          {key}
+                          {t(metricLabel(key))}
                         </th>
                         <td className="py-2 pr-3 tabular-nums text-zinc-600 dark:text-zinc-400">
                           {base !== undefined ? fmtNum(base, lang) : "—"}
@@ -508,7 +563,7 @@ function SimulationDetailView() {
             <p className={mutedText}>{t(STR.noLogs)}</p>
           ) : (
             <details className="group">
-              <summary className="cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+              <summary className="cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                 {t(STR.logs)} ({logs.length})
               </summary>
               <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-zinc-950 p-3 font-mono text-xs leading-relaxed text-zinc-100">

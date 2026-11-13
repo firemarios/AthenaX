@@ -364,7 +364,7 @@ export default function CitizenPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader title={t(STR.title)} description={t(STR.desc)} />
 
       {disclaimerOpen ? (
@@ -427,7 +427,7 @@ export default function CitizenPage() {
                       {t(STR.window)}: {fmtDate(c.starts_at, lang)} – {fmtDate(c.ends_at, lang)}
                     </p>
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-sm font-medium text-indigo-600 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
+                      <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">
                         {t(STR.nestedProposals)} ({c.proposals?.length ?? 0})
                       </summary>
                       {c.proposals && c.proposals.length > 0 ? (
@@ -604,7 +604,7 @@ export default function CitizenPage() {
           <p className={`mt-2 ${mutedText}`}>
             <Link
               href="/policies"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+              className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
             >
               {t({ el: "Δείτε τις πολιτικές →", en: "See the policies →" })}
             </Link>

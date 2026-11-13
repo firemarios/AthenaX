@@ -7,6 +7,9 @@ import {
   I18nProvider,
   LayoutShell,
   Nav,
+  RouteFocus,
+  ScrollProgress,
+  ScrollReveal,
   ThemeProvider,
 } from "@policylab/ui";
 
@@ -23,11 +26,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "POLICYLAB — Open GovTech Intelligence & Policy Experimentation",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  applicationName: "ATHENAX",
+  title: "ATHENAX — Wisdom Meets the Future",
   description:
-    "Το POLICYLAB συνδέει δημόσια δεδομένα και GovTech πληροφορίες, σε βάση αποδείξεων. Κατανοείς την πόλη και δοκιμάζεις καλύτερες πολιτικές.",
+    "Το ATHENAX συνδέει δημόσια δεδομένα και GovTech πληροφορίες, σε βάση αποδείξεων. Κατανοείς την πόλη και δοκιμάζεις καλύτερες πολιτικές.",
   keywords: [
-    "POLICYLAB",
+    "ATHENAX",
     "GovTech",
     "open data",
     "δημόσια δεδομένα",
@@ -35,9 +40,22 @@ export const metadata: Metadata = {
     "ψηφιακή πόλη",
     "Αθήνα",
   ],
+  openGraph: {
+    title: "ATHENAX — Wisdom Meets the Future",
+    description:
+      "Open data, GovTech intelligence and policy experimentation with provenance and evidence in every answer.",
+    siteName: "ATHENAX",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ATHENAX — Wisdom Meets the Future",
+    description:
+      "Open data, GovTech intelligence and policy experimentation with provenance and evidence in every answer.",
+  },
 };
 
-const themeInitScript = `(function(){try{var k="policylab_theme";var t=null;try{t=window.localStorage.getItem(k)}catch(e){}if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}var l=null;try{l=window.localStorage.getItem("policylab_lang")}catch(e){}if(l==="el"||l==="en"){document.documentElement.lang=l}}catch(e){}})();`;
+const themeInitScript = `(function(){try{var k="policylab_theme";var t=null;try{t=window.localStorage.getItem(k)}catch(e){}if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}document.documentElement.classList.add("js");setTimeout(function(){document.documentElement.classList.add("reveal-fallback")},3000);var l=null;try{l=window.localStorage.getItem("policylab_lang")}catch(e){}if(l==="el"||l==="en"){document.documentElement.lang=l}}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -53,11 +71,20 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <ErrorBoundary>
+              <ScrollProgress />
               <LayoutShell>
+                <ScrollReveal />
                 <Suspense fallback={null}>
                   <Nav />
                 </Suspense>
-                <main id="main-content" className="flex min-w-0 flex-1 flex-col">
+                <Suspense fallback={null}>
+                  <RouteFocus />
+                </Suspense>
+                <main
+                  id="main-content"
+                  tabIndex={-1}
+                  className="flex min-w-0 flex-1 flex-col pb-24 outline-none md:pb-0"
+                >
                   {children}
                 </main>
               </LayoutShell>

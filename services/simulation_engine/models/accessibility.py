@@ -28,6 +28,7 @@ class AccessibilityModel:
             "el": "Προσβασιμότητα με τα πόδις: ποσοστό πληθυσμού εντός μέγιστης απόστασης από εγκαταστάσεις.",
             "en": "Walk accessibility: share of population within max walk distance of facilities.",
         },
+        label={"el": "Προσβασιμότητα πεζών", "en": "Walk accessibility"},
         parameters=[
             {
                 "name": "area_id",

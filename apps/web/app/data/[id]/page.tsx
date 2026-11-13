@@ -130,16 +130,13 @@ function DatasetDetailView() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
-      <Link
-        href="/data"
-        className="mb-4 inline-flex rounded text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-      >
-        {t(STR.back)}
-      </Link>
-
       <PageHeader
         title={d.title}
         description={d.description ?? undefined}
+        breadcrumbs={[
+          { label: t({ el: "Δεδομένα", en: "Data" }), href: "/data" },
+          { label: d.title },
+        ]}
         actions={
           d.original_source?.url ? (
             <a
@@ -198,7 +195,7 @@ function DatasetDetailView() {
                     href={d.original_source.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="break-all font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                    className="break-all font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
                   >
                     {d.original_source.name || d.original_source.url}
                   </a>
@@ -283,7 +280,7 @@ function DatasetDetailView() {
                 <li key={r.id}>
                   <Link
                     href={`/data/${r.id}`}
-                    className="block rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 hover:border-indigo-400 dark:hover:border-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    className="block rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 hover:border-blue-400 dark:hover:border-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
                     <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {r.title}

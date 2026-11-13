@@ -9,6 +9,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
+import re
 from typing import Any
 
 from services.ai_engine.providers import get_provider
@@ -20,6 +22,31 @@ BASE_TAX_EUR_PER_BUILDING = 1_600.0
 MAX_NEW_BUILDINGS = 20_000
 PLANNER_TIMEOUT_SECONDS = 150.0
 
+_CHART_TYPES = {"bar", "line", "donut"}
+_CHART_FORMATS = {"number", "currency", "percent"}
+_KPI_TONES = {"positive", "negative", "neutral"}
+_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+_DIMENSION_ALIASES = {
+    "environment": "environment",
+    "περιβάλλον": "environment",
+    "society": "society",
+    "social": "society",
+    "κοινωνία": "society",
+    "economy": "economy",
+    "economics": "economy",
+    "οικονομία": "economy",
+    "mobility": "mobility",
+    "transport": "mobility",
+    "κινητικότητα": "mobility",
+    "quality_of_life": "quality_of_life",
+    "quality": "quality_of_life",
+    "quality-of-life": "quality_of_life",
+    "ποιότητα_ζωής": "quality_of_life",
+    "administration": "administration",
+    "governance": "administration",
+    "διοίκηση": "administration",
+}
+
 PLANNER_SYSTEM_PROMPT = """You are POLICYLAB's policy simulation planner for the City of Athens.
 You receive a policy topic, a free-text description of the changes, the user's
 changing factors (for example new_buildings or tax_change_pct), a location and a
@@ -29,7 +56,9 @@ report. Use realistic, internally consistent planning assumptions.
 
 Return ONLY a JSON object with this shape:
 {
+  "title": {"el": "...", "en": "..."},
   "model": "greenspace | accessibility | traffic_sumo | cost",
+  "model_reason": {"el": "...", "en": "..."},
   "parameters": {"parameter_name": 123},
   "factors": [
     {"name": "new_buildings", "label": {"el": "...", "en": "..."},
@@ -53,8 +82,19 @@ Return ONLY a JSON object with this shape:
 
 Rules:
 - Pick exactly one model from the supplied catalog and use only its parameter names.
+- Respect each parameter's label, unit and choices in the catalog.
+- For traffic_sumo, demand and capacity are vehicles per hour. Keep them on the
+  same scale as the defaults (around 1,200 demand and 1,600 capacity); never put
+  a daily vehicle total directly into demand.
+- Supported traffic interventions are open, congestion_charge, pedestrianize and
+  closed.
+- "title" must be a specific scenario name (for example "Πεζοδρόμηση πλατείας
+  Εξαρχείων"), never just the technical model id.
+- "model_reason" must explain in one sentence why that model fits the policy.
 - Use the supplied default property tax proxy: 1600 EUR per new building per year,
   adjusted by tax_change_pct. If the user supplies a total tax change, apply it.
+- If a factor or tax value is not applicable, omit it or use null; never invent 0
+  placeholders just to fill the schema.
 - Numeric parameters must respect the catalog min/max. Do not invent locations.
 - Write report text in Greek (el) and English (en), concise but specific.
 - Keep findings and risks to at most 3 each, and assumptions to at most 3.
@@ -113,6 +153,271 @@ def _factor_value(factors: Any, name: str) -> float | None:
     return None
 
 
+def _text(value: Any, max_len: int = 300) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.strip()[:max_len]
+
+
+def _finite(value: Any) -> float | None:
+    number = _num(value)
+    if number is None or not math.isfinite(number):
+        return None
+    return number
+
+
+def _slug(value: Any, fallback: str) -> str:
+    slug = re.sub(r"[^a-z0-9_]+", "_", _text(value, 80).lower()).strip("_")
+    return slug or fallback
+
+
+def _normalise_kpis(raw_items: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_items, list):
+        return []
+    items: list[dict[str, Any]] = []
+    for raw in raw_items[:6]:
+        if not isinstance(raw, dict):
+            continue
+        label = _localized(raw.get("label"))
+        if not label["en"]:
+            continue
+        value = raw.get("value")
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)):
+            number = _finite(value)
+            if number is None:
+                continue
+            value = round(number, 4)
+        elif isinstance(value, str):
+            value = _text(value, 120)
+            if not value:
+                continue
+        else:
+            continue
+        tone = str(raw.get("tone") or "").strip().lower()
+        items.append(
+            {
+                "label": label,
+                "value": value,
+                "unit": _text(raw.get("unit"), 20) or None,
+                "hint": _localized(raw.get("hint")) if raw.get("hint") else None,
+                "tone": tone if tone in _KPI_TONES else "neutral",
+            }
+        )
+    return items
+
+
+def _normalise_chart(raw_chart: Any) -> dict[str, Any] | None:
+    if not isinstance(raw_chart, dict):
+        return None
+    chart_type = str(raw_chart.get("type") or "").strip().lower()
+    if chart_type not in _CHART_TYPES:
+        return None
+    raw_labels = raw_chart.get("labels")
+    if not isinstance(raw_labels, list) or not raw_labels:
+        return None
+    labels = [_localized(label, str(index + 1)) for index, label in enumerate(raw_labels[:24])]
+    raw_datasets = raw_chart.get("datasets")
+    if not isinstance(raw_datasets, list):
+        return None
+    datasets: list[dict[str, Any]] = []
+    for index, raw_dataset in enumerate(raw_datasets[:4]):
+        if not isinstance(raw_dataset, dict):
+            continue
+        raw_data = raw_dataset.get("data")
+        if not isinstance(raw_data, list):
+            continue
+        data = [_finite(value) for value in raw_data[: len(labels)]]
+        if not any(value is not None for value in data):
+            continue
+        cleaned = [float(value) if value is not None else 0.0 for value in data]
+        if len(cleaned) < len(labels):
+            cleaned.extend([0.0] * (len(labels) - len(cleaned)))
+        dataset: dict[str, Any] = {
+            "label": _localized(raw_dataset.get("label"), f"Series {index + 1}"),
+            "data": cleaned,
+        }
+        color = str(raw_dataset.get("color") or "").strip()
+        if _COLOR_RE.match(color):
+            dataset["color"] = color
+        datasets.append(dataset)
+    if not datasets:
+        return None
+    fmt = str(raw_chart.get("format") or "").strip().lower()
+    return {
+        "type": chart_type,
+        "title": _localized(raw_chart.get("title"), "Chart"),
+        "labels": labels,
+        "datasets": datasets,
+        "unit": _text(raw_chart.get("unit"), 20) or None,
+        "format": fmt if fmt in _CHART_FORMATS else "number",
+        "horizontal": bool(raw_chart.get("horizontal")),
+    }
+
+
+def _normalise_table(raw_table: Any) -> dict[str, Any] | None:
+    if not isinstance(raw_table, dict):
+        return None
+    raw_columns = raw_table.get("columns")
+    if not isinstance(raw_columns, list) or not raw_columns:
+        return None
+    columns = [_localized(column, f"Column {index + 1}") for index, column in enumerate(raw_columns[:8])]
+    raw_rows = raw_table.get("rows")
+    if not isinstance(raw_rows, list) or not raw_rows:
+        return None
+    rows: list[list[Any]] = []
+    for raw_row in raw_rows[:12]:
+        if not isinstance(raw_row, list):
+            continue
+        row: list[Any] = []
+        for cell in raw_row[: len(columns)]:
+            if isinstance(cell, bool):
+                row.append(str(cell).lower())
+            elif isinstance(cell, (int, float)):
+                number = _finite(cell)
+                row.append(round(number, 4) if number is not None else "")
+            else:
+                row.append(_text(cell, 120))
+        if len(row) < len(columns):
+            row.extend([""] * (len(columns) - len(row)))
+        rows.append(row)
+    if not rows:
+        return None
+    table: dict[str, Any] = {"columns": columns, "rows": rows}
+    if raw_table.get("title"):
+        table["title"] = _localized(raw_table.get("title"))
+    return table
+
+
+def _normalise_sections(raw_sections: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_sections, list):
+        return []
+    sections: list[dict[str, Any]] = []
+    for raw_section in raw_sections[:6]:
+        if not isinstance(raw_section, dict):
+            continue
+        raw_blocks = raw_section.get("blocks")
+        if not isinstance(raw_blocks, list):
+            continue
+        blocks: list[dict[str, Any]] = []
+        for raw_block in raw_blocks[:8]:
+            if not isinstance(raw_block, dict):
+                continue
+            kind = str(raw_block.get("kind") or "").strip().lower()
+            if kind == "kpis":
+                items = _normalise_kpis(raw_block.get("items"))
+                if items:
+                    blocks.append({"kind": "kpis", "items": items})
+            elif kind == "chart":
+                chart = _normalise_chart(raw_block.get("chart"))
+                if chart:
+                    blocks.append({"kind": "chart", "chart": chart})
+            elif kind == "table":
+                table = _normalise_table(raw_block.get("table"))
+                if table:
+                    blocks.append({"kind": "table", "table": table})
+            elif kind == "text":
+                text = _localized(raw_block.get("text"))
+                if text["en"]:
+                    blocks.append({"kind": "text", "text": text})
+            elif kind in ("findings", "risks"):
+                items = _localized_list(raw_block.get("items"))
+                if items:
+                    blocks.append({"kind": kind, "items": items})
+        if not blocks:
+            continue
+        section: dict[str, Any] = {
+            "title": _localized(raw_section.get("title"), "Insights"),
+            "blocks": blocks,
+        }
+        if raw_section.get("description"):
+            description = _localized(raw_section.get("description"))
+            if description["en"]:
+                section["description"] = description
+        sections.append(section)
+    return sections
+
+
+def _normalise_ai_metrics(raw_metrics: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_metrics, list):
+        return []
+    metrics: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, raw in enumerate(raw_metrics[:12]):
+        if not isinstance(raw, dict):
+            continue
+        label = _localized(raw.get("label"))
+        if not label["en"]:
+            continue
+        value = _finite(raw.get("value"))
+        if value is None:
+            continue
+        key = _slug(raw.get("key"), f"metric_{index + 1}")
+        if key in seen:
+            continue
+        seen.add(key)
+        baseline = _finite(raw.get("baseline"))
+        confidence = _finite(raw.get("confidence"))
+        metrics.append(
+            {
+                "key": key,
+                "label": label,
+                "value": round(value, 4),
+                "baseline": round(baseline, 4) if baseline is not None else None,
+                "unit": _text(raw.get("unit"), 20) or None,
+                "confidence": round(max(0.0, min(1.0, confidence)), 2)
+                if confidence is not None
+                else 0.6,
+                "source": "ai",
+            }
+        )
+    return metrics
+
+
+def _normalise_ai_impact(raw_impact: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_impact, list):
+        return []
+    indicators: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for index, raw in enumerate(raw_impact[:12]):
+        if not isinstance(raw, dict):
+            continue
+        dimension = re.sub(r"[\s-]+", "_", str(raw.get("dimension") or "").strip().lower())
+        dimension = _DIMENSION_ALIASES.get(dimension, "")
+        if not dimension:
+            continue
+        label = _localized(raw.get("label"))
+        if not label["en"]:
+            continue
+        value = _finite(raw.get("value"))
+        if value is None:
+            continue
+        name = _slug(raw.get("name"), f"ai_indicator_{index + 1}")
+        if (dimension, name) in seen:
+            continue
+        seen.add((dimension, name))
+        baseline = _finite(raw.get("baseline"))
+        confidence = _finite(raw.get("confidence"))
+        indicator: dict[str, Any] = {
+            "dimension": dimension,
+            "name": name,
+            "label": label,
+            "value": round(value, 4),
+            "baseline": round(baseline, 4) if baseline is not None else None,
+            "unit": _text(raw.get("unit"), 20) or "",
+            "confidence": round(max(0.0, min(1.0, confidence)), 2)
+            if confidence is not None
+            else 0.55,
+            "source": "ai",
+        }
+        note = _localized(raw.get("note")) if raw.get("note") else None
+        if note and note["en"]:
+            indicator["note"] = note
+        indicators.append(indicator)
+    return indicators
+
+
 def _model_catalog() -> list[dict[str, Any]]:
     catalog: list[dict[str, Any]] = []
     for name in MODELS:
@@ -123,6 +428,8 @@ def _model_catalog() -> list[dict[str, Any]]:
                 {
                     "name": param.get("name"),
                     "type": param.get("type"),
+                    "label": param.get("label"),
+                    "unit": param.get("unit"),
                     "default": param.get("default"),
                     "min": param.get("min"),
                     "max": param.get("max"),
@@ -132,6 +439,7 @@ def _model_catalog() -> list[dict[str, Any]]:
         catalog.append(
             {
                 "name": name,
+                "label": spec.label,
                 "category": spec.category,
                 "description": spec.description,
                 "parameters": parameters,
@@ -308,6 +616,11 @@ def _fallback_plan(
     return {
         "ai_used": False,
         "model": model_name,
+        "title": _localized(topic, "Simulation"),
+        "model_reason": {
+            "el": "Επιλέχθηκε με βάση την κατηγορία και το θέμα της πολιτικής.",
+            "en": "Selected from the policy category and topic.",
+        },
         "parameters": normalised_parameters,
         "factors": _normalise_factors([], factors, tax),
         "tax": tax,
@@ -393,9 +706,18 @@ async def plan_policy_simulation(
         tax = _normalise_tax(payload.get("tax"), factors)
         confidence = _num(payload.get("confidence"))
         confidence = max(0.0, min(1.0, confidence if confidence is not None else 0.6))
-        return {
+        title = _localized(payload.get("title"), topic or model_name)
+        model_reason = _localized(payload.get("model_reason"))
+        plan: dict[str, Any] = {
             "ai_used": True,
             "model": model_name,
+            "title": title,
+            "model_reason": model_reason
+            if model_reason["en"]
+            else {
+                "el": f"Το μοντέλο {model_name} ταιριάζει καλύτερα στην πολιτική.",
+                "en": f"The {model_name} model best matches the policy.",
+            },
             "parameters": normalised_parameters,
             "factors": _normalise_factors(payload.get("factors"), factors, tax),
             "tax": tax,
@@ -403,7 +725,11 @@ async def plan_policy_simulation(
             "confidence": round(confidence, 2),
             "assumptions": _localized_list(payload.get("assumptions"))[:6],
             "limitations": ["ai-estimated values"],
+            "sections": _normalise_sections(payload.get("sections")),
+            "metrics": _normalise_ai_metrics(payload.get("metrics")),
+            "impact": _normalise_ai_impact(payload.get("impact")),
         }
+        return plan
     except Exception as exc:  # noqa: BLE001 — AI must never fail a simulation
         logger.warning("policy planner fallback: %s", exc)
         return _fallback_plan(
@@ -423,4 +749,11 @@ def _parse_json_answer(content: str) -> dict | None:
     return parse(content)
 
 
-__all__ = ["plan_policy_simulation"]
+__all__ = [
+    "plan_policy_simulation",
+    "_localized",
+    "_localized_list",
+    "_normalise_ai_impact",
+    "_normalise_ai_metrics",
+    "_normalise_sections",
+]

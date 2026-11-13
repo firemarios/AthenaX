@@ -1,8 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
-import type { SimulationRun } from "@policylab/types";
+import type { Policy, SimulationRun } from "@policylab/types";
 import { useApi } from "@/_shared/hooks";
 import { fmtDateTime } from "@/_shared/format";
 import { ErrorPanel, PageHeader, mutedText } from "@/_shared/ui";
@@ -22,19 +23,27 @@ const STR = {
   },
   toSimulations: { el: "Μετάβαση στις προσομοιώσεις", en: "Go to simulations" },
   model: { el: "Μοντέλο", en: "Model" },
+  policy: { el: "Πολιτική", en: "Policy" },
   created: { el: "Εκτελέστηκε", en: "Executed" },
   view: { el: "Άνοιγμα αναφοράς →", en: "Open report →" },
+  simulation: { el: "Προσομοίωση", en: "Simulation" },
 };
 
 export default function ImpactPage() {
   const { t, lang } = useI18n();
   const runs = useApi<SimulationRun[]>("/v1/simulations");
+  const policies = useApi<Policy[]>("/v1/policies");
+  const policyTitles = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const policy of policies.data ?? []) map.set(policy.id, policy.title);
+    return map;
+  }, [policies.data]);
   const list = (runs.data ?? []).filter(
     (run) => run.status === "succeeded" && run.results
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader title={t(STR.title)} description={t(STR.desc)} />
 
       {runs.loading ? (
@@ -57,7 +66,7 @@ export default function ImpactPage() {
           title={t(STR.empty)}
           description={t(STR.emptyDesc)}
           action={
-            <Link href="/simulations" className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+            <Link href="/simulations" className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
               {t(STR.toSimulations)}
             </Link>
           }
@@ -67,7 +76,7 @@ export default function ImpactPage() {
           <p className={`mb-4 ${mutedText}`} aria-live="polite">
             {list.length} {t(STR.count)}
           </p>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {list.map((run) => (
               <li key={run.id} className="flex">
                 <DataCard
@@ -79,16 +88,34 @@ export default function ImpactPage() {
                       <span>
                         {t(STR.created)}: {fmtDateTime(run.created_at, lang)}
                       </span>
-                      {run.policy_id ? <span>{run.policy_id}</span> : null}
+                      {run.policy_id ? (
+                        <span>
+                          {t(STR.policy)}:{" "}
+                          <Link
+                            href={`/policies/${run.policy_id}`}
+                            className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                          >
+                            {policyTitles.get(run.policy_id) ?? run.policy_id}
+                          </Link>
+                        </span>
+                      ) : null}
                     </>
                   }
                   footer={
-                    <Link
-                      href={`/impact/${run.id}`}
-                      className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
-                    >
-                      {t(STR.view)}
-                    </Link>
+                    <span className="flex flex-wrap gap-4">
+                      <Link
+                        href={`/impact/${run.id}`}
+                        className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                      >
+                        {t(STR.view)}
+                      </Link>
+                      <Link
+                        href={`/simulations/${run.id}`}
+                        className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                      >
+                        {t(STR.simulation)}
+                      </Link>
+                    </span>
                   }
                 />
               </li>

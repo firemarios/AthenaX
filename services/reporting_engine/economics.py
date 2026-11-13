@@ -16,6 +16,7 @@ _LABELS = {
     "green_area": {"el": "Δημιουργία / αναβάθμιση πρασίνου", "en": "Green space creation / upgrade"},
     "facilities": {"el": "Κατασκευή κοινωνικών υποδομών", "en": "Community facility construction"},
     "traffic": {"el": "Ρύθμιση κυκλοφορίας / ανάπλαση", "en": "Traffic intervention / street redesign"},
+    "congestion_charge": {"el": "Σύστημα χρέωσης κυκλοφορίας", "en": "Congestion charging system"},
     "cost_model": {"el": "Εκτίμηση κόστους έργου", "en": "Works cost estimate"},
     "green_benefit": {"el": "Όφελος από πράσινο", "en": "Green-space benefit"},
     "access_benefit": {"el": "Όφελος προσβασιμότητας", "en": "Accessibility benefit"},
@@ -40,7 +41,7 @@ def _num(value: Any) -> float | None:
 
 
 def _line(label: dict[str, str], amount: float, *, quantity: float | None = None, unit: str | None = None) -> dict:
-    item: dict[str, Any] = {"label": label, "amount_eur": round(max(0.0, amount), 2)}
+    item: dict[str, Any] = {"label": label, "amount_eur": round(amount, 2)}
     if quantity is not None:
         item["quantity"] = round(quantity, 2)
     if unit:
@@ -108,11 +109,17 @@ def _cost_estimate(
         intervention = str(parameters.get("intervention") or "open").lower()
         table = {
             "open": (0.0, 0.0, 0.0),
+            "congestion_charge": (450_000.0, 550_000.0, 700_000.0),
             "pedestrianize": (280_000.0, 350_000.0, 450_000.0),
             "closed": (400_000.0, 500_000.0, 650_000.0),
         }
         low, expected, high = table.get(intervention, table["open"])
-        lines = [_line(_LABELS["traffic"], expected)] if expected > 0 else []
+        label = (
+            _LABELS["congestion_charge"]
+            if intervention == "congestion_charge"
+            else _LABELS["traffic"]
+        )
+        lines = [_line(label, expected)] if expected > 0 else []
         return low, expected, high, lines
 
     return 0.0, 0.0, 0.0, []
@@ -140,7 +147,7 @@ def _benefit_estimate(
     if model_name == "greenspace":
         area_delta = delta("green_area_m2")
         if area_delta is not None:
-            if area_delta > 0:
+            if area_delta != 0:
                 lines.append(
                     _line(
                         _LABELS["green_benefit"],
@@ -151,7 +158,7 @@ def _benefit_estimate(
                 )
         else:
             per_capita_delta = delta("green_m2_per_capita")
-            if per_capita_delta is not None and per_capita_delta > 0:
+            if per_capita_delta is not None and per_capita_delta != 0:
                 lines.append(
                     _line(
                         _LABELS["green_benefit"],
@@ -161,7 +168,7 @@ def _benefit_estimate(
                     )
                 )
         pct_delta = delta("pct_within_300m")
-        if pct_delta is not None and pct_delta > 0:
+        if pct_delta is not None and pct_delta != 0:
             covered = pct_delta / 100.0 * population
             lines.append(
                 _line(
@@ -175,7 +182,7 @@ def _benefit_estimate(
     if model_name == "accessibility":
         covered_delta = delta("covered_population")
         if covered_delta is not None:
-            if covered_delta > 0:
+            if covered_delta != 0:
                 lines.append(
                     _line(
                         _LABELS["access_benefit"],
@@ -186,7 +193,7 @@ def _benefit_estimate(
                 )
         else:
             pct_delta = delta("accessibility_pct")
-            if pct_delta is not None and pct_delta > 0:
+            if pct_delta is not None and pct_delta != 0:
                 covered = pct_delta / 100.0 * population
                 lines.append(
                     _line(
@@ -199,10 +206,13 @@ def _benefit_estimate(
 
     if model_name == "traffic_sumo":
         travel_delta = delta("avg_travel_min")
-        if travel_delta is not None and travel_delta < 0:
+        if travel_delta is not None and travel_delta != 0:
             saved_min = -travel_delta
             demand = _num(parameters.get("demand")) or 1_200.0
-            trips = demand * 8.0 * ANNUAL_DAYS
+            capacity = _num(parameters.get("capacity")) or 0.0
+            intervention = str(parameters.get("intervention") or "").lower()
+            daily_demand = intervention == "congestion_charge" and demand > capacity
+            trips = demand * (ANNUAL_DAYS if daily_demand else 8.0 * ANNUAL_DAYS)
             lines.append(
                 _line(
                     _LABELS["travel_benefit"],
@@ -212,7 +222,7 @@ def _benefit_estimate(
                 )
             )
         emissions_delta = delta("emissions_kg")
-        if emissions_delta is not None and emissions_delta < 0:
+        if emissions_delta is not None and emissions_delta != 0:
             saved_kg = -emissions_delta
             lines.append(
                 _line(
@@ -223,7 +233,7 @@ def _benefit_estimate(
                 )
             )
         noise_delta = delta("noise_db")
-        if noise_delta is not None and noise_delta < 0:
+        if noise_delta is not None and noise_delta != 0:
             lines.append(
                 _line(
                     _LABELS["noise_benefit"],
@@ -246,16 +256,30 @@ def _verdict(bcr: float | None, within_budget: bool | None, has_benefit: bool) -
     return "no"
 
 
-def _summary(bcr: float | None, payback: float | None, verdict: str) -> dict[str, str]:
+def _summary(
+    bcr: float | None,
+    payback: float | None,
+    verdict: str,
+    *,
+    has_baseline: bool = True,
+) -> dict[str, str]:
     verdict_el = {"yes": "αξίζει", "marginal": "οριακά", "no": "δεν αξίζει", "unknown": "δεν επαρκούν τα δεδομένα"}[verdict]
     verdict_en = {"yes": "worth it", "marginal": "marginal", "no": "not worth it", "unknown": "insufficient data"}[verdict]
     if bcr is None:
+        if has_baseline:
+            return {
+                "el": "Υπάρχει σύγκριση με βασικό σενάριο, αλλά δεν υπάρχει εκτίμηση κόστους για αυτή την παρέμβαση, οπότε δεν υπολογίζεται σχέση οφέλους/κόστους.",
+                "en": "A baseline comparison exists, but there is no cost estimate for this intervention, so a benefit-cost ratio cannot be calculated.",
+            }
         return {
             "el": "Το μοντέλο δεν παράγει σύγκριση με βασικό σενάριο, οπότε δεν υπολογίζεται σχέση οφέλους/κόστους.",
             "en": "The model has no baseline comparison, so a benefit-cost ratio cannot be calculated.",
         }
     payback_el = f" Αποπληρωμή σε {payback:.1f} έτη." if payback else ""
     payback_en = f" Payback in {payback:.1f} years." if payback else ""
+    if bcr < 0:
+        payback_el += " Το σενάριο υπολείπεται του βασικού σεναρίου."
+        payback_en += " The scenario falls short of the baseline."
     return {
         "el": f"Σχέση οφέλους/κόστους {bcr:.2f}× — {verdict_el}.{payback_el}",
         "en": f"Benefit-cost ratio {bcr:.2f}× — {verdict_en}.{payback_en}",
@@ -319,7 +343,7 @@ def compute_economics(
         "confidence": confidence,
         "cost_breakdown": cost_lines,
         "benefit_breakdown": benefit_lines,
-        "summary": _summary(bcr, payback, verdict),
+        "summary": _summary(bcr, payback, verdict, has_baseline=baseline is not None),
         "assumptions": [
             {
                 "el": "Οι τιμές είναι προγραμματικές εκτιμήσεις για σύγκριση σεναρίων, όχι δεσμευτικός προϋπολογισμός.",

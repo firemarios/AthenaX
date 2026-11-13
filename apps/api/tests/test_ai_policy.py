@@ -6,8 +6,13 @@ import json
 
 import pytest
 
-from services.ai_engine.policy_planner import plan_policy_simulation
+from services.ai_engine.policy_planner import (
+    _normalise_sections,
+    plan_policy_simulation,
+)
+from services.ai_engine.report_composer import compose_simulation_report
 from services.reporting_engine.economics import compute_economics
+from services.reporting_engine.impact import compute_impact
 
 
 @pytest.fixture(autouse=True)
@@ -93,7 +98,8 @@ def test_models_list(client):
     assert resp.status_code == 200 and body["ok"] is True
     assert len(body["data"]) == 4
     spec = body["data"][0]
-    assert {"name", "version", "category", "description", "parameters"} <= set(spec)
+    assert {"name", "version", "category", "description", "label", "parameters"} <= set(spec)
+    assert spec["label"]["en"]
 
 
 def test_policy_crud_flow(client):
@@ -269,6 +275,115 @@ def test_policy_planner_calculates_model_factors_and_tax():
     assert plan["confidence"] == 0.81
 
 
+def test_report_sections_normalizer_drops_invalid_blocks():
+    sections = _normalise_sections(
+        [
+            {
+                "title": {"el": "Ανάλυση", "en": "Analysis"},
+                "blocks": [
+                    {"kind": "kpis", "items": [{"label": {"el": "Κάλυψη", "en": "Coverage"}, "value": 72.5, "unit": "%"}]},
+                    {
+                        "kind": "chart",
+                        "chart": {
+                            "type": "bar",
+                            "title": {"el": "Σύγκριση", "en": "Comparison"},
+                            "labels": [{"el": "Α", "en": "A"}, {"el": "Β", "en": "B"}],
+                            "datasets": [{"label": {"el": "Σενάριο", "en": "Scenario"}, "data": [10, 12]}],
+                            "format": "percent",
+                        },
+                    },
+                    {"kind": "chart", "chart": {"type": "radar", "labels": [], "datasets": []}},
+                    {"kind": "kpis", "items": [{"label": {"el": "", "en": ""}, "value": 4}]},
+                ],
+            }
+        ]
+    )
+    assert len(sections) == 1
+    kinds = [block["kind"] for block in sections[0]["blocks"]]
+    assert kinds == ["kpis", "chart"]
+    chart = sections[0]["blocks"][1]["chart"]
+    assert len(chart["labels"]) == len(chart["datasets"][0]["data"]) == 2
+
+
+def test_report_composer_returns_flexible_sections():
+    class _ComposerProvider:
+        async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
+            return json.dumps(
+                {
+                    "title": {"el": "Πεζοδρόμηση", "en": "Pedestrianisation"},
+                    "model_reason": {"el": "Ταίριασμα", "en": "Fits"},
+                    "sections": [
+                        {
+                            "title": {"el": "Αποτελέσματα", "en": "Results"},
+                            "blocks": [
+                                {
+                                    "kind": "kpis",
+                                    "items": [
+                                        {
+                                            "label": {"el": "Κάλυψη", "en": "Coverage"},
+                                            "value": 72.5,
+                                            "unit": "%",
+                                            "tone": "positive",
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                    "metrics": [
+                        {
+                            "key": "extra",
+                            "label": {"el": "Πρόσθετο", "en": "Extra"},
+                            "value": 3.2,
+                            "unit": "t",
+                        }
+                    ],
+                }
+            )
+
+    composed = asyncio.run(
+        compose_simulation_report(
+            policy={"title": "Πεζοδρόμηση"},
+            plan={"model": "traffic_sumo", "ai_used": True},
+            metrics={"avg_travel_min": 14.2},
+            baseline=None,
+            uncertainty={},
+            economics={"capex_eur": 100000},
+            passport={},
+            provider=_ComposerProvider(),
+        )
+    )
+    assert composed is not None
+    assert composed["title"]["en"] == "Pedestrianisation"
+    assert composed["sections"][0]["blocks"][0]["kind"] == "kpis"
+    assert composed["metrics"][0]["source"] == "ai"
+
+
+def test_impact_merges_economics_and_ai_indicators():
+    report = compute_impact(
+        {"accessibility_pct": 70.0},
+        baseline={"accessibility_pct": 60.0},
+        economics={"capex_eur": 50000.0, "benefit_cost_ratio": 1.4, "confidence": 0.8},
+        ai_impact=[
+            {
+                "dimension": "environment",
+                "name": "co2_saved",
+                "label": {"el": "CO2", "en": "CO2 saved"},
+                "value": 12.0,
+                "unit": "t",
+                "confidence": 0.6,
+            }
+        ],
+    )
+    dimensions = {dimension["key"]: dimension for dimension in report["dimensions"]}
+    assert dimensions["mobility"]["indicators"][0]["source"] == "simulation"
+    economy = {item["name"]: item for item in dimensions["economy"]["indicators"]}
+    assert economy["capex_eur"]["source"] == "economics"
+    assert economy["benefit_cost_ratio"]["value"] == 1.4
+    environment = {item["name"]: item for item in dimensions["environment"]["indicators"]}
+    assert environment["co2_saved"]["source"] == "ai"
+
+
 def test_policy_planner_falls_back_without_failing():
     class _BrokenProvider:
         async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
@@ -329,7 +444,11 @@ def test_simulation_use_ai_persists_plan_and_tax(client, monkeypatch):
             "limitations": [],
         }
 
+    async def _fake_compose(**kwargs):
+        return None
+
     monkeypatch.setattr("app.api.v1.simulations.plan_policy_simulation", _fake_plan)
+    monkeypatch.setattr("app.api.v1.simulations.compose_simulation_report", _fake_compose)
     resp = client.post(
         "/v1/simulations",
         json={"policy_id": policy["id"], "use_ai": True, "parameters": {}, "compare_baseline": True},
@@ -341,6 +460,54 @@ def test_simulation_use_ai_persists_plan_and_tax(client, monkeypatch):
     assert run["parameters"]["area_id"] == "Κυψέλη"
     assert run["results"]["economics"]["annual_tax_revenue_eur"] == 67200
     assert run["results"]["economics"]["new_buildings"] == 40
+
+
+def test_economics_negative_greenspace_delta_is_not_worth_it():
+    economics = compute_economics(
+        "greenspace",
+        {"park_count": 5, "avg_park_m2": 1500, "population": 9500},
+        {
+            "green_area_m2": 7500.0,
+            "green_m2_per_capita": 0.79,
+            "pct_within_300m": 50.83,
+        },
+        {
+            "green_area_m2": 30000.0,
+            "green_m2_per_capita": 3.0,
+            "pct_within_300m": 77.08,
+        },
+    )
+    assert economics["annual_benefit_eur"] < 0
+    assert economics["benefit_cost_ratio"] < 0
+    assert economics["verdict"] == "no"
+    assert economics["benefit_breakdown"]
+    assert "falls short of the baseline" in economics["summary"]["en"]
+
+
+def test_economics_congestion_charge_has_cost_and_positive_value():
+    economics = compute_economics(
+        "traffic_sumo",
+        {"intervention": "congestion_charge", "demand": 8000, "capacity": 6000},
+        {
+            "avg_travel_min": 12.0,
+            "throughput_vph": 530.4,
+            "queue_length_m": 0.0,
+            "emissions_kg": 1.28,
+            "noise_db": 56.8,
+        },
+        {
+            "avg_travel_min": 12.6,
+            "throughput_vph": 1216.7,
+            "queue_length_m": 0.0,
+            "emissions_kg": 1.344,
+            "noise_db": 62.2,
+        },
+    )
+    assert economics["capex_eur"] == 550000.0
+    assert economics["cost_breakdown"][0]["label"]["en"] == "Congestion charging system"
+    assert economics["annual_benefit_eur"] > 0
+    assert economics["verdict"] == "yes"
+    assert "worth it" in economics["summary"]["en"]
 
 
 def test_economics_includes_new_building_tax_revenue():

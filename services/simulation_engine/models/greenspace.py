@@ -26,6 +26,7 @@ class GreenspaceModel:
             "el": "Πράσινο δίκτυο: τετραγωνικά μέτρα πράσινου ανά κάτοικο και ποσοστό εντός 300 μ από πάρκο.",
             "en": "Green space: green m² per capita and share of population within 300 m of a park.",
         },
+        label={"el": "Πράσινο & πάρκα", "en": "Green space & parks"},
         parameters=[
             {
                 "name": "area_id",

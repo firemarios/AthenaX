@@ -13,4 +13,5 @@ class ModelSpec:
     version: str
     category: str
     description: dict  # {el, en}
+    label: dict = field(default_factory=dict)  # {el, en}
     parameters: list[dict] = field(default_factory=list)

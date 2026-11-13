@@ -20,14 +20,14 @@ const FILL_LAYER = "policylab-fill";
 const LINE_LAYER = "policylab-line";
 const CIRCLE_LAYER = "policylab-circle";
 const PALETTE = [
-  "#4f46e5",
-  "#10b981",
-  "#f59e0b",
-  "#f43f5e",
-  "#0ea5e9",
-  "#8b5cf6",
-  "#14b8a6",
-  "#f97316",
+  "#007aff",
+  "#34c759",
+  "#ff9f0a",
+  "#ff3b30",
+  "#5ac8fa",
+  "#af52de",
+  "#30d158",
+  "#ff9500",
 ];
 
 function escapeHtml(value: string): string {
@@ -83,12 +83,12 @@ function geometryFilters(active: string | null): {
 }
 
 function colorExpression(layers: CityLayer[] | undefined): unknown {
-  if (!layers || layers.length === 0) return "#4f46e5";
+  if (!layers || layers.length === 0) return "#007aff";
   const pairs: unknown[] = [];
   layers.forEach((layer, index) => {
     pairs.push(layer.id, PALETTE[index % PALETTE.length]);
   });
-  return ["match", ["get", "layer"], ...pairs, "#4f46e5"];
+  return ["match", ["get", "layer"], ...pairs, "#007aff"];
 }
 
 function buildCollection(
@@ -222,7 +222,7 @@ export function MapPanel({
             const hit = hits[0];
             try {
               markerRef.current?.remove();
-              markerRef.current = new Marker({ color: "#4f46e5" })
+              markerRef.current = new Marker({ color: "#007aff" })
                 .setLngLat(event.lngLat)
                 .addTo(map);
             } catch {

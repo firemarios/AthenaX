@@ -204,15 +204,14 @@ export default function NewPolicyPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-      <PageHeader title={t(STR.title)} description={t(STR.desc)} />
-      <p className="mb-6">
-        <Link
-          href="/policies"
-          className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-        >
-          {t(STR.back)}
-        </Link>
-      </p>
+      <PageHeader
+        title={t(STR.title)}
+        description={t(STR.desc)}
+        breadcrumbs={[
+          { label: t({ el: "Πολιτικές", en: "Policies" }), href: "/policies" },
+          { label: t(STR.title) },
+        ]}
+      />
 
       {error ? (
         <div className="mb-6">

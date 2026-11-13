@@ -1,15 +1,19 @@
 "use client";
 
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
 import type { Policy } from "@policylab/types";
 import { useApi } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
 import {
   ErrorPanel,
+  PageFallback,
   PageHeader,
   Tag,
   btnPrimary,
+  inputCls,
   mutedText,
 } from "@/_shared/ui";
 import {
@@ -40,15 +44,51 @@ const STR = {
   category: { el: "Κατηγορία", en: "Category" },
   status: { el: "Κατάσταση", en: "Status" },
   noCategory: { el: "Χωρίς κατηγορία", en: "Uncategorised" },
+  search: { el: "Αναζήτηση πολιτικών", en: "Search policies" },
+  searchPh: {
+    el: "Αναζήτηση με τίτλο, κατηγορία ή περιοχή…",
+    en: "Search by title, category or area…",
+  },
+  noMatches: { el: "Δεν βρέθηκαν πολιτικές", en: "No policies found" },
+  noMatchesDesc: {
+    el: "Δοκιμάστε διαφορετικό όρο αναζήτησης.",
+    en: "Try a different search term.",
+  },
+  clear: { el: "Καθαρισμός", en: "Clear" },
 };
 
-export default function PoliciesPage() {
+function PoliciesView() {
   const { t, lang } = useI18n();
+  const sp = useSearchParams();
+  const urlQuery = sp.get("q") ?? "";
   const policies = useApi<Policy[]>("/v1/policies");
-  const list = policies.data ?? [];
+  const [query, setQuery] = useState(urlQuery);
+  const [prevQuery, setPrevQuery] = useState(urlQuery);
+  if (urlQuery !== prevQuery) {
+    setPrevQuery(urlQuery);
+    setQuery(urlQuery);
+  }
+
+  const list = useMemo(() => policies.data ?? [], [policies.data]);
+
+  const filtered = useMemo(() => {
+    const term = query.trim().toLocaleLowerCase();
+    if (!term) return list;
+    return list.filter((policy) => {
+      const haystack = [
+        policy.title,
+        policy.description ?? "",
+        policy.category ?? "",
+        policy.area ?? "",
+      ]
+        .join(" ")
+        .toLocaleLowerCase();
+      return haystack.includes(term);
+    });
+  }, [list, query]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader
         title={t(STR.title)}
         description={t(STR.desc)}
@@ -66,7 +106,7 @@ export default function PoliciesPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-40 animate-pulse rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                className="h-40 animate-pulse rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
               />
             ))}
           </div>
@@ -86,56 +126,95 @@ export default function PoliciesPage() {
         />
       ) : (
         <>
+          <div className="mb-4">
+            <label htmlFor="policy-search" className="sr-only">
+              {t(STR.search)}
+            </label>
+            <input
+              id="policy-search"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t(STR.searchPh)}
+              className={`${inputCls} sm:max-w-md`}
+            />
+          </div>
+
           <p className={`mb-4 ${mutedText}`} aria-live="polite">
-            {list.length} {t(STR.count)}
+            {filtered.length} {t(STR.count)}
           </p>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((policy) => {
-              const cat = categoryLabel(policy.category);
-              return (
-                <li key={policy.id} className="flex">
-                  <DataCard
-                    title={policy.title}
-                    subtitle={policy.description ?? undefined}
-                    badge={
-                      <Badge tone="info">
-                        {cat ? t(cat) : t(STR.noCategory)}
-                      </Badge>
-                    }
-                    meta={
-                      <>
-                        <Badge tone={statusTone(policy.status)}>
-                          {t(statusLabel(policy.status, POLICY_STATUS_LABELS))}
+
+          {filtered.length === 0 ? (
+            <EmptyState
+              title={t(STR.noMatches)}
+              description={t(STR.noMatchesDesc)}
+              action={
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                >
+                  {t(STR.clear)}
+                </button>
+              }
+            />
+          ) : (
+            <ul className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((policy) => {
+                const cat = categoryLabel(policy.category);
+                return (
+                  <li key={policy.id} className="flex">
+                    <DataCard
+                      title={policy.title}
+                      subtitle={policy.description ?? undefined}
+                      badge={
+                        <Badge tone="info">
+                          {cat ? t(cat) : t(STR.noCategory)}
                         </Badge>
-                        <span>
-                          {t(STR.area)}: {policy.area || t(STR.citywide)}
-                        </span>
-                        <span>
-                          {t(STR.created)}: {fmtDate(policy.created_at, lang)}
-                        </span>
-                        {policy.variants && policy.variants.length > 0 ? (
-                          <Tag>
-                            {policy.variants.length}{" "}
-                            {t({ el: "παραλλαγές", en: "variants" })}
-                          </Tag>
-                        ) : null}
-                      </>
-                    }
-                    footer={
-                      <Link
-                        href={`/policies/${policy.id}`}
-                        className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      >
-                        {t(STR.details)}
-                      </Link>
-                    }
-                  />
-                </li>
-              );
-            })}
-          </ul>
+                      }
+                      meta={
+                        <>
+                          <Badge tone={statusTone(policy.status)}>
+                            {t(statusLabel(policy.status, POLICY_STATUS_LABELS))}
+                          </Badge>
+                          <span>
+                            {t(STR.area)}: {policy.area || t(STR.citywide)}
+                          </span>
+                          <span>
+                            {t(STR.created)}: {fmtDate(policy.created_at, lang)}
+                          </span>
+                          {policy.variants && policy.variants.length > 0 ? (
+                            <Tag>
+                              {policy.variants.length}{" "}
+                              {t({ el: "παραλλαγές", en: "variants" })}
+                            </Tag>
+                          ) : null}
+                        </>
+                      }
+                      footer={
+                        <Link
+                          href={`/policies/${policy.id}`}
+                          className="rounded font-medium text-blue-600 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-400"
+                        >
+                          {t(STR.details)}
+                        </Link>
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </>
       )}
     </div>
+  );
+}
+
+export default function PoliciesPage() {
+  return (
+    <Suspense fallback={<PageFallback rows={6} />}>
+      <PoliciesView />
+    </Suspense>
   );
 }

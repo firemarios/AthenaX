@@ -59,13 +59,14 @@ export function SearchBar({ placeholder, onSearch, initial }: SearchBarProps) {
         placeholder={resolvedPlaceholder}
         autoComplete="off"
         className={cn(
-          "h-10 w-full rounded-[var(--radius-button)] border border-input bg-background pl-9 pr-16 text-sm text-foreground",
-          "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "h-11 w-full rounded-full border border-zinc-200/80 bg-white pl-9 pr-16 text-sm text-zinc-900 shadow-sm",
+          "placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500",
         )}
       />
       <kbd
         aria-hidden="true"
-        className="pointer-events-none absolute right-2 hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-block"
+        className="pointer-events-none absolute right-2 hidden rounded-md border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 sm:inline-block"
       >
         Ctrl K
       </kbd>

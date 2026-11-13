@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Badge, ExportButton, Skeleton, useI18n } from "@policylab/ui";
-import type { ImpactIndicator, ImpactReport } from "@policylab/types";
+import type { ImpactIndicator, ImpactReport, SimulationRun } from "@policylab/types";
 import { API_BASE } from "@policylab/api-client";
 import { useApi } from "@/_shared/hooks";
 import { downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "@/_shared/format";
@@ -38,6 +38,10 @@ const STR = {
     en: "Estimates are based on the data and assumptions of each simulation.",
   },
   noDimensions: { el: "Δεν υπάρχουν διαστάσεις στην αναφορά.", en: "No dimensions in this report." },
+  noIndicators: {
+    el: "Δεν υπάρχουν δείκτες για αυτό το μοντέλο.",
+    en: "No indicators for this model.",
+  },
   retry: { el: "Δοκιμάστε ξανά", en: "Try again" },
   exportJson: { el: "Λήψη JSON", en: "Download JSON" },
 };
@@ -67,15 +71,41 @@ function DeltaBadge({ indicator }: { indicator: ImpactIndicator }) {
   );
 }
 
+const SOURCE_LABELS = {
+  simulation: { el: "Προσομοίωση", en: "Simulation" },
+  economics: { el: "Οικονομικό μοντέλο", en: "Economics model" },
+  ai: { el: "Εκτίμηση AI", en: "AI estimate" },
+} as const;
+
+const SOURCE_TONES = {
+  simulation: "neutral",
+  economics: "info",
+  ai: "warning",
+} as const;
+
 function IndicatorRow({ indicator }: { indicator: ImpactIndicator }) {
   const { t, lang } = useI18n();
   return (
     <li className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="min-w-0 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {t(indicator.label)}
-        </p>
-        <DeltaBadge indicator={indicator} />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {t(indicator.label)}
+          </p>
+          {indicator.note ? (
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              {t(indicator.note)}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {indicator.source ? (
+            <Badge tone={SOURCE_TONES[indicator.source]}>
+              {t(SOURCE_LABELS[indicator.source])}
+            </Badge>
+          ) : null}
+          <DeltaBadge indicator={indicator} />
+        </div>
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
         <div className="flex gap-1.5">
@@ -108,6 +138,9 @@ function ImpactDetailView() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? "";
   const report = useApi<ImpactReport>(id ? `/v1/impact/${encodeURIComponent(id)}` : null);
+  const run = useApi<SimulationRun>(
+    report.data ? `/v1/simulations/${encodeURIComponent(report.data.run_id)}` : null,
+  );
 
   const onExport = async (format: "csv" | "geojson" | "json") => {
     if (format === "csv" && report.data) {
@@ -184,7 +217,7 @@ function ImpactDetailView() {
 
   if (report.loading) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
         <span className="sr-only">{t(STR.loading)}</span>
         <Skeleton rows={8} />
       </div>
@@ -193,7 +226,7 @@ function ImpactDetailView() {
 
   if (report.error || !report.data) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
         <PageHeader title={t(STR.title)} />
         <div aria-live="polite">
           <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-6 py-12 text-center">
@@ -220,20 +253,31 @@ function ImpactDetailView() {
   const data = report.data;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader
         title={t(STR.title)}
         description={`run_id: ${data.run_id}`}
-        actions={<ExportButton onExport={onExport} />}
+        breadcrumbs={[
+          { label: t({ el: "Προσομοιώσεις", en: "Simulations" }), href: "/simulations" },
+          { label: t(STR.title) },
+        ]}
+        actions={
+          <>
+            {run.data?.policy_id ? (
+              <Link
+                href={`/policies/${run.data.policy_id}`}
+                className={btnSecondary}
+              >
+                {t({ el: "Πολιτική", en: "Policy" })}
+              </Link>
+            ) : null}
+            <Link href={`/simulations/${data.run_id}`} className={btnSecondary}>
+              {t({ el: "Προσομοίωση", en: "Simulation" })}
+            </Link>
+            <ExportButton onExport={onExport} />
+          </>
+        }
       />
-      <p className="mb-6">
-        <Link
-          href="/policies"
-          className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-        >
-          {t(STR.back)}
-        </Link>
-      </p>
 
       <div className="space-y-6">
         <SectionCard title={t(STR.summary)}>
@@ -254,15 +298,15 @@ function ImpactDetailView() {
                 <div className="mb-4 flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-base font-bold text-indigo-600 dark:text-indigo-400"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-base font-bold text-blue-600 dark:text-blue-400"
                   >
                     {letter}
                   </span>
                   <h2 className={headingCls}>{t(dim.label)}</h2>
                 </div>
-                {dim.indicators.length === 0 ? (
-                  <p className={mutedText}>{t(STR.noDimensions)}</p>
-                ) : (
+              {dim.indicators.length === 0 ? (
+                <p className={mutedText}>{t(STR.noIndicators)}</p>
+              ) : (
                   <ul className="space-y-3">
                     {dim.indicators.map((ind) => (
                       <IndicatorRow key={ind.name} indicator={ind} />

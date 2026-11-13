@@ -114,7 +114,7 @@ export default function ResearchPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader title={t(STR.title)} description={t(STR.desc)} />
 
       <div className="mb-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5">
@@ -187,7 +187,7 @@ export default function ResearchPage() {
       ) : shown.length === 0 ? (
         <EmptyState title={t(STR.empty)} description={t(STR.emptyDesc)} />
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((project) => (
             <li key={project.id} className="flex">
               <DataCard
@@ -206,7 +206,7 @@ export default function ResearchPage() {
                 footer={
                   <Link
                     href={`/research/${project.id}`}
-                    className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
                     {t(STR.open)}
                   </Link>

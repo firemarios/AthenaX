@@ -20,7 +20,15 @@ async def impact(run_id: str, request: Request):
     results = run.get("results") if isinstance(run.get("results"), dict) else {}
     metrics = dict(results.get("metrics") or {}) if results else {}
     baseline = results.get("baseline") if results else None
+    economics = results.get("economics") if results else None
+    ai = results.get("ai") if results else None
+    ai_impact = ai.get("impact") if isinstance(ai, dict) else None
 
-    report = compute_impact({"run_id": run_id, **metrics}, baseline=baseline)
+    report = compute_impact(
+        {"run_id": run_id, **metrics},
+        baseline=baseline,
+        economics=economics if isinstance(economics, dict) else None,
+        ai_impact=ai_impact if isinstance(ai_impact, list) else None,
+    )
     report["run_id"] = run_id
     return ok(report, build_meta(get_request_id(request)))

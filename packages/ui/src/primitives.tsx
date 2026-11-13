@@ -16,14 +16,14 @@ export type BadgeTone = "neutral" | "success" | "warning" | "error" | "info";
 
 const BADGE_STYLES: Record<BadgeTone, string> = {
   neutral:
-    "border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100",
+    "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
   success:
-    "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-200",
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
   warning:
-    "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200",
+    "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400",
   error:
-    "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-200",
-  info: "border-indigo-300 bg-indigo-50 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950 dark:text-indigo-200",
+    "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400",
+  info: "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
 };
 
 export function Badge({
@@ -36,7 +36,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
         BADGE_STYLES[tone],
       )}
     >
@@ -79,10 +79,10 @@ export function DataCard({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "flex h-full flex-col rounded-[var(--radius-card)] border border-border bg-card p-4 text-left shadow-sm transition",
+        "pl-card-sheen flex h-full flex-col rounded-[var(--radius-card)] border border-border bg-card p-4 text-left shadow-sm transition",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         onClick &&
-          "cursor-pointer hover:border-primary/50 hover:shadow-md active:translate-y-px",
+          "pl-lift cursor-pointer hover:border-primary/50 hover:shadow-[0_20px_45px_-18px_rgba(0,82,255,0.3)] active:translate-y-px",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -132,11 +132,11 @@ export function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="pl-lift rounded-[var(--radius-card)] border border-border bg-card p-4 hover:border-primary/40 hover:shadow-[0_18px_40px_-20px_rgba(0,82,255,0.35)]">
+      <p className="text-xs font-medium text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">
+      <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-foreground">
         {value}
       </p>
       {hint ? (
@@ -205,7 +205,7 @@ export function Skeleton({
       {Array.from({ length: Math.max(1, rows) }).map((_, index) => (
         <div
           key={index}
-          className="h-4 animate-pulse rounded bg-muted"
+          className="pl-shimmer h-4 rounded bg-muted"
           style={{ width: widths[index % widths.length] }}
         />
       ))}

@@ -119,6 +119,7 @@ export interface ModelSpec {
   version: string;
   category: string;
   description: { el: string; en: string };
+  label?: { el: string; en: string };
   parameters: {
     name: string;
     type: string;
@@ -161,6 +162,71 @@ export interface AITaxEstimate {
   rationale?: { el: string; en: string } | null;
 }
 
+export interface AIReportKpi {
+  label: { el: string; en: string };
+  value: number | string;
+  unit?: string;
+  hint?: { el: string; en: string };
+  tone?: "positive" | "negative" | "neutral";
+}
+
+export interface AIReportDataset {
+  label: { el: string; en: string };
+  data: number[];
+  color?: string;
+}
+
+export interface AIReportChart {
+  type: "bar" | "line" | "donut";
+  title: { el: string; en: string };
+  labels: { el: string; en: string }[];
+  datasets: AIReportDataset[];
+  unit?: string;
+  format?: "number" | "currency" | "percent";
+  horizontal?: boolean;
+}
+
+export interface AIReportTable {
+  title?: { el: string; en: string };
+  columns: { el: string; en: string }[];
+  rows: (string | number)[][];
+}
+
+export type AIReportBlock =
+  | { kind: "kpis"; items: AIReportKpi[] }
+  | { kind: "chart"; chart: AIReportChart }
+  | { kind: "table"; table: AIReportTable }
+  | { kind: "text"; text: { el: string; en: string } }
+  | { kind: "findings"; items: { el: string; en: string }[] }
+  | { kind: "risks"; items: { el: string; en: string }[] };
+
+export interface AIReportSection {
+  title: { el: string; en: string };
+  description?: { el: string; en: string };
+  blocks: AIReportBlock[];
+}
+
+export interface AIEstimatedMetric {
+  key: string;
+  label: { el: string; en: string };
+  value: number;
+  baseline?: number | null;
+  unit?: string;
+  confidence?: number;
+  source?: "ai";
+}
+
+export interface AIImpactEstimate {
+  dimension: string;
+  name: string;
+  label: { el: string; en: string };
+  value: number;
+  baseline?: number | null;
+  unit?: string;
+  confidence?: number;
+  note?: { el: string; en: string };
+}
+
 export interface AISimulationPlan {
   ai_used: boolean;
   model: string;
@@ -175,6 +241,11 @@ export interface AISimulationPlan {
   confidence: number;
   assumptions: { el: string; en: string }[];
   limitations: string[];
+  title?: { el: string; en: string };
+  model_reason?: { el: string; en: string };
+  sections?: AIReportSection[];
+  metrics?: AIEstimatedMetric[];
+  impact?: AIImpactEstimate[];
 }
 
 export interface Policy {
@@ -266,6 +337,8 @@ export interface ImpactIndicator {
   unit: string;
   direction: "up" | "down" | "neutral";
   confidence: number;
+  source?: "simulation" | "ai" | "economics";
+  note?: { el: string; en: string };
 }
 
 export interface ImpactDimension {

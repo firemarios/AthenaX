@@ -35,7 +35,23 @@ const STR = {
     en: "Limitations: values come from a simulation with declared uncertainty and are not a forecast or commitment. Comparison with the baseline is relative to the same model.",
   },
   empty: { el: "Δεν υπάρχουν δείκτες σε αυτήν την έκθεση.", en: "No indicators in this report." },
+  noIndicators: {
+    el: "Δεν υπάρχουν δείκτες για αυτό το μοντέλο.",
+    en: "No indicators for this model.",
+  },
 };
+
+const SOURCE_LABELS = {
+  simulation: { el: "Προσομοίωση", en: "Simulation" },
+  economics: { el: "Οικονομικό μοντέλο", en: "Economics model" },
+  ai: { el: "Εκτίμηση AI", en: "AI estimate" },
+} as const;
+
+const SOURCE_TONES = {
+  simulation: "neutral",
+  economics: "info",
+  ai: "warning",
+} as const;
 
 function deltaTone(delta: number | null): "neutral" | "success" | "warning" | "error" | "info" {
   if (delta === null || !Number.isFinite(delta) || delta === 0) return "neutral";
@@ -91,8 +107,20 @@ function IndicatorRow({ indicator }: { indicator: ImpactIndicator }) {
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
             {t(STR.confidence)}: {fmtConfidence(indicator.confidence)}
           </p>
+          {indicator.note ? (
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              {t(indicator.note)}
+            </p>
+          ) : null}
         </div>
-        <DeltaBadge indicator={indicator} />
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {indicator.source ? (
+            <Badge tone={SOURCE_TONES[indicator.source]}>
+              {t(SOURCE_LABELS[indicator.source])}
+            </Badge>
+          ) : null}
+          <DeltaBadge indicator={indicator} />
+        </div>
       </div>
 
       <div className="mt-3 space-y-2">
@@ -101,7 +129,7 @@ function IndicatorRow({ indicator }: { indicator: ImpactIndicator }) {
             {t(STR.scenario)}
           </span>
           <div className="h-3 w-full overflow-hidden rounded bg-zinc-200 dark:bg-zinc-700">
-            <div className="h-full rounded bg-indigo-600" style={{ width: `${valuePct}%` }} />
+            <div className="h-full rounded bg-blue-600" style={{ width: `${valuePct}%` }} />
           </div>
           <span className="w-28 shrink-0 text-right text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">
             {fmtNum(value, lang)} {indicator.unit}
@@ -208,14 +236,14 @@ export function ImpactReportView({ report }: { report: ImpactReport }) {
               <div className="mb-4 flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400"
                 >
                   <Icon className="h-5 w-5" />
                 </span>
                 <h2 className={headingCls}>{t(dim.label)}</h2>
               </div>
               {dim.indicators.length === 0 ? (
-                <p className={mutedText}>{t(STR.empty)}</p>
+                <p className={mutedText}>{t(STR.noIndicators)}</p>
               ) : (
                 <ul className="space-y-3">
                   {dim.indicators.map((ind) => (

@@ -10,12 +10,14 @@ from services.simulation_engine.model_spec import ModelSpec
 
 FREE_FLOW_MIN = 12.0
 TRIP_KM = 8.0
+DEFAULT_CHARGING_HOURS = 13.0
 
-_INTERVENTIONS = ("open", "pedestrianize", "closed")
+_INTERVENTIONS = ("open", "pedestrianize", "closed", "congestion_charge")
 
 # (capacity factor, demand factor after rerouting)
 _INTERVENTION_FACTORS = {
     "open": (1.0, 1.0),
+    "congestion_charge": (1.15, 0.85),
     "pedestrianize": (0.15, 0.35),
     "closed": (0.05, 0.20),
 }
@@ -42,12 +44,17 @@ class TrafficSumoModel:
             "el": "Κυκλοφορία: επίπτωση παρέμβασης (αποκλεισμός/πεζόδρομος) σε χρόνο, ουρές, εκπομπές και θόρυβο.",
             "en": "Traffic: effect of interventions (closure/pedestrianisation) on travel time, queues, emissions and noise.",
         },
+        label={"el": "Κυκλοφορία", "en": "Traffic"},
         parameters=[
             {
                 "name": "intervention",
                 "type": "str",
                 "default": "open",
-                "label": {"el": "Παρέμβαση (open/pedestrianize/closed)", "en": "Intervention (open/pedestrianize/closed)"},
+                "choices": ["open", "congestion_charge", "pedestrianize", "closed"],
+                "label": {
+                    "el": "Παρέμβαση (open/congestion_charge/pedestrianize/closed)",
+                    "en": "Intervention (open/congestion_charge/pedestrianize/closed)",
+                },
             },
             {
                 "name": "demand",
@@ -93,6 +100,13 @@ class TrafficSumoModel:
 
         demand = max(0.0, float(parameters.get("demand", 1200)))
         capacity = max(1.0, float(parameters.get("capacity", 1600)))
+
+        if intervention == "congestion_charge" and demand > capacity:
+            demand = demand / DEFAULT_CHARGING_HOURS
+            warnings.append(
+                "Η ζήτηση ερμηνεύεται ως ημερήσιες είσοδοι και μετατρέπεται σε ωριαία ροή "
+                f"για τις {DEFAULT_CHARGING_HOURS:.0f} ώρες χρέωσης."
+            )
 
         rng = random.Random(seed)
         demand *= rng.uniform(0.95, 1.05)

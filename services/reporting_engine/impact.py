@@ -104,7 +104,7 @@ _METRIC_SPECS: dict[str, dict] = {
     # mobility
     "accessibility_pct": {
         "dim": "mobility",
-        "label": {"el": "Προσβασιμότητα με τα πόδις", "en": "Walk accessibility"},
+        "label": {"el": "Προσβασιμότητα με τα πόδια", "en": "Walk accessibility"},
         "unit": "%",
     },
     "avg_travel_min": {
@@ -192,11 +192,15 @@ def _summary(dimensions: list[dict], has_baseline: bool) -> dict:
             "el": "Δεν αναγνωρίστηκαν μετρήσεις για αναφορά επιδράσεων.",
             "en": "No measurable indicators recognised for the impact report.",
         }
-    with_delta = [ind for ind in all_indicators if ind["delta"] is not None]
+    with_delta = [
+        ind
+        for ind in all_indicators
+        if ind["delta"] is not None and abs(float(ind["delta"] or 0.0)) > 1e-9
+    ]
     if not with_delta:
         return {
-            "el": "Δεν παρέχεται βάση σύγκρισης· παρατίθενται οι τρέχουσες τιμές.",
-            "en": "No baseline provided; current values are listed as-is.",
+            "el": "Δεν υπάρχει ουσιαστική μεταβολή έναντι της βάσης· παρατίθενται οι τρέχουσες τιμές.",
+            "en": "No material change against the baseline; current values are listed as-is.",
         }
     top = max(with_delta, key=lambda ind: abs(ind["delta"] or 0.0))
     delta = float(top["delta"] or 0.0)
@@ -217,8 +221,168 @@ def _summary(dimensions: list[dict], has_baseline: bool) -> dict:
     }
 
 
-def compute_impact(metrics: dict, *, baseline: dict | None = None) -> dict:
-    """ImpactReport {run_id, dimensions[6], summary{el,en}} — unknown metrics are ignored."""
+_ECONOMICS_SPECS: list[tuple[str, dict, str]] = [
+    (
+        "capex_eur",
+        {"el": "Κόστος επένδυσης", "en": "Capital cost"},
+        "€",
+    ),
+    (
+        "capex_low_eur",
+        {"el": "Κόστος επένδυσης (κάτω όριο)", "en": "Capital cost (low)"},
+        "€",
+    ),
+    (
+        "capex_high_eur",
+        {"el": "Κόστος επένδυσης (πάνω όριο)", "en": "Capital cost (high)"},
+        "€",
+    ),
+    (
+        "annual_maintenance_eur",
+        {"el": "Ετήσια συντήρηση", "en": "Annual maintenance"},
+        "€",
+    ),
+    (
+        "annual_benefit_eur",
+        {"el": "Ετήσιο όφελος", "en": "Annual benefit"},
+        "€",
+    ),
+    (
+        "annual_tax_revenue_eur",
+        {"el": "Έσοδα φόρου", "en": "Annual tax revenue"},
+        "€",
+    ),
+    (
+        "net_annual_eur",
+        {"el": "Καθαρό ετήσιο όφελος", "en": "Net annual benefit"},
+        "€",
+    ),
+    (
+        "benefit_cost_ratio",
+        {"el": "Δείκτης οφέλους/κόστους", "en": "Benefit-cost ratio"},
+        "×",
+    ),
+    (
+        "payback_years",
+        {"el": "Απόσβεση", "en": "Payback"},
+        "έτη",
+    ),
+]
+
+_ECONOMICS_DUPLICATES = {
+    "capex_eur": ("cost_eur",),
+    "capex_low_eur": ("cost_low_eur",),
+    "capex_high_eur": ("cost_high_eur",),
+}
+
+_AI_DIMENSION_ALIASES = {
+    "environment": "environment",
+    "society": "society",
+    "social": "society",
+    "economy": "economy",
+    "economics": "economy",
+    "mobility": "mobility",
+    "transport": "mobility",
+    "quality_of_life": "quality_of_life",
+    "quality": "quality_of_life",
+    "quality-of-life": "quality_of_life",
+    "administration": "administration",
+    "governance": "administration",
+}
+
+
+def _clamp_confidence(value: Any, default: float) -> float:
+    number = _number(value)
+    if number is None:
+        return default
+    return max(0.0, min(1.0, number))
+
+
+def _economics_indicators(economics: dict | None) -> list[dict]:
+    if not isinstance(economics, dict):
+        return []
+    confidence = _clamp_confidence(economics.get("confidence"), 0.7)
+    indicators: list[dict] = []
+    for key, label, unit in _ECONOMICS_SPECS:
+        value = _number(economics.get(key))
+        if value is None or value == 0:
+            continue
+        indicators.append(
+            {
+                "name": key,
+                "label": dict(label),
+                "baseline": None,
+                "value": value,
+                "delta": None,
+                "unit": unit,
+                "direction": "neutral",
+                "confidence": confidence,
+                "source": "economics",
+            }
+        )
+    return indicators
+
+
+def _merge_ai_impact(dimensions: list[dict], ai_impact: Any) -> None:
+    if not isinstance(ai_impact, list):
+        return
+    by_key = {dimension["key"]: dimension for dimension in dimensions}
+    for raw in ai_impact:
+        if not isinstance(raw, dict):
+            continue
+        dimension_key = str(raw.get("dimension") or "").strip().lower().replace(" ", "_")
+        dimension_key = _AI_DIMENSION_ALIASES.get(dimension_key, "")
+        dimension = by_key.get(dimension_key)
+        if dimension is None:
+            continue
+        name = str(raw.get("name") or "").strip()
+        if not name:
+            continue
+        if any(str(item.get("name")) == name for item in dimension["indicators"]):
+            continue
+        value = _number(raw.get("value"))
+        if value is None:
+            continue
+        label = raw.get("label")
+        if not isinstance(label, dict):
+            label = {"el": name, "en": name}
+        base_value = _number(raw.get("baseline"))
+        delta = (value - base_value) if base_value is not None else None
+        indicator: dict = {
+            "name": name,
+            "label": {
+                "el": str(label.get("el") or label.get("en") or name),
+                "en": str(label.get("en") or label.get("el") or name),
+            },
+            "baseline": base_value,
+            "value": value,
+            "delta": delta,
+            "unit": str(raw.get("unit") or ""),
+            "direction": _delta_direction(delta),
+            "confidence": _clamp_confidence(raw.get("confidence"), 0.55),
+            "source": "ai",
+        }
+        note = raw.get("note")
+        if isinstance(note, dict) and (note.get("el") or note.get("en")):
+            indicator["note"] = {
+                "el": str(note.get("el") or note.get("en") or ""),
+                "en": str(note.get("en") or note.get("el") or ""),
+            }
+        dimension["indicators"].append(indicator)
+
+
+def compute_impact(
+    metrics: dict,
+    *,
+    baseline: dict | None = None,
+    economics: dict | None = None,
+    ai_impact: list | None = None,
+) -> dict:
+    """ImpactReport {run_id, dimensions[6], summary{el,en}}.
+
+    Unknown metrics are ignored. Economics indicators and clearly-labelled AI
+    estimates are merged into the six dimensions.
+    """
     metrics = metrics if isinstance(metrics, dict) else {}
     baseline = baseline if isinstance(baseline, dict) else None
     has_baseline = baseline is not None
@@ -243,12 +407,24 @@ def compute_impact(metrics: dict, *, baseline: dict | None = None) -> dict:
                     "delta": delta,
                     "unit": spec["unit"],
                     "direction": _delta_direction(delta),
-                    "confidence": 0.7 if base_value is not None else None,
+                    "confidence": 0.7,
+                    "source": "simulation",
                 }
             )
+        if dimension["key"] == "economy":
+            existing_names = {str(item.get("name")) for item in indicators}
+            for indicator in _economics_indicators(economics):
+                duplicates = _ECONOMICS_DUPLICATES.get(indicator["name"], ())
+                if indicator["name"] in existing_names or any(
+                    name in existing_names for name in duplicates
+                ):
+                    continue
+                indicators.append(indicator)
         dimensions.append(
             {"key": dimension["key"], "label": dict(dimension["label"]), "indicators": indicators}
         )
+
+    _merge_ai_impact(dimensions, ai_impact)
 
     run_id = str(metrics.get("run_id") or metrics.get("id") or uuid.uuid4().hex)
     return {

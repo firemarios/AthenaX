@@ -163,7 +163,7 @@ function DataView() {
   const list = datasets.data ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader title={t(STR.title)} description={t(STR.desc)} />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -273,7 +273,7 @@ function DataView() {
             suggestions={STR.suggestions}
           />
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {list.map((d) => {
               const provider =
                 d.provider ?? d.original_source?.name ?? "";
@@ -305,7 +305,7 @@ function DataView() {
                   footer={
                     <Link
                       href={`/data/${d.id}`}
-                      className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                      className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
                     >
                       {t(STR.details)}
                     </Link>

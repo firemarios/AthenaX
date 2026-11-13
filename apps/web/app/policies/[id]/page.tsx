@@ -1,16 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, DataCard, Skeleton, cn, useI18n } from "@policylab/ui";
-import type {
-  ModelSpec,
-  Policy,
-  PolicyFactor,
-  PolicyVariant,
-  SimulationRun,
-} from "@policylab/types";
+import { Badge, Skeleton, useI18n } from "@policylab/ui";
+import type { Policy, PolicyVariant, SimulationRun } from "@policylab/types";
 import { doPost, useApi } from "@/_shared/hooks";
 import { fmtDate, fmtEUR } from "@/_shared/format";
 import { areaName, type CityArea } from "@/_shared/geo";
@@ -32,6 +26,7 @@ import {
   SectionCard,
   Tag,
   btnPrimary,
+  btnSecondary,
   inputCls,
   labelCls,
   mutedText,
@@ -83,22 +78,6 @@ const STR = {
   noRuns: { el: "Δεν έχουν εκτελεστεί προσομοιώσεις ακόμη.", en: "No simulations have been run yet." },
   openRun: { el: "Άνοιγμα", en: "Open" },
   aiBadge: { el: "AI", en: "AI" },
-  manual: { el: "Χειροκίνητη προσομοίωση (για ειδικούς)", en: "Manual simulation (advanced)" },
-  simDesc: {
-    el: "Επιλέξτε ένα μοντέλο, ρυθμίστε τις παραμέτρους του και εκτελέστε την προσομοίωση.",
-    en: "Pick a model, tune its parameters and run the simulation.",
-  },
-  models: { el: "Διαθέσιμα μοντέλα", en: "Available models" },
-  noModels: { el: "Δεν βρέθηκαν μοντέλα προσομοίωσης.", en: "No simulation models found." },
-  selectModel: { el: "Επιλογή μοντέλου", en: "Select model" },
-  modelParams: { el: "Παράμετροι μοντέλου", en: "Model parameters" },
-  compareBaseline: { el: "Σύγκριση με βασικό σενάριο", en: "Compare with baseline scenario" },
-  run: { el: "Εκτέλεση προσομοίωσης", en: "Run simulation" },
-  running: { el: "Εκτέλεση…", en: "Running…" },
-  chooseModelFirst: {
-    el: "Επιλέξτε πρώτα ένα μοντέλο.",
-    en: "Select a model first.",
-  },
   impact: { el: "Επιπτώσεις", en: "Impact" },
   impactLink: { el: "Αναφορά επιπτώσεων →", en: "Impact report →" },
   impactNone: {
@@ -120,8 +99,6 @@ const STR = {
   default: { el: "Προεπιλογή", en: "Default" },
 };
 
-type Choice = string | number;
-
 const RUN_STATUS_LABELS: Record<string, { el: string; en: string }> = {
   succeeded: { el: "Ολοκληρώθηκε", en: "Succeeded" },
   running: { el: "Σε εξέλιξη", en: "Running" },
@@ -129,106 +106,34 @@ const RUN_STATUS_LABELS: Record<string, { el: string; en: string }> = {
   failed: { el: "Απέτυχε", en: "Failed" },
 };
 
-function paramChoices(p: ModelSpec["parameters"][number]): Choice[] | null {
-  const raw = (p as { choices?: unknown }).choices;
-  if (Array.isArray(raw) && raw.length > 0) return raw as Choice[];
-  return null;
-}
+const AI_STEPS: { el: string; en: string }[] = [
+  {
+    el: "Διαβάζω την πολιτική και το ελεύθερο κείμενο",
+    en: "Reading the policy and free text",
+  },
+  {
+    el: "Επιλέγω το κατάλληλο μοντέλο",
+    en: "Choosing the right model",
+  },
+  {
+    el: "Υπολογίζω τις παραμέτρους και τους παράγοντες",
+    en: "Calculating parameters and factors",
+  },
+  {
+    el: "Εκτελώ την προσομοίωση",
+    en: "Running the simulation",
+  },
+  {
+    el: "Υπολογίζω κόστος, οφέλη και φορολογικά έσοδα",
+    en: "Calculating costs, benefits and tax revenue",
+  },
+  {
+    el: "Συντάσσω την αναφορά AI",
+    en: "Composing the AI report",
+  },
+];
 
-function ParameterField({
-  spec,
-  value,
-  onChange,
-  factor,
-}: {
-  spec: ModelSpec["parameters"][number];
-  value: string;
-  onChange: (next: string) => void;
-  factor?: PolicyFactor;
-}) {
-  const { t, lang } = useI18n();
-  const id = `model-param-${spec.name}`;
-  const label = factor?.label ? factor.label : t(spec.label);
-  const choices = paramChoices(spec);
-  const min = factor?.min ?? spec.min;
-  const max = factor?.max ?? spec.max;
-  const hintParts: string[] = [];
-  if (min !== undefined && max !== undefined) {
-    hintParts.push(`${t(STR.minMax)}: ${min} – ${max}`);
-  }
-  if (spec.default !== undefined && spec.default !== null) {
-    hintParts.push(`${t(STR.default)}: ${String(spec.default)}`);
-  }
-  if (factor?.unit) {
-    hintParts.push(factor.unit);
-  }
-  const hint = hintParts.join(" · ");
-
-  return (
-    <div>
-      <label htmlFor={id} className={labelCls}>
-        {label}
-        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-          ({spec.type})
-        </span>
-      </label>
-      {choices ? (
-        <select
-          id={id}
-          className={inputCls}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          {choices.map((choice) => (
-            <option key={String(choice)} value={String(choice)}>
-              {String(choice)}
-            </option>
-          ))}
-        </select>
-      ) : spec.type === "range" ? (
-        <div className="flex items-center gap-3">
-          <input
-            id={id}
-            type="range"
-            min={min ?? 0}
-            max={max ?? 100}
-            step={factor?.step ?? 1}
-            className="w-full accent-indigo-600"
-            value={Number.isFinite(Number(value)) ? Number(value) : (min ?? 0)}
-            onChange={(e) => onChange(e.target.value)}
-            aria-label={label}
-          />
-          <span className="w-16 shrink-0 text-right text-sm tabular-nums text-zinc-700 dark:text-zinc-300">
-            {value || "—"}
-          </span>
-        </div>
-      ) : spec.type === "number" || spec.type === "int" || spec.type === "float" ? (
-        <input
-          id={id}
-          type="number"
-          className={inputCls}
-          min={min}
-          max={max}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      ) : (
-        <input
-          id={id}
-          type="text"
-          className={inputCls}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      )}
-      {hint ? (
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          {hint} · {lang === "el" ? "π.χ." : "e.g."} {String(spec.default ?? min ?? "—")}
-        </p>
-      ) : null}
-    </div>
-  );
-}
+const AI_STEP_MS = 8_000;
 
 function PolicyDetailView() {
   const { t, lang } = useI18n();
@@ -237,7 +142,6 @@ function PolicyDetailView() {
   const id = params?.id ?? "";
 
   const policy = useApi<Policy>(id ? `/v1/policies/${encodeURIComponent(id)}` : null);
-  const models = useApi<ModelSpec[]>("/v1/models");
   const areas = useApi<CityArea[]>("/v1/city/areas");
   const runs = useApi<SimulationRun[]>(
     id ? `/v1/simulations?policy_id=${encodeURIComponent(id)}` : null
@@ -248,36 +152,20 @@ function PolicyDetailView() {
   const [variantError, setVariantError] = useState<string | null>(null);
   const [variantBusy, setVariantBusy] = useState(false);
 
-  const [selectedModel, setSelectedModel] = useState<ModelSpec | null>(null);
-  const [modelValues, setModelValues] = useState<Record<string, string>>({});
   const [areaChoice, setAreaChoice] = useState("");
-  const [compareBaseline, setCompareBaseline] = useState(true);
-  const [simError, setSimError] = useState<string | null>(null);
-  const [simBusy, setSimBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiStep, setAiStep] = useState(0);
+
+  useEffect(() => {
+    if (!aiBusy) return;
+    const timer = window.setInterval(() => {
+      setAiStep((step) => Math.min(step + 1, AI_STEPS.length - 1));
+    }, AI_STEP_MS);
+    return () => window.clearInterval(timer);
+  }, [aiBusy]);
 
   const data = policy.data;
-
-  const factorsByName = new Map(
-    (policy.data?.factors ?? []).map((factor) => [factor.name, factor])
-  );
-
-  const selectModel = (model: ModelSpec) => {
-    setSelectedModel(model);
-    setSimError(null);
-    const initial: Record<string, string> = {};
-    for (const p of model.parameters) {
-      const factor = factorsByName.get(p.name);
-      initial[p.name] =
-        factor !== undefined
-          ? String(factor.baseline)
-          : p.default === undefined || p.default === null
-            ? ""
-            : String(p.default);
-    }
-    setModelValues(initial);
-  };
 
   const handleVariant = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,6 +194,7 @@ function PolicyDetailView() {
   const handleAiRun = async () => {
     if (!id) return;
     setAiError(null);
+    setAiStep(0);
     const parameters = Object.fromEntries(
       (policy.data?.factors ?? []).map((factor) => [factor.name, factor.baseline])
     );
@@ -336,61 +225,13 @@ function PolicyDetailView() {
     router.push(`/simulations/${res.data.id}`);
   };
 
-  const handleRun = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedModel) {
-      setSimError(t(STR.chooseModelFirst));
-      return;
-    }
-    setSimError(null);
-    const parameters: Record<string, unknown> = {};
-    for (const p of selectedModel.parameters) {
-      if (p.name === "area_id") continue;
-      const raw = modelValues[p.name] ?? "";
-      const choices = paramChoices(p);
-      if (p.type === "number" || p.type === "range") {
-        const n = Number(raw);
-        parameters[p.name] = Number.isFinite(n) ? n : (p.default ?? 0);
-      } else if (choices) {
-        const match = choices.find((c) => String(c) === raw);
-        parameters[p.name] = match !== undefined ? match : raw;
-      } else {
-        parameters[p.name] = raw;
-      }
-    }
-    setSimBusy(true);
-    const body: Record<string, unknown> = {
-      model: selectedModel.name,
-      parameters,
-      compare_baseline: compareBaseline,
-    };
-    if (id) body.policy_id = id;
-    const chosenArea = areaChoice
-      ? (areas.data ?? []).find((area) => area.id === areaChoice)
-      : undefined;
-    if (chosenArea) body.area = areaName(chosenArea, lang);
-    else if (data?.area) body.area = data.area;
-    if (data?.budget_eur !== undefined && data.budget_eur !== null) {
-      body.budget_eur = data.budget_eur;
-    }
-    const res = await doPost<SimulationRun>("/v1/simulations", body);
-    setSimBusy(false);
-    if (res.error || !res.data) {
-      setSimError(
-        res.error ?? t({ el: "Η προσομοίωση απέτυχε.", en: "The simulation failed." })
-      );
-      return;
-    }
-    router.push(`/simulations/${res.data.id}`);
-  };
-
   const succeededRuns = (runs.data ?? []).filter((r) => r.status === "succeeded");
   const latestRun = succeededRuns[0] ?? null;
   const latestEconomics = latestRun?.results?.economics ?? null;
 
   if (policy.loading) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
         <span className="sr-only">{t(STR.loading)}</span>
         <Skeleton rows={8} />
       </div>
@@ -399,7 +240,7 @@ function PolicyDetailView() {
 
   if (policy.error || !data) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
         <ErrorPanel
           message={policy.error ?? t(STR.notFound)}
           onRetry={policy.reload}
@@ -407,7 +248,7 @@ function PolicyDetailView() {
         <p className="mt-4">
           <Link
             href="/policies"
-            className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
           >
             {t(STR.back)}
           </Link>
@@ -422,10 +263,14 @@ function PolicyDetailView() {
   const policyFactors = data.factors ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader
         title={data.title}
         description={data.description ?? undefined}
+        breadcrumbs={[
+          { label: t({ el: "Πολιτικές", en: "Policies" }), href: "/policies" },
+          { label: data.title },
+        ]}
         actions={
           <>
             <Badge tone={statusTone(data.status)}>
@@ -435,14 +280,6 @@ function PolicyDetailView() {
           </>
         }
       />
-      <p className="mb-6">
-        <Link
-          href="/policies"
-          className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-        >
-          {t(STR.back)}
-        </Link>
-      </p>
 
       <div className="space-y-6">
         <SectionCard title={t(STR.elements)}>
@@ -640,27 +477,88 @@ function PolicyDetailView() {
             <div
               role="status"
               aria-live="polite"
-              className="pl-reveal mt-4 rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 dark:border-indigo-800 dark:bg-indigo-950/30"
+              className="pl-reveal mt-4 overflow-hidden rounded-xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-800 dark:bg-blue-950/30"
             >
-              <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 dark:text-indigo-300">
-                <span className="flex gap-1" aria-hidden="true">
-                  <span className="pl-ai-dot h-2 w-2 rounded-full bg-indigo-500" />
-                  <span className="pl-ai-dot h-2 w-2 rounded-full bg-indigo-500" style={{ animationDelay: "0.18s" }} />
-                  <span className="pl-ai-dot h-2 w-2 rounded-full bg-indigo-500" style={{ animationDelay: "0.36s" }} />
+              <div className="flex items-start gap-3">
+                <span
+                  className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white"
+                  aria-hidden="true"
+                >
+                  <span className="absolute inset-0 animate-ping rounded-full bg-blue-400 opacity-40" />
+                  <span className="relative">✦</span>
                 </span>
-                {t(STR.aiRunning)}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                      {t(STR.aiRunning)}
+                    </p>
+                    <span className="text-xs tabular-nums text-blue-700/70 dark:text-blue-300/70">
+                      {aiStep + 1}/{AI_STEPS.length}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-blue-700/80 dark:text-blue-300/80">{t(STR.aiWait)}</p>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/60">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 transition-[width] duration-700 ease-out"
+                      style={{ width: `${((aiStep + 1) / AI_STEPS.length) * 100}%` }}
+                    />
+                  </div>
+                  <p className="sr-only">{t(AI_STEPS[aiStep])}</p>
+                </div>
               </div>
-              <p className="mt-1 text-xs text-indigo-700/80 dark:text-indigo-300/80">{t(STR.aiWait)}</p>
-              <div className="mt-3 space-y-2" aria-hidden="true">
-                <div className="pl-ai-shimmer h-2.5 w-full rounded-full" />
-                <div className="pl-ai-shimmer h-2.5 w-4/5 rounded-full" style={{ animationDelay: "0.15s" }} />
-                <div className="pl-ai-shimmer h-2.5 w-3/5 rounded-full" style={{ animationDelay: "0.3s" }} />
-              </div>
+              <ol className="mt-4 space-y-2" aria-hidden="true">
+                {AI_STEPS.map((step, index) => {
+                  const done = index < aiStep;
+                  const active = index === aiStep;
+                  return (
+                    <li key={step.en} className="flex items-start gap-2.5 text-sm">
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${
+                          done
+                            ? "border-emerald-500 bg-emerald-500 text-white"
+                            : active
+                              ? "border-blue-500 bg-white text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                              : "border-blue-200 bg-white/60 text-blue-400 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-600"
+                        }`}
+                      >
+                        {done ? (
+                          "✓"
+                        ) : active ? (
+                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600 dark:border-blue-800 dark:border-t-blue-300" />
+                        ) : (
+                          index + 1
+                        )}
+                      </span>
+                      <span
+                        className={
+                          done
+                            ? "text-blue-900/80 dark:text-blue-100/80"
+                            : active
+                              ? "font-medium text-blue-900 dark:text-blue-100"
+                              : "text-blue-700/60 dark:text-blue-300/50"
+                        }
+                      >
+                        {t(step)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
           ) : null}
         </SectionCard>
 
-        <SectionCard title={t(STR.runs)}>
+        <SectionCard
+          title={t(STR.runs)}
+          actions={
+            <Link
+              href={`/simulations?policy_id=${encodeURIComponent(data.id)}`}
+              className={btnSecondary}
+            >
+              {t({ el: "Όλες οι εκτελέσεις", en: "All runs" })}
+            </Link>
+          }
+        >
           <p className={`mb-4 ${mutedText}`}>{t(STR.runsDesc)}</p>
           {runs.loading ? (
             <Skeleton rows={3} />
@@ -674,7 +572,7 @@ function PolicyDetailView() {
                 <li key={run.id}>
                   <Link
                     href={`/simulations/${run.id}`}
-                    className="group flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-900"
+                    className="group flex flex-wrap items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-zinc-900"
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -693,123 +591,13 @@ function PolicyDetailView() {
                         <span className="font-mono">{run.id.slice(0, 12)}</span>
                       </p>
                     </div>
-                    <span className="shrink-0 text-sm font-medium text-indigo-600 transition-transform group-hover:translate-x-0.5 dark:text-indigo-400">
+                    <span className="shrink-0 text-sm font-medium text-blue-600 transition-transform group-hover:translate-x-0.5 dark:text-blue-400">
                       {t(STR.openRun)} →
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
-          )}
-        </SectionCard>
-
-        <SectionCard title={t(STR.manual)}>
-          <p className={`mb-4 ${mutedText}`}>{t(STR.simDesc)}</p>
-
-          {models.loading ? (
-            <Skeleton rows={4} />
-          ) : models.error ? (
-            <ErrorPanel message={models.error} onRetry={models.reload} />
-          ) : (models.data ?? []).length === 0 ? (
-            <p className={mutedText}>{t(STR.noModels)}</p>
-          ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {(models.data ?? []).map((model) => {
-                const active = selectedModel?.name === model.name;
-                return (
-                  <li key={model.name}>
-                    <DataCard
-                      title={`${model.name} v${model.version}`}
-                      subtitle={t(model.description)}
-                      badge={<Badge tone="info">{model.category}</Badge>}
-                      meta={
-                        <span>
-                          {model.parameters.length}{" "}
-                          {t({ el: "παράμετροι", en: "parameters" })}
-                        </span>
-                      }
-                      onClick={() => selectModel(model)}
-                    />
-                    <span
-                      className={cn(
-                        "sr-only",
-                        active && "text-indigo-600"
-                      )}
-                      aria-live="polite"
-                    >
-                      {active ? t(STR.selectModel) : ""}
-                    </span>
-                    {active ? (
-                      <p className="mt-1 text-center text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                        ✓ {t(STR.selectModel)}
-                      </p>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          {selectedModel ? (
-            <form onSubmit={handleRun} className="mt-6 space-y-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
-              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                {t(STR.modelParams)} — {selectedModel.name}
-              </h3>
-              {simError ? (
-                <div role="alert" className="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-3 text-sm text-red-800 dark:text-red-200">
-                  {simError}
-                </div>
-              ) : null}
-              <div>
-                <label htmlFor="simulation-area" className={labelCls}>
-                  {t(STR.simulationArea)}
-                </label>
-                <select
-                  id="simulation-area"
-                  className={inputCls}
-                  value={areaChoice}
-                  onChange={(e) => setAreaChoice(e.target.value)}
-                >
-                  <option value="">{data.area || t(STR.citywide)}</option>
-                  {(areas.data ?? []).map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {areaName(area, lang)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {selectedModel.parameters
-                  .filter((p) => p.name !== "area_id")
-                  .map((p) => (
-                  <ParameterField
-                    key={p.name}
-                    spec={p}
-                    value={modelValues[p.name] ?? ""}
-                    factor={factorsByName.get(p.name)}
-                    onChange={(next) =>
-                      setModelValues((prev) => ({ ...prev, [p.name]: next }))
-                    }
-                  />
-                ))}
-              </div>
-              <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-zinc-300 accent-indigo-600"
-                  checked={compareBaseline}
-                  onChange={(e) => setCompareBaseline(e.target.checked)}
-                />
-                {t(STR.compareBaseline)}
-              </label>
-              <div className="flex flex-wrap gap-3">
-                <button type="submit" className={btnPrimary} disabled={simBusy}>
-                  {simBusy ? t(STR.running) : `▶ ${t(STR.run)}`}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <p className={`mt-4 ${mutedText}`}>{t(STR.chooseModelFirst)}</p>
           )}
         </SectionCard>
 
@@ -827,7 +615,7 @@ function PolicyDetailView() {
           ) : latestRun ? (
             <Link
               href={`/impact/${latestRun.id}`}
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+              className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             >
               {t(STR.impactLink)}
             </Link>

@@ -13,6 +13,7 @@ from app.repositories import policies as policies_repo
 from app.repositories import simulations as simulations_repo
 from app.repositories.common import new_id, utcnow_iso
 from services.ai_engine.policy_planner import plan_policy_simulation
+from services.ai_engine.report_composer import compose_simulation_report
 from services.reporting_engine.economics import compute_economics
 from services.simulation_engine.registry import get_model
 from services.simulation_engine.runner import build_passport, run_model
@@ -142,8 +143,6 @@ async def create_simulation(payload: SimulationCreate, request: Request):
             "baseline": baseline,
             "uncertainty": dict(result.get("uncertainty") or {}),
         }
-        if ai_plan is not None:
-            results["ai"] = ai_plan
         try:
             results["economics"] = compute_economics(
                 model_name,
@@ -156,6 +155,22 @@ async def create_simulation(payload: SimulationCreate, request: Request):
             )
         except Exception as exc:  # noqa: BLE001 — economics must not fail the run
             logger.warning("compute_economics: %s", exc)
+
+        if ai_plan is not None:
+            if ai_plan.get("ai_used"):
+                composed = await compose_simulation_report(
+                    policy=policy,
+                    plan=ai_plan,
+                    metrics=metrics,
+                    baseline=baseline if isinstance(baseline, dict) else None,
+                    uncertainty=results.get("uncertainty"),
+                    economics=results.get("economics"),
+                    passport=passport,
+                    warnings=warnings,
+                )
+                if composed:
+                    ai_plan.update(composed)
+            results["ai"] = ai_plan
 
     run: dict[str, Any] = {
         "id": new_id(),

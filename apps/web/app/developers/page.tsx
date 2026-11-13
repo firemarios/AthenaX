@@ -547,9 +547,9 @@ export default function DevelopersPage() {
   const serviceExamples = examples ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           {t(STR.title)}
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">

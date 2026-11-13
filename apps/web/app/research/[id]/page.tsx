@@ -92,7 +92,7 @@ function ResearchDetailView() {
 
   if (project.loading) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
         <span className="sr-only">{t(STR.loading)}</span>
         <Skeleton rows={8} />
       </div>
@@ -101,12 +101,12 @@ function ResearchDetailView() {
 
   if (project.error || !project.data) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
         <ErrorPanel message={project.error ?? t(STR.notFound)} onRetry={project.reload} />
         <p className="mt-4">
           <Link
             href="/research"
-            className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
           >
             {t(STR.back)}
           </Link>
@@ -119,10 +119,14 @@ function ResearchDetailView() {
   const experiments = data.experiments ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
       <PageHeader
         title={data.name}
         description={data.description ?? undefined}
+        breadcrumbs={[
+          { label: t({ el: "Έρευνα", en: "Research" }), href: "/research" },
+          { label: data.name },
+        ]}
         actions={
           <Badge tone="info">
             {experiments.length} {t(STR.experimentCount)}
@@ -131,12 +135,6 @@ function ResearchDetailView() {
       />
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/research"
-          className="rounded font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-        >
-          {t(STR.back)}
-        </Link>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t(STR.export)}>
           <button
             type="button"
@@ -213,7 +211,7 @@ function ResearchDetailView() {
                           <li key={runId}>
                             <Link
                               href={`/simulations/${runId}`}
-                              className="inline-flex items-center rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="inline-flex items-center rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                             >
                               {runId}
                             </Link>

@@ -256,7 +256,7 @@ function AskView() {
           {question.trim() ? (
             <button
               type="button"
-              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               onClick={() => {
                 abortRef.current?.abort();
                 abortRef.current = null;
