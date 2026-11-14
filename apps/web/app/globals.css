@@ -777,11 +777,26 @@ dialog[open]::backdrop {
 .pl-home-after {
   position: relative;
   z-index: 10;
+  background: transparent;
+}
+
+/* Start the scrim above the section boundary so the city fades into the
+   content instead of stopping at a hard horizontal edge. */
+.pl-home-after::before {
+  content: "";
+  position: absolute;
+  inset: -45vh 0 auto 0;
+  height: calc(100% + 45vh);
+  z-index: -1;
+  pointer-events: none;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--home-bg) 82%, transparent) 0%,
-    color-mix(in srgb, var(--home-bg) 92%, transparent) 30%,
-    color-mix(in srgb, var(--home-bg) 97%, transparent) 100%
+    transparent 0,
+    color-mix(in srgb, var(--home-bg) 20%, transparent) 20vh,
+    color-mix(in srgb, var(--home-bg) 55%, transparent) 45vh,
+    color-mix(in srgb, var(--home-bg) 82%, transparent) 85vh,
+    color-mix(in srgb, var(--home-bg) 92%, transparent) 130vh,
+    color-mix(in srgb, var(--home-bg) 97%, transparent) 190vh
   );
 }
 

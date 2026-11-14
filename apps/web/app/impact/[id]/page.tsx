@@ -7,7 +7,7 @@ import { Badge, ExportButton, Skeleton, useI18n } from "@policylab/ui";
 import type { ImpactIndicator, ImpactReport, SimulationRun } from "@policylab/types";
 import { API_BASE } from "@policylab/api-client";
 import { useApi } from "@/_shared/hooks";
-import { downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "@/_shared/format";
+import { deltaTone, downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "@/_shared/format";
 import {
   PageFallback,
   PageHeader,
@@ -50,12 +50,7 @@ function DeltaBadge({ indicator }: { indicator: ImpactIndicator }) {
   const { t, lang } = useI18n();
   const arrow =
     indicator.direction === "up" ? "↑" : indicator.direction === "down" ? "↓" : "→";
-  const tone =
-    indicator.direction === "up"
-      ? "success"
-      : indicator.direction === "down"
-        ? "error"
-        : "neutral";
+  const tone = deltaTone(indicator.name, indicator.delta);
   if (indicator.delta === null || !Number.isFinite(indicator.delta)) {
     return <Badge tone="neutral">{arrow} {t({ el: "χωρίς σύγκριση", en: "no comparison" })}</Badge>;
   }

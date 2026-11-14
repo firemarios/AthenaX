@@ -127,3 +127,133 @@ export function downloadBlob(
   a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+export type DeltaTone = "success" | "error" | "neutral";
+
+const METRIC_POLARITY: Record<string, "higher" | "lower" | "neutral"> = {
+  emissions_kg: "lower",
+  energy_kwh: "lower",
+  cost_eur: "lower",
+  cost_low_eur: "lower",
+  cost_high_eur: "lower",
+  housing_cost_index: "lower",
+  unemployment_rate: "lower",
+  avg_travel_min: "lower",
+  queue_length_m: "lower",
+  noise_db: "lower",
+  admin_days: "lower",
+  processing_days: "lower",
+  capex_eur: "lower",
+  capex_low_eur: "lower",
+  capex_high_eur: "lower",
+  annual_maintenance_eur: "lower",
+  payback_years: "lower",
+  green_m2_per_capita: "higher",
+  green_area_m2: "higher",
+  covered_population: "higher",
+  facilities_count: "higher",
+  facility_count: "higher",
+  proposals_count: "higher",
+  participation_rate: "higher",
+  jobs_created: "higher",
+  accessibility_pct: "higher",
+  throughput_vph: "higher",
+  pct_within_300m: "higher",
+  services_within_15min: "higher",
+  digital_coverage_pct: "higher",
+  annual_benefit_eur: "higher",
+  annual_tax_revenue_eur: "higher",
+  net_annual_eur: "higher",
+  benefit_cost_ratio: "higher",
+  population: "neutral",
+};
+
+const LOWER_IS_BETTER_HINTS = [
+  "cost",
+  "price",
+  "emission",
+  "co2",
+  "pollution",
+  "energy",
+  "waste",
+  "consumption",
+  "time",
+  "delay",
+  "congestion",
+  "queue",
+  "travel",
+  "wait",
+  "noise",
+  "accident",
+  "crash",
+  "fatalit",
+  "crime",
+  "risk",
+  "unemployment",
+  "processing",
+  "admin",
+  "payback",
+  "maintenance",
+];
+
+const HIGHER_IS_BETTER_HINTS = [
+  "green",
+  "access",
+  "coverage",
+  "score",
+  "jobs",
+  "gdp",
+  "satisfaction",
+  "quality",
+  "safety",
+  "percent",
+  "share",
+  "capacity",
+  "riders",
+  "users",
+  "benefit",
+  "revenue",
+  "profit",
+  "throughput",
+  "participation",
+  "proposal",
+  "facilit",
+  "served",
+  "within",
+  "digital",
+];
+
+function metricPolarity(key: string): "higher" | "lower" | "neutral" {
+  const normalized = key.trim().toLowerCase();
+  if (normalized in METRIC_POLARITY) return METRIC_POLARITY[normalized];
+  const lower = LOWER_IS_BETTER_HINTS.some((hint) => normalized.includes(hint));
+  const higher = HIGHER_IS_BETTER_HINTS.some((hint) => normalized.includes(hint));
+  if (lower && !higher) return "lower";
+  if (higher && !lower) return "higher";
+  return "neutral";
+}
+
+export function deltaTone(
+  key: string,
+  delta: number | null | undefined
+): DeltaTone {
+  if (delta === null || delta === undefined || !Number.isFinite(delta)) {
+    return "neutral";
+  }
+  if (Math.abs(delta) < 1e-12) return "neutral";
+  const polarity = metricPolarity(key);
+  if (polarity === "neutral") return "neutral";
+  const improved = polarity === "lower" ? delta < 0 : delta > 0;
+  return improved ? "success" : "error";
+}
+
+export function metricTone(
+  key: string,
+  value: number,
+  baseline: number | null | undefined
+): DeltaTone {
+  if (baseline === null || baseline === undefined || !Number.isFinite(baseline)) {
+    return "neutral";
+  }
+  return deltaTone(key, value - baseline);
+}

@@ -8,7 +8,7 @@ import type { Passport, SimulationRun } from "@policylab/types";
 import { doPost, useApi } from "@/_shared/hooks";
 import { EconomicsPanel, MetricComparisonChart, metricLabel } from "@/_shared/charts";
 import { AIReportView } from "@/_shared/ai-report";
-import { fmtDateTime, fmtNum, fmtRange } from "@/_shared/format";
+import { fmtDateTime, fmtNum, fmtRange, metricTone } from "@/_shared/format";
 import {
   ErrorPanel,
   KeyValueTable,
@@ -71,7 +71,7 @@ const STR = {
   loading: { el: "Φόρτωση προσομοίωσης…", en: "Loading simulation…" },
   notFound: { el: "Η προσομοίωση δεν βρέθηκε.", en: "The simulation was not found." },
   better: { el: "βελτίωση", en: "better" },
-  worse: { el: "χείρον", en: "worse" },
+  worse: { el: "Χειρότερο", en: "worse" },
   neutral: { el: "όμοιο", en: "unchanged" },
   params: { el: "Παράμετροι εισόδου", en: "Input parameters" },
   runId: { el: "Κωδικός εκτέλεσης", en: "Run ID" },
@@ -86,54 +86,6 @@ const MODEL_LABELS: Record<string, { el: string; en: string }> = {
 
 function modelLabel(name: string): { el: string; en: string } {
   return MODEL_LABELS[name] ?? { el: name, en: name };
-}
-
-const LOWER_IS_BETTER = [
-  "cost",
-  "time",
-  "delay",
-  "congestion",
-  "emission",
-  "co2",
-  "pollution",
-  "accident",
-  "crash",
-  "noise",
-  "fatalities",
-  "queue",
-];
-
-const HIGHER_IS_BETTER = [
-  "coverage",
-  "green",
-  "access",
-  "score",
-  "jobs",
-  "gdp",
-  "satisfaction",
-  "percent",
-  "share",
-  "capacity",
-  "riders",
-  "users",
-];
-
-type DeltaTone = "success" | "error" | "neutral";
-
-function metricTone(
-  key: string,
-  value: number,
-  baseline: number | undefined
-): DeltaTone {
-  if (baseline === undefined || !Number.isFinite(baseline)) return "neutral";
-  const delta = value - baseline;
-  if (delta === 0) return "neutral";
-  const lower = key.toLowerCase();
-  const isLowerBetter = LOWER_IS_BETTER.some((k) => lower.includes(k));
-  const isHigherBetter = HIGHER_IS_BETTER.some((k) => lower.includes(k));
-  if (isLowerBetter) return delta < 0 ? "success" : "error";
-  if (isHigherBetter) return delta > 0 ? "success" : "error";
-  return "neutral";
 }
 
 function warningsOf(run: SimulationRun): string[] {

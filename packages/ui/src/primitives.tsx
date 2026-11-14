@@ -79,7 +79,7 @@ export function DataCard({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "pl-card-sheen flex h-full flex-col rounded-[var(--radius-card)] border border-border bg-card p-4 text-left shadow-sm transition",
+        "pl-card-sheen flex h-full w-full flex-col rounded-[var(--radius-card)] border border-border bg-card p-4 text-left shadow-sm transition",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         onClick &&
           "pl-lift cursor-pointer hover:border-primary/50 hover:shadow-[0_20px_45px_-18px_rgba(0,82,255,0.3)] active:translate-y-px",

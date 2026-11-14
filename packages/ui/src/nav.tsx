@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   ChevronDown,
-  MoreHorizontal,
+  Menu,
   Moon,
   Plus,
   Search,
@@ -345,7 +345,7 @@ function MoreMenu({
   );
 }
 
-function MobileMoreSheet({
+function HeaderMenu({
   id,
   open,
   pathname,
@@ -359,44 +359,25 @@ function MobileMoreSheet({
   onSearch: () => void;
 }) {
   const { t } = useI18n();
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
+    if (!open) return;
+    const timer = window.setTimeout(() => firstLinkRef.current?.focus(), 20);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
+  if (!open) return null;
+
   return (
-    <dialog
-      ref={dialogRef}
+    <div
       id={id}
-      aria-label={t({ el: "Όλες οι ενότητες", en: "All sections" })}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-      onClose={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-      className={cn(
-        "fixed inset-x-0 bottom-0 top-auto z-[80] m-0 max-h-[85vh] w-full max-w-none overflow-y-auto rounded-t-3xl border-0 bg-white p-0 text-foreground shadow-[0_-20px_60px_rgba(15,23,42,0.25)] backdrop:bg-black/40 dark:bg-zinc-950",
-        open && "pl-sheet-up",
-      )}
+      className="pl-enter absolute inset-x-0 top-full z-50 border-b border-white/40 bg-white shadow-[0_24px_60px_-30px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950 dark:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.7)] md:hidden"
     >
-      <div
-        className="px-4 pt-3"
-        style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
-      >
-        <div
-          aria-hidden="true"
-          className="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-700"
-        />
+      <div className="mx-auto max-h-[calc(100svh-4rem)] w-full max-w-[96rem] overflow-y-auto px-4 py-4 sm:px-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <p className="text-sm font-semibold">
-            {t({ el: "Όλες οι ενότητες", en: "All sections" })}
+            {t({ el: "Μενού", en: "Menu" })}
           </p>
           <button
             type="button"
@@ -420,7 +401,37 @@ function MobileMoreSheet({
           </kbd>
         </button>
 
-        <nav aria-label={t({ el: "Όλες οι ενότητες", en: "All sections" })}>
+        <nav aria-label={t({ el: "Πλοήγηση", en: "Navigation" })}>
+          <div className="mb-4">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t({ el: "Κύρια", en: "Main" })}
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {MOBILE_LINKS.map((link, index) => {
+                const Icon = link.icon;
+                const current = isActive(pathname, link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    ref={index === 0 ? firstLinkRef : undefined}
+                    onClick={onClose}
+                    aria-current={current ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      current
+                        ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/15 dark:text-blue-300"
+                        : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800",
+                    )}
+                  >
+                    <Icon aria-hidden="true" className="size-4 shrink-0" />
+                    <span className="truncate">{t(link.label)}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
           {NAV_GROUPS.map((group) => (
             <div key={group.label.en} className="mb-4">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -468,7 +479,7 @@ function MobileMoreSheet({
           <ThemeToggle />
         </div>
       </div>
-    </dialog>
+    </div>
   );
 }
 
@@ -476,7 +487,9 @@ export function Nav() {
   const pathname = usePathname();
   const { t } = useI18n();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -507,15 +520,33 @@ export function Nav() {
 
   useEffect(() => {
     setSearchOpen(false);
-    setMoreOpen(false);
+    setMenuOpen(false);
   }, [pathname]);
 
-  const moreActive = isAnyActive(pathname, MORE_LINKS);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (headerRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
   const isHome = pathname === "/";
 
   return (
     <>
       <header
+        ref={headerRef}
         className={cn(
           "pl-enter sticky top-0 z-40 border-b backdrop-blur-xl",
           isHome
@@ -571,6 +602,24 @@ export function Nav() {
             >
               <Search aria-hidden="true" className="h-4 w-4" />
             </button>
+            <button
+              ref={menuButtonRef}
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              aria-expanded={menuOpen}
+              aria-controls="policylab-header-menu"
+              aria-label={t({ el: "Μενού", en: "Menu" })}
+              className={cn(
+                GLASS_CONTROL,
+                "flex h-9 w-9 items-center justify-center text-zinc-700 transition-colors hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-zinc-300 dark:hover:text-white md:hidden",
+              )}
+            >
+              {menuOpen ? (
+                <X aria-hidden="true" className="h-4 w-4" />
+              ) : (
+                <Menu aria-hidden="true" className="h-4 w-4" />
+              )}
+            </button>
             <div className="hidden items-center gap-2 lg:flex">
               <HealthChip />
               <LangToggle />
@@ -581,124 +630,20 @@ export function Nav() {
             </div>
           </div>
         </div>
+        <HeaderMenu
+          id="policylab-header-menu"
+          open={menuOpen}
+          pathname={pathname}
+          onClose={() => {
+            setMenuOpen(false);
+            menuButtonRef.current?.focus();
+          }}
+          onSearch={() => {
+            setMenuOpen(false);
+            setSearchOpen(true);
+          }}
+        />
       </header>
-
-      <nav
-        aria-label={t({ el: "Γρήγορη πλοήγηση", en: "Quick navigation" })}
-        className="pl-enter fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 md:hidden"
-        style={{
-          paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
-          animationDelay: "220ms",
-        }}
-      >
-        <div
-          className={cn(
-            "relative w-full max-w-md overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_10px_40px_rgba(15,23,42,0.18),inset_0_1px_1px_rgba(255,255,255,0.6)] backdrop-blur-xl dark:border-white/10 dark:bg-black/50 dark:shadow-[0_10px_40px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.12)]",
-          )}
-        >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5"
-          />
-          <div className="relative flex items-stretch gap-1 p-1.5">
-            {MOBILE_LINKS.map((link) => {
-              const active = isActive(pathname, link.href);
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative z-10 flex min-w-0 flex-1 flex-col items-center gap-1 rounded-full px-2 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active
-                      ? "text-[#007AFF] dark:text-[#0A84FF]"
-                      : "text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white",
-                  )}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "absolute inset-0 -z-10 rounded-full transition-all duration-300",
-                      active
-                        ? "bg-[#007AFF]/10 dark:bg-[#0A84FF]/15"
-                        : "bg-transparent",
-                    )}
-                  />
-                  <Icon
-                    aria-hidden="true"
-                    className={cn(
-                      "relative size-[22px] transition-transform duration-200",
-                      active && "scale-110",
-                    )}
-                  />
-                  <span className="truncate text-[11px] font-medium leading-none">
-                    {t(link.label)}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "h-1 w-1 rounded-full transition-colors",
-                      active ? "bg-current" : "bg-transparent",
-                    )}
-                  />
-                </Link>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => setMoreOpen(true)}
-              aria-expanded={moreOpen}
-              aria-controls="policylab-mobile-more"
-              aria-label={t({ el: "Περισσότερες ενότητες", en: "More sections" })}
-              className={cn(
-                "relative z-10 flex min-w-0 flex-1 flex-col items-center gap-1 rounded-full px-2 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                moreActive
-                  ? "text-[#007AFF] dark:text-[#0A84FF]"
-                  : "text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white",
-              )}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "absolute inset-0 -z-10 rounded-full transition-all duration-300",
-                  moreActive
-                    ? "bg-[#007AFF]/10 dark:bg-[#0A84FF]/15"
-                    : "bg-transparent",
-                )}
-              />
-              <MoreHorizontal
-                aria-hidden="true"
-                className={cn(
-                  "relative size-[22px] transition-transform duration-200",
-                  moreActive && "scale-110",
-                )}
-              />
-              <span className="truncate text-[11px] font-medium leading-none">
-                {t({ el: "Περισσότερα", en: "More" })}
-              </span>
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "h-1 w-1 rounded-full transition-colors",
-                  moreActive ? "bg-current" : "bg-transparent",
-                )}
-              />
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <MobileMoreSheet
-        id="policylab-mobile-more"
-        open={moreOpen}
-        pathname={pathname}
-        onClose={() => setMoreOpen(false)}
-        onSearch={() => {
-          setMoreOpen(false);
-          setSearchOpen(true);
-        }}
-      />
 
       <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
