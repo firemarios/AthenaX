@@ -8,8 +8,8 @@ Baseline generated from app.models.Base.metadata (25 tables, no FK constraints โ
 relations are plain id strings per contracts ยง5.7). PostGIS extension must exist
 before `city_features.geom` is created (infrastructure/database/init-db/01-extensions.sql).
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from geoalchemy2 import Geometry
 
 revision = "0001_initial"

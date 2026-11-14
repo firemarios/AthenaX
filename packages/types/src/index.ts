@@ -309,6 +309,69 @@ export interface Passport {
   inputs_checksum: string;
 }
 
+export interface SnapshotSource {
+  name: string;
+  url?: string;
+  kind?: "database" | "live" | "synthetic" | string;
+  retrieved_at?: string;
+}
+
+export interface SnapshotCoverage {
+  parks: string;
+  facilities: string;
+  population_points: string;
+}
+
+export interface SnapshotReach {
+  population: number | null;
+  area_km2: number | null;
+  facilities: number | null;
+  parks?: number | null;
+}
+
+export interface SimulationSnapshot {
+  area_id: string;
+  area?: {
+    id?: string;
+    name_el?: string;
+    name_en?: string;
+    lat?: number;
+    lon?: number;
+    radius_m?: number;
+  };
+  bbox?: number[];
+  mode: "snapshot" | "synthetic" | string;
+  coverage?: SnapshotCoverage;
+  observed?: Record<string, number>;
+  sources?: SnapshotSource[];
+  reach?: SnapshotReach;
+  retrieved_at?: string;
+  degraded?: boolean;
+}
+
+export interface SensitivityMovement {
+  low: number;
+  high: number;
+  base: number;
+  swing: number;
+}
+
+export interface SensitivityParameter {
+  parameter: string;
+  step: number;
+  low_input: number;
+  high_input: number;
+  total_swing: number;
+  metrics: Record<string, SensitivityMovement>;
+}
+
+export interface SimulationSensitivity {
+  method: "one_at_a_time" | string;
+  step: number;
+  parameters: SensitivityParameter[];
+  note?: string;
+}
+
 export interface SimulationRun {
   id: string;
   policy_id: string | null;
@@ -321,11 +384,15 @@ export interface SimulationRun {
     uncertainty?: Record<string, [number, number]>;
     economics?: PolicyEconomics;
     ai?: AISimulationPlan;
+    snapshot?: SimulationSnapshot;
+    sensitivity?: SimulationSensitivity;
   } | null;
   status: "queued" | "running" | "succeeded" | "failed";
   passport: Passport | null;
   created_at: string;
   error: string | null;
+  seed?: number | null;
+  snapshot_mode?: string | null;
 }
 
 export interface ImpactIndicator {
@@ -351,6 +418,8 @@ export interface ImpactReport {
   run_id: string;
   dimensions: ImpactDimension[];
   summary: { el: string; en: string };
+  reach?: SnapshotReach;
+  snapshot?: SimulationSnapshot | null;
 }
 
 export interface Proposal {

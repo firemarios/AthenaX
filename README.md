@@ -1,5 +1,8 @@
 # POLICYLAB
 
+[![CI](https://github.com/firemarios/AthenaX-V2/actions/workflows/ci.yml/badge.svg)](https://github.com/firemarios/AthenaX-V2/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 **Open GovTech Intelligence & Policy Experimentation**
 
 > Connect public data. Understand the city. Test better policies.
@@ -10,8 +13,11 @@ makes them explorable and question-able with **evidence-first AI**, and lets pra
 Athens, built to work for any city.
 
 - **License:** [Apache-2.0](LICENSE)
-- **Language:** Greek-first UI (English fully available) — every user-facing string ships `el` + `en`
+- **Language:** Greek-first UI (English fully available) - every user-facing string ships `el` + `en`
 - **Contracts (normative):** [`docs/architecture/contracts.md`](docs/architecture/contracts.md)
+- **Evidence for reviewers:** [`docs/evidence/`](docs/evidence/) - smoke run, connector health,
+  AI evidence-first eval, model determinism, rehearsal checklist. Demo/deploy:
+  [`docs/DEMO.md`](docs/DEMO.md), [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 

@@ -1,12 +1,12 @@
 """GovTech module (02): Public Project Tracker list/detail (+ linked decisions)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import decisions as decisions_repo
 from app.services import catalog as catalog_service
+from fastapi import APIRouter, HTTPException, Query, Request
+
 from services.geospatial_engine.queries import parse_bbox
 
 router = APIRouter()

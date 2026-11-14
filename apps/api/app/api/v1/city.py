@@ -1,11 +1,11 @@
 """City / Digital Twin module (04): layers, features (GeoJSON), areas."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import city as city_repo
+from fastapi import APIRouter, HTTPException, Query, Request
+
 from services.geospatial_engine.layers import LAYER_REGISTRY
 from services.geospatial_engine.queries import parse_bbox
 

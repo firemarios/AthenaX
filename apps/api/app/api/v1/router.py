@@ -8,13 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
-
 from app.api.v1 import (
     admin,
     ai,
-    city,
     citizen,
+    city,
     datasets,
     decisions,
     developers,
@@ -26,6 +24,7 @@ from app.api.v1 import (
     simulations,
     sources,
 )
+from fastapi import APIRouter
 
 api_router = APIRouter()
 

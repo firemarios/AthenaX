@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from services.connector_kit.base import BaseConnector, NormalizedRecord
-from services.connector_kit.helpers import coerce_float, get_json, first_str
+from services.connector_kit.helpers import coerce_float, first_str, get_json
 
 DEFAULT_LAT = 37.9838  # Athens
 DEFAULT_LON = 23.7275

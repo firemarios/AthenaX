@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   POLICYLAB local development launcher (Windows / PowerShell 5.1+).
 
@@ -12,17 +12,28 @@
 .PARAMETER NoWeb
   Skip the frontend dev server.
 
+.PARAMETER NoReload
+  Start uvicorn without --reload. Use this for a demo: a reload resets in-flight
+  requests and shows up in the web proxy as `socket hang up` / ECONNRESET.
+
+.PARAMETER Prod
+  Build the web app and serve it with `next start` instead of `next dev`. Use this
+  for a demo: dev-mode compilation can also reset a proxied request.
+
 .PARAMETER SkipMigrate
   Skip `alembic upgrade head` (use when migrations are not available yet).
 
 .EXAMPLE
-  .\infrastructure\deployment\dev.ps1            # db + api
-  .\infrastructure\deployment\dev.ps1 -Web       # db + api + web
+  .\infrastructure\deployment\dev.ps1                   # db + api (reload)
+  .\infrastructure\deployment\dev.ps1 -Web              # db + api + web (dev)
+  .\infrastructure\deployment\dev.ps1 -Web -NoReload -Prod   # demo-safe
   .\infrastructure\deployment\dev.ps1 -SkipMigrate
 #>
 [CmdletBinding()]
 param(
     [switch]$Web,
+    [switch]$NoReload,
+    [switch]$Prod,
     [switch]$SkipMigrate
 )
 
@@ -74,7 +85,14 @@ Write-Host "[4/4] uvicorn (http://localhost:8000/docs)" -ForegroundColor Cyan
 # Verified uvicorn flags: --app-dir (prepend import path), --reload (dev auto-reload),
 # --host, --port. Equivalent to: uvicorn app.main:app --reload --app-dir apps/api
 $env:PYTHONPATH = "$RepoRoot;$RepoRoot\apps/api"
-$apiArgs = @("app.main:app", "--app-dir", "apps/api", "--reload", "--host", "127.0.0.1", "--port", "8000")
+$apiArgs = @("app.main:app", "--app-dir", "apps/api")
+if (-not $NoReload) {
+    $apiArgs += "--reload"
+    Write-Host "  uvicorn auto-reload: ON (use -NoReload for a demo)" -ForegroundColor DarkGray
+} else {
+    Write-Host "  uvicorn auto-reload: OFF (-NoReload)" -ForegroundColor DarkGray
+}
+$apiArgs += @("--host", "127.0.0.1", "--port", "8000")
 
 if ($Web) {
     # Run api and web concurrently; Ctrl+C stops both.
@@ -86,8 +104,17 @@ if ($Web) {
 
     Push-Location $RepoRoot
     try {
-        npm.cmd install
-        npm.cmd dev
+        if ($Prod) {
+            Write-Host "  web: production build + next start (-Prod)" -ForegroundColor DarkGray
+            npm.cmd install
+            if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
+            npm.cmd run build
+            if ($LASTEXITCODE -ne 0) { throw "npm run build failed" }
+            npm.cmd start
+        } else {
+            npm.cmd install
+            npm.cmd dev
+        }
     } finally {
         Pop-Location
         Stop-Job $apiJob -ErrorAction SilentlyContinue

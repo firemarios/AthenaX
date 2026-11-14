@@ -4,8 +4,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.repositories.common import as_json, mem_list
-
 logger = logging.getLogger("policylab.repositories.city")
 
 # Athens default centre (contracts §2 / Digital Twin)
@@ -31,10 +29,9 @@ _DEFAULT_AREAS: list[dict[str, Any]] = [
 async def layer_counts() -> tuple[dict[str, int], bool]:
     """layer -> feature count from city_features (DB). ({}, True) when unavailable."""
     try:
-        from sqlalchemy import func, select
-
         from app.database import session_scope
         from app.models import CityFeature
+        from sqlalchemy import func, select
 
         counts: dict[str, int] = {}
         async with session_scope() as session:
@@ -62,9 +59,8 @@ async def query_features(
     from services.geospatial_engine.queries import feature_query, feature_query_sqlite
 
     try:
-        from sqlalchemy import text
-
         from app.database import engine, session_scope
+        from sqlalchemy import text
 
         builder = (
             feature_query_sqlite
@@ -86,10 +82,9 @@ async def query_features(
 async def list_areas() -> tuple[list[dict[str, Any]], bool]:
     """city_areas — DB (seeded from catalog.yaml) → YAML → static defaults. Never raises."""
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import CityArea
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (await session.execute(select(CityArea).order_by(CityArea.id))).scalars()
@@ -126,10 +121,9 @@ async def get_city_center(city: str | None = None) -> tuple[float, float]:
     """(lat, lon) for a city — DB `cities` table → Athens default. Never raises."""
     if city:
         try:
-            from sqlalchemy import select
-
             from app.database import session_scope
             from app.models import City
+            from sqlalchemy import select
 
             async with session_scope() as session:
                 row = (
@@ -151,6 +145,14 @@ async def get_city_center(city: str | None = None) -> tuple[float, float]:
                     return float(area["lat"]), float(area["lon"])
                 except (KeyError, TypeError, ValueError):
                     break
+    try:
+        from app.repositories.sources import load_catalog
+
+        center = (load_catalog().get("city") or {}).get("center") or []
+        if len(center) == 2:
+            return float(center[0]), float(center[1])
+    except Exception:  # noqa: BLE001
+        pass
     return DEFAULT_CENTER
 
 
@@ -167,10 +169,9 @@ async def upsert_area(entry: dict[str, Any]) -> None:
     area_id = str(entry.get("id") or "").strip()
     if not area_id:
         return
-    from sqlalchemy import select
-
     from app.database import session_scope
     from app.models import CityArea
+    from sqlalchemy import select
 
     async with session_scope() as session:
         row = (await session.execute(select(CityArea).where(CityArea.id == area_id))).scalar_one_or_none()

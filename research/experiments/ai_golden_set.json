@@ -1,0 +1,147 @@
+{
+  "version": "1.0.0",
+  "language": "el",
+  "description": "Golden set for the Ask the City evidence-first evaluation. Each item is a Greek question with an expected behaviour: 'sources' (answer must cite at least one retrieved source and must not claim insufficiency) or 'insufficient' (answer must explicitly say insufficient data). 'must_include' is an optional keyword that should appear in a source title/URL when the expectation is 'sources'.",
+  "questions": [
+    {
+      "id": "q01",
+      "question": "Ποια ανοικτά δεδομένα υπάρχουν για τα πάρκα και τους χώρους πρασίνου στην Αθήνα;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["πάρκ", "πρασίν", "park", "green"]
+    },
+    {
+      "id": "q02",
+      "question": "Ποιες δημόσιες συμβάσεις έχουν ανατεθεί πρόσφατα από τον Δήμο Αθηναίων;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["σύμβασ", "contract", "ανάθεσ"]
+    },
+    {
+      "id": "q03",
+      "question": "Πόσοι κάτοικοι ζουν στα Εξάρχεια σύμφωνα με διαθέσιμα στατιστικά;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["πληθυσμ", "population", "απογραφ"]
+    },
+    {
+      "id": "q04",
+      "question": "Ποιες αποφάσεις της Διαύγειας αφορούν έργα ανάπλασης στην Αθήνα;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["διαύγει", "απόφασ", "ανάπλασ"]
+    },
+    {
+      "id": "q05",
+      "question": "Ποια είναι η προσβασιμότητα με τα πόδια σε δημόσιες υπηρεσίες στο κέντρο της Αθήνας;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["προσβασιμ", "υπηρεσ", "access"]
+    },
+    {
+      "id": "q06",
+      "question": "Τι καιρό κάνει σήμερα στην Αθήνα;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["καιρ", "θερμοκρασ", "weather"]
+    },
+    {
+      "id": "q07",
+      "question": "Ποια έργα χρηματοδοτούνται από ευρωπαϊκά ταμεία στην Αττική;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["ευρωπα", "χρηματοδ", "fund"]
+    },
+    {
+      "id": "q08",
+      "question": "Πόσα σχολεία υπάρχουν στην περιοχή των Εξαρχείων;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["σχολ", "school"]
+    },
+    {
+      "id": "q09",
+      "question": "Ποια νοσοκομεία και κέντρα υγείας εξυπηρετούν το κέντρο της Αθήνας;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["νοσοκομ", "υγεία", "hospital"]
+    },
+    {
+      "id": "q10",
+      "question": "Υπάρχουν στοιχεία για την ανεργία στην Ελλάδα;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["ανεργ", "εργατικ", "unemployment"]
+    },
+    {
+      "id": "q11",
+      "question": "Ποια είναι τα όρια και τα βασικά χαρακτηριστικά της γειτονιάς των Εξαρχείων;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["εξάρχει", "γειτονι", "neighbo"]
+    },
+    {
+      "id": "q12",
+      "question": "Ποια δημόσια κτίρια και υπηρεσίες βρίσκονται κοντά στην πλατεία Συντάγματος;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["δημ", "υπηρεσ", "κτίρι"]
+    },
+    {
+      "id": "q13",
+      "question": "Πόσα τετραγωνικά μέτρα πρασίνου αντιστοιχούν ανά κάτοικο στην Αθήνα;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["πράσιν", "m²", "κάτοικ"]
+    },
+    {
+      "id": "q14",
+      "question": "Ποια είναι τα πιο πρόσφατα στατιστικά της ΕΛΣΤΑΤ για τον πληθυσμό της Αττικής;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["ελστατ", "πληθυσμ", "αττικ"]
+    },
+    {
+      "id": "q15",
+      "question": "Πώς μπορώ να δω τα επίπεδα θορύβου στο κέντρο της Αθήνας;",
+      "city": "Athens",
+      "expect": "sources",
+      "must_include": ["θόρυβ", "noise", "ηχορύπανσ"]
+    },
+    {
+      "id": "q16",
+      "question": "Ποιος είναι ο πληθυσμός της πόλης της Θεσσαλονίκης φέτος;",
+      "city": "Athens",
+      "expect": "insufficient",
+      "must_include": []
+    },
+    {
+      "id": "q17",
+      "question": "Ποιο είναι το ακριβές κόστος κατασκευής του μετρό της Θεσσαλονίκης το 2027;",
+      "city": "Athens",
+      "expect": "insufficient",
+      "must_include": []
+    },
+    {
+      "id": "q18",
+      "question": "Πόσοι τουρίστες επισκέφτηκαν την Ακρόπολη χθες;",
+      "city": "Athens",
+      "expect": "insufficient",
+      "must_include": []
+    },
+    {
+      "id": "q19",
+      "question": "Ποια είναι η προσωπική γνώμη του δημάρχου για το κυκλοφοριακό;",
+      "city": "Athens",
+      "expect": "insufficient",
+      "must_include": []
+    },
+    {
+      "id": "q20",
+      "question": "Ποια θα είναι η τιμή του ηλεκτρικού ρεύματος τον Δεκέμβριο του 2030;",
+      "city": "Athens",
+      "expect": "insufficient",
+      "must_include": []
+    }
+  ]
+}

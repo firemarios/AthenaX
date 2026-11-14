@@ -1,12 +1,11 @@
 """AI module (03): POST /v1/ai/query + alias /v1/ai/chat (Ask the City)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
-
 from app.deps import get_request_id
 from app.envelope import ok
 from app.services import intelligence
+from fastapi import APIRouter, Request
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 

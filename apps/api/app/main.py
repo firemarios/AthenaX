@@ -10,10 +10,6 @@ import time
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-
 from app.api.v1.router import ROUTE_CATALOG, api_router
 from app.audit import create_audit_middleware
 from app.config import API_VERSION, get_settings
@@ -21,7 +17,12 @@ from app.database import init_db, ping_db
 from app.deps import get_request_id
 from app.envelope import build_meta, ok
 from app.errors import register_error_handlers
+from app.metrics import create_metrics_middleware, render_metrics
 from app.ratelimit import create_rate_limit_middleware
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -92,7 +93,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# middleware order: audit (inner) → rate limit → CORS (outermost)
+# middleware order: metrics (inner) → audit → rate limit → CORS (outermost)
+app.add_middleware(BaseHTTPMiddleware, dispatch=create_metrics_middleware())
 app.add_middleware(BaseHTTPMiddleware, dispatch=create_audit_middleware())
 app.add_middleware(BaseHTTPMiddleware, dispatch=create_rate_limit_middleware())
 app.add_middleware(
@@ -141,3 +143,9 @@ async def health(request: Request):
         "sources": len(ROUTE_CATALOG),
     }
     return ok(data, build_meta(get_request_id(request)))
+
+
+@app.get("/metrics", include_in_schema=False)
+async def prometheus_metrics() -> PlainTextResponse:
+    """Prometheus-compatible text metrics — no extra dependencies (Phase 0)."""
+    return PlainTextResponse(render_metrics(), media_type="text/plain; version=0.0.4")

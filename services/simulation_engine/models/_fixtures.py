@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import math
+import os
 import random
+from pathlib import Path
 
 # Seeded intervention areas (data/source-registry/catalog.yaml → city_areas)
 AREAS: dict[str, dict] = {
@@ -16,17 +18,57 @@ AREAS: dict[str, dict] = {
 
 DEFAULT_AREA_ID = "exarchia"
 
+_CATALOG_CACHE: dict[str, dict] | None = None
+
+
+def _catalog_areas() -> dict[str, dict]:
+    """Extra areas from the active city pack (POLICYLAB_CATALOG_FILE or default catalog)."""
+    global _CATALOG_CACHE
+    if _CATALOG_CACHE is not None:
+        return _CATALOG_CACHE
+    _CATALOG_CACHE = {}
+    try:
+        import yaml
+
+        path = os.getenv("POLICYLAB_CATALOG_FILE")
+        if path:
+            file_path = Path(path)
+        else:
+            file_path = Path(__file__).resolve().parents[3] / "data" / "source-registry" / "catalog.yaml"
+        data = yaml.safe_load(file_path.read_text(encoding="utf-8")) or {}
+        for entry in data.get("city_areas") or []:
+            if not isinstance(entry, dict) or not entry.get("id"):
+                continue
+            try:
+                _CATALOG_CACHE[str(entry["id"]).lower()] = {
+                    "name_el": str(entry.get("name_el") or entry.get("name_en") or entry["id"]),
+                    "name_en": str(entry.get("name_en") or entry.get("name_el") or entry["id"]),
+                    "lat": float(entry["lat"]),
+                    "lon": float(entry["lon"]),
+                    "radius_m": int(entry.get("radius_m") or 700),
+                }
+            except (TypeError, ValueError, KeyError):
+                continue
+    except Exception:  # noqa: BLE001 — a missing/broken pack must not break simulations
+        _CATALOG_CACHE = {}
+    return _CATALOG_CACHE
+
+
+def all_areas() -> dict[str, dict]:
+    return {**AREAS, **_catalog_areas()}
+
 
 def area_center(area_id: str | None) -> tuple[dict, bool]:
-    """Return (area dict, known?) — accepts ids or Greek/English names."""
+    """Return (area dict, known?) - accepts ids or Greek/English names."""
+    areas = all_areas()
     key = str(area_id or "").strip().lower()
-    if key in AREAS:
-        return AREAS[key], True
-    for area in AREAS.values():
+    if key in areas:
+        return areas[key], True
+    for area in areas.values():
         names = {str(area["name_el"]).strip().lower(), str(area["name_en"]).strip().lower()}
         if key in names:
             return area, True
-    return AREAS[DEFAULT_AREA_ID], False
+    return areas.get(DEFAULT_AREA_ID, AREAS[DEFAULT_AREA_ID]), False
 
 
 def offset_point(lat: float, lon: float, dist_m: float, bearing_rad: float) -> tuple[float, float]:

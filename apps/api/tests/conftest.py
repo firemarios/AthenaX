@@ -7,6 +7,8 @@ import tempfile
 os.environ.setdefault(
     "POLICYLAB_STORAGE_DIR", tempfile.mkdtemp(prefix="policylab-test-storage-")
 )
+# Tests must stay hermetic: never call the live Overpass API.
+os.environ.setdefault("POLICYLAB_SNAPSHOT_LIVE", "0")
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,9 +35,9 @@ def client(monkeypatch):
         lambda *args, **kwargs: _FakeProvider(),
     )
 
+    from app.ratelimit import limiter
     from app.repositories.admin import clear_audit_buffer
     from app.repositories.common import mem_clear
-    from app.ratelimit import limiter
 
     mem_clear()
     clear_audit_buffer()

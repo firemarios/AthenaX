@@ -68,6 +68,20 @@ const STR = {
     en: "The AI analysis can take 30–90 seconds.",
   },
   impactLink: { el: "Αναφορά επιπτώσεων", en: "Impact report" },
+  snapshotMode: { el: "Πραγματικά δεδομένα (snapshot)", en: "Real data (snapshot)" },
+  syntheticMode: { el: "Συνθετικά δεδομένα (synthetic)", en: "Synthetic data" },
+  snapshotSources: { el: "Πηγές snapshot", en: "Snapshot sources" },
+  snapshotCoverage: { el: "Κάλυψη ανά επίπεδο", en: "Coverage per layer" },
+  reproduce: { el: "Αναπαραγωγή (ίδιο seed)", en: "Reproduce (same seed)" },
+  reproducing: { el: "Αναπαραγωγή…", en: "Reproducing…" },
+  reproduceOk: {
+    el: "Η αναπαραγωγή επέστρεψε ταυτόσημο checksum και μετρικές.",
+    en: "Reproduction returned an identical checksum and metrics.",
+  },
+  reproduceDiff: {
+    el: "Η αναπαραγωγή διέφερε από την αρχική εκτέλεση.",
+    en: "The reproduction differed from the original run.",
+  },
   loading: { el: "Φόρτωση προσομοίωσης…", en: "Loading simulation…" },
   notFound: { el: "Η προσομοίωση δεν βρέθηκε.", en: "The simulation was not found." },
   better: { el: "βελτίωση", en: "better" },
@@ -75,6 +89,14 @@ const STR = {
   neutral: { el: "όμοιο", en: "unchanged" },
   params: { el: "Παράμετροι εισόδου", en: "Input parameters" },
   runId: { el: "Κωδικός εκτέλεσης", en: "Run ID" },
+  provenance: { el: "Αλυσίδα προέλευσης", en: "Provenance chain" },
+  provenanceDesc: {
+    el: "Κάθε βήμα από την πηγή έως την αναφορά, με τους κωδικούς που το συνδέουν.",
+    en: "Every step from source to report, with the identifiers that link them.",
+  },
+  provenanceVerified: { el: "Επαληθεύσιμο", en: "Verifiable" },
+  provenanceDegraded: { el: "Μερικό", en: "Partial" },
+  provenanceSynthetic: { el: "Συνθετικό", en: "Synthetic" },
 };
 
 const MODEL_LABELS: Record<string, { el: string; en: string }> = {
@@ -96,6 +118,14 @@ function warningsOf(run: SimulationRun): string[] {
 function logsOf(run: SimulationRun): string[] {
   const extra = (run as { logs?: unknown }).logs;
   return Array.isArray(extra) ? extra.filter((l): l is string => typeof l === "string") : [];
+}
+
+function metricsEqual(a: Record<string, number>, b: Record<string, number>): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    if (!Object.is(a[key], b[key])) return false;
+  }
+  return true;
 }
 
 function PassportCard({ passport }: { passport: Passport }) {
@@ -183,6 +213,91 @@ function PassportCard({ passport }: { passport: Passport }) {
   );
 }
 
+function ProvenanceChain({ run }: { run: SimulationRun }) {
+  const { t, lang } = useI18n();
+  const snapshot = run.results?.snapshot;
+  const sources = snapshot?.sources ?? run.passport?.data_sources ?? [];
+  const mode = snapshot?.mode ?? (sources.length > 0 ? "snapshot" : "unknown");
+  const layers = snapshot?.coverage ? Object.keys(snapshot.coverage) : [];
+  const steps = [
+    {
+      label: t({ el: "Κατάλογος πηγών", en: "Source registry" }),
+      detail: `${sources.length} ${t({ el: "πηγές", en: "sources" })}`,
+      href: "/sources",
+      tone: sources.length > 0 ? "success" : "warning",
+    },
+    {
+      label: t({ el: "Ingest → city_features", en: "Ingest → city_features" }),
+      detail: layers.length > 0 ? layers.join(", ") : t({ el: "χωρίς επίπεδα", en: "no layers" }),
+      href: "/datasets",
+      tone: layers.length > 0 ? "success" : "neutral",
+    },
+    {
+      label: t({ el: "Snapshot", en: "Snapshot" }),
+      detail:
+        mode === "snapshot"
+          ? `${t(STR.provenanceVerified)} · ${snapshot?.retrieved_at ? fmtDateTime(snapshot.retrieved_at, lang) : "—"}`
+          : mode === "synthetic"
+            ? t(STR.provenanceSynthetic)
+            : t(STR.provenanceDegraded),
+      href: null,
+      tone: mode === "snapshot" ? "success" : "warning",
+    },
+    {
+      label: t(STR.run),
+      detail: `${run.model_name} v${run.model_version}`,
+      href: null,
+      tone: run.status === "succeeded" ? "success" : "warning",
+    },
+    {
+      label: t(STR.passport),
+      detail: run.passport?.inputs_checksum
+        ? `sha256:${run.passport.inputs_checksum.slice(0, 12)}…`
+        : "—",
+      href: null,
+      tone: run.passport?.inputs_checksum ? "success" : "warning",
+    },
+    {
+      label: t({ el: "Αναφορά επιπτώσεων", en: "Impact report" }),
+      detail: t({ el: "6 διαστάσεις + reach", en: "6 dimensions + reach" }),
+      href: run.status === "succeeded" ? `/impact/${run.id}` : null,
+      tone: run.status === "succeeded" ? "success" : "neutral",
+    },
+  ];
+  return (
+    <SectionCard title={t(STR.provenance)} className="mb-6">
+      <p className={`mb-4 ${mutedText}`}>{t(STR.provenanceDesc)}</p>
+      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {steps.map((step, index) => (
+          <li
+            key={step.label}
+            className="rounded-lg border border-zinc-200 bg-white/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40"
+          >
+            <div className="mb-1 flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                {index + 1}
+              </span>
+              <Badge tone={step.tone as "success" | "warning" | "neutral"}>{step.label}</Badge>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              {step.href ? (
+                <Link
+                  href={step.href}
+                  className="text-blue-600 underline underline-offset-2 hover:text-blue-500 dark:text-blue-400"
+                >
+                  {step.detail}
+                </Link>
+              ) : (
+                step.detail
+              )}
+            </p>
+          </li>
+        ))}
+      </ol>
+    </SectionCard>
+  );
+}
+
 function SimulationDetailView() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -192,8 +307,57 @@ function SimulationDetailView() {
   const run = useApi<SimulationRun>(id ? `/v1/simulations/${encodeURIComponent(id)}` : null);
   const [rerunError, setRerunError] = useState<string | null>(null);
   const [rerunning, setRerunning] = useState(false);
+  const [reproducing, setReproducing] = useState(false);
+  const [reproResult, setReproResult] = useState<
+    { ok: boolean; runId: string; checksum: string } | null
+  >(null);
 
   const data = run.data;
+
+  const buildReproduceBody = (runData: SimulationRun): Record<string, unknown> => {
+    const parameters = runData.parameters ?? {};
+    const body: Record<string, unknown> = {
+      model: runData.model_name,
+      parameters,
+      compare_baseline: Boolean(runData.results?.baseline),
+      use_ai: false,
+    };
+    if (runData.policy_id) body.policy_id = runData.policy_id;
+    if (runData.passport?.seed !== null && runData.passport?.seed !== undefined) {
+      body.seed = runData.passport.seed;
+    }
+    const areaId = parameters.area_id;
+    if (areaId !== undefined && areaId !== null && areaId !== "") {
+      body.area = String(areaId);
+    }
+    return body;
+  };
+
+  const handleReproduce = async () => {
+    if (!data) return;
+    setRerunError(null);
+    setReproResult(null);
+    setReproducing(true);
+    const res = await doPost<SimulationRun>("/v1/simulations", buildReproduceBody(data));
+    setReproducing(false);
+    if (res.error || !res.data) {
+      setRerunError(
+        res.error ?? t({ el: "Η αναπαραγωγή απέτυχε.", en: "Reproduction failed." }),
+      );
+      return;
+    }
+    const originalMetrics = data.results?.metrics ?? {};
+    const reproducedMetrics = res.data.results?.metrics ?? {};
+    const sameChecksum =
+      Boolean(data.passport?.inputs_checksum) &&
+      data.passport?.inputs_checksum === res.data.passport?.inputs_checksum;
+    const sameMetrics = metricsEqual(originalMetrics, reproducedMetrics);
+    setReproResult({
+      ok: sameChecksum && sameMetrics,
+      runId: res.data.id,
+      checksum: res.data.passport?.inputs_checksum ?? "—",
+    });
+  };
 
   const handleRerun = async () => {
     if (!data) return;
@@ -295,9 +459,20 @@ function SimulationDetailView() {
           { label: t(STR.run) },
         ]}
         actions={
-          <Badge tone={statusToneMap[data.status] ?? "neutral"}>
-            {t(statusLabels[data.status] ?? { el: data.status, en: data.status })}
-          </Badge>
+          <>
+            {data.results?.snapshot ? (
+              <Badge
+                tone={data.results.snapshot.mode === "snapshot" ? "success" : "warning"}
+              >
+                {data.results.snapshot.mode === "snapshot"
+                  ? t(STR.snapshotMode)
+                  : t(STR.syntheticMode)}
+              </Badge>
+            ) : null}
+            <Badge tone={statusToneMap[data.status] ?? "neutral"}>
+              {t(statusLabels[data.status] ?? { el: data.status, en: data.status })}
+            </Badge>
+          </>
         }
       />
 
@@ -322,6 +497,20 @@ function SimulationDetailView() {
               : t(STR.rerunning)
             : `↻ ${t(STR.rerun)}`}
         </button>
+        {data.passport?.seed !== null && data.passport?.seed !== undefined ? (
+          <button
+            type="button"
+            className={btnSecondary}
+            onClick={handleReproduce}
+            disabled={reproducing || data.status !== "succeeded"}
+            title={t({
+              el: "Εκτελεί ξανά με το αποθηκευμένο seed και συγκρίνει checksum/μετρικές.",
+              en: "Runs again with the stored seed and compares checksum/metrics.",
+            })}
+          >
+            {reproducing ? t(STR.reproducing) : `⇄ ${t(STR.reproduce)}`}
+          </button>
+        ) : null}
         {data.status === "succeeded" ? (
           <Link href={`/impact/${data.id}`} className={btnSecondary}>
             {t(STR.impactLink)} →
@@ -375,6 +564,109 @@ function SimulationDetailView() {
           <ErrorPanel message={rerunError} onRetry={() => setRerunError(null)} />
         </div>
       ) : null}
+
+      {reproResult ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`mb-6 rounded-xl border p-4 ${
+            reproResult.ok
+              ? "border-green-300 bg-green-50/80 dark:border-green-800 dark:bg-green-950/30"
+              : "border-amber-300 bg-amber-50/80 dark:border-amber-800 dark:bg-amber-950/30"
+          }`}
+        >
+          <p
+            className={`text-sm font-semibold ${
+              reproResult.ok
+                ? "text-green-800 dark:text-green-200"
+                : "text-amber-800 dark:text-amber-200"
+            }`}
+          >
+            {reproResult.ok ? `✓ ${t(STR.reproduceOk)}` : `⚠ ${t(STR.reproduceDiff)}`}
+          </p>
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+            {t(STR.checksum)}:{" "}
+            <code className="break-all font-mono">{reproResult.checksum}</code>
+          </p>
+          <Link
+            href={`/simulations/${reproResult.runId}`}
+            className="mt-2 inline-block text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+          >
+            {t({ el: "Άνοιγμα νέας εκτέλεσης", en: "Open the new run" })} →
+          </Link>
+        </div>
+      ) : null}
+
+      {data.results?.snapshot ? (
+        <SectionCard title={t(STR.snapshotSources)} className="mb-6">
+          <KeyValueTable
+            rows={[
+              {
+                k: t({ el: "Λειτουργία", en: "Mode" }),
+                v: (
+                  <span className="font-mono">
+                    {data.results.snapshot.mode}
+                    {data.results.snapshot.degraded ? " · degraded" : ""}
+                  </span>
+                ),
+              },
+              {
+                k: t({ el: "Ανάκτηση", en: "Retrieved" }),
+                v: data.results.snapshot.retrieved_at
+                  ? fmtDateTime(data.results.snapshot.retrieved_at, lang)
+                  : "—",
+              },
+              {
+                k: t(STR.snapshotCoverage),
+                v: data.results.snapshot.coverage ? (
+                  <span className="font-mono text-xs">
+                    {Object.entries(data.results.snapshot.coverage)
+                      .map(([layer, origin]) => `${layer}=${origin}`)
+                      .join(" · ")}
+                  </span>
+                ) : (
+                  "—"
+                ),
+              },
+              {
+                k: t(STR.dataSources),
+                v:
+                  data.results.snapshot.sources && data.results.snapshot.sources.length > 0 ? (
+                    <ul className="space-y-1">
+                      {data.results.snapshot.sources.map((src, i) => (
+                        <li key={`${src.name}-${i}`} className="text-sm">
+                          <span className="font-medium">{src.name}</span>
+                          {src.url ? (
+                            <>
+                              {" — "}
+                              <a
+                                href={src.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline underline-offset-2 hover:text-blue-500 dark:text-blue-400"
+                              >
+                                {src.url}
+                              </a>
+                            </>
+                          ) : null}
+                          {src.retrieved_at ? (
+                            <span className={`ml-2 ${mutedText}`}>
+                              ({t(STR.retrieved)}: {fmtDateTime(src.retrieved_at, lang)})
+                            </span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    "—"
+                  ),
+              },
+            ]}
+          />
+        </SectionCard>
+      ) : null}
+
+      <ProvenanceChain run={data} />
 
       {data.status === "failed" ? (
         <div

@@ -1,0 +1,67 @@
+
+==> Health
+  [ok] GET /health returns an envelope
+  [ok] health status is ok/degraded
+    (0.2s)
+
+==> Connector health (one live source)
+  [ok] at least 9 connectors are registered
+    (0.1s)
+
+==> Ask the City
+  [ok] AI returns ok:true
+  [ok] AI answer has a summary
+  [ok] AI answer always exposes limitations[]
+    (113.9s)
+
+==> Create policy
+  [ok] policy created with an id
+    (0.1s)
+
+==> Simulate (greenspace, snapshot inputs)
+  [ok] simulation succeeded
+  [ok] simulation has a passport
+  [ok] passport carries a sha256 inputs checksum
+  [ok] run records the pseudo-data snapshot metadata
+  snapshot mode=snapshot coverage={"parks":"database","facilities":"database","population_points":"database"}
+  [ok] snapshot lists at least one source
+  [ok] snapshot mode carries a real source URL
+    (0.3s)
+
+==> Simulation detail
+  [ok] run is persisted and retrievable
+    (0.1s)
+
+==> Reproduce with the same seed
+  [ok] reproduce keeps the same inputs checksum
+  [ok] reproduce returns identical metrics
+    (0.1s)
+
+==> Impact report
+  [ok] impact report has 6 dimensions
+  [ok] impact report has a reach block
+    (0.2s)
+
+==> Research export
+  [ok] research export returns 200
+  [ok] research export is non-empty
+    (0.4s)
+
+==> Metrics endpoint
+  [ok] GET /metrics exposes Prometheus counters
+    (0.0s)
+
+Step timings (total 115.4s):
+  Health                                               0.2s
+  Connector health (one live source)                   0.1s
+  Ask the City                                       113.9s
+  Create policy                                        0.1s
+  Simulate (greenspace, snapshot inputs)               0.3s
+  Simulation detail                                    0.1s
+  Reproduce with the same seed                         0.1s
+  Impact report                                        0.2s
+  Research export                                      0.4s
+  Metrics endpoint                                     0.0s
+
+SMOKE PASSED (21 checks)
+

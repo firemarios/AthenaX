@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
+
 from services.connector_kit.base import BaseConnector, NormalizedRecord
 from services.connector_kit.helpers import coerce_tags, post_json, sanitize_query_fragment
 
@@ -10,6 +12,12 @@ from services.connector_kit.helpers import coerce_tags, post_json, sanitize_quer
 DEFAULT_BBOX = (23.65, 37.93, 23.87, 38.05)
 
 _CATEGORIES = ("amenity", "shop", "leisure", "tourism", "office", "healthcare", "railway", "highway")
+_USER_AGENT = "POLICYLAB/1.0 (+https://github.com/firemarios/AthenaX-V2)"
+_FALLBACK_ENDPOINTS = (
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+)
 
 
 class OverpassConnector(BaseConnector):
@@ -46,16 +54,78 @@ class OverpassConnector(BaseConnector):
                 f'way["name"~"{fragment}",i]{bbox};'
             )
         else:
-            body = f'node["amenity"]{bbox};way["amenity"]{bbox};'
+            # Digital Twin layers: parks + the facilities simulations depend on.
+            body = (
+                f'way["leisure"~"^(park|garden|nature_reserve|recreation_ground)$"]{bbox};'
+                f'node["leisure"~"^(park|garden|nature_reserve|recreation_ground)$"]{bbox};'
+                f'way["amenity"~"^(school|university|college|kindergarten|hospital|clinic|doctors|pharmacy|police|townhall|library|courthouse|fire_station)$"]{bbox};'
+                f'node["amenity"~"^(school|university|college|kindergarten|hospital|clinic|doctors|pharmacy|police|townhall|library|courthouse|fire_station)$"]{bbox};'
+                f'way["amenity"]{bbox};'
+                f'node["amenity"]{bbox};'
+            )
         return f"[out:json][timeout:25];({body});out center {limit};"
 
     async def fetch(self, query: str | None = None, limit: int = 50) -> Any:
         ql = self.build_query(query, limit)
-        return await post_json(
-            self.endpoint_url,
-            data={"data": ql},
-            transport=self.config.get("transport"),
-        )
+        transport = self.config.get("transport")
+        endpoints = [self.endpoint_url] if transport else list(dict.fromkeys(
+            [self.endpoint_url, *_FALLBACK_ENDPOINTS]
+        ))
+        last_error: Exception | None = None
+        for endpoint in endpoints:
+            try:
+                return await post_json(
+                    endpoint,
+                    data={"data": ql},
+                    headers={"User-Agent": _USER_AGENT},
+                    transport=transport,
+                    timeout=8.0,
+                )
+            except Exception as exc:  # noqa: BLE001 — try the next mirror
+                last_error = exc
+        raise last_error or RuntimeError("overpass: no endpoint available")
+
+    async def health(self) -> dict[str, Any]:
+        """Overpass rejects bare GETs (406); probe with a tiny real query instead."""
+        from datetime import datetime, timezone
+        from time import perf_counter
+
+        checked_at = datetime.now(timezone.utc).isoformat()
+        if not self.enabled:
+            return {"status": "down", "latency_ms": None, "detail": "συνθήκη απενεργοποίησης",
+                    "checked_at": checked_at}
+        transport = self.config.get("transport")
+        endpoints = [self.endpoint_url] if transport else list(dict.fromkeys(
+            [self.endpoint_url, *_FALLBACK_ENDPOINTS]
+        ))
+        last_error: Exception | None = None
+        for endpoint in endpoints:
+            started = perf_counter()
+            try:
+                if transport:
+                    await post_json(
+                        endpoint,
+                        data={"data": "[out:json][timeout:10];node(1);out 1;"},
+                        headers={"User-Agent": _USER_AGENT},
+                        transport=transport,
+                        timeout=8.0,
+                    )
+                else:
+                    async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+                        response = await client.post(
+                            endpoint,
+                            data={"data": "[out:json][timeout:10];node(1);out 1;"},
+                            headers={"User-Agent": _USER_AGENT},
+                        )
+                        response.raise_for_status()
+                latency = int((perf_counter() - started) * 1000)
+                return {"status": "healthy", "latency_ms": latency,
+                        "detail": f"HTTP query ok ({endpoint})", "checked_at": checked_at}
+            except Exception as exc:  # noqa: BLE001 — try the next mirror
+                last_error = exc
+        return {"status": "down", "latency_ms": None,
+                "detail": f"{type(last_error).__name__}: {last_error}"[:200],
+                "checked_at": checked_at}
 
     async def normalize(self, raw: Any) -> list[NormalizedRecord]:
         if not isinstance(raw, dict):

@@ -36,10 +36,9 @@ def experiment_from_row(row: Any) -> dict[str, Any]:
 
 async def _experiments_for(project_id: str) -> list[dict[str, Any]]:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Experiment
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (
@@ -61,10 +60,9 @@ async def _experiments_for(project_id: str) -> list[dict[str, Any]]:
 async def list_projects() -> tuple[list[dict[str, Any]], int, bool]:
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import ResearchProject
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = list(
@@ -92,10 +90,9 @@ async def list_projects() -> tuple[list[dict[str, Any]], int, bool]:
 
 async def get_project(project_id: str) -> dict[str, Any] | None:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import ResearchProject
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (

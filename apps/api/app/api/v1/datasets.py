@@ -5,11 +5,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import datasets as datasets_repo
+from fastapi import APIRouter, HTTPException, Query, Request
+
 from services.data_ingestion.quality import score_quality
 
 logger = logging.getLogger("policylab.api.datasets")
@@ -99,7 +99,6 @@ async def recompute_quality(id: str, request: Request):
     )
     quality = score_quality(_scoring_record(dataset), fetched_at)
     report = {
-        "id": None,
         "id": id,
         **quality,
         "computed_at": datetime.now(timezone.utc).isoformat(),

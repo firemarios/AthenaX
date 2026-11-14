@@ -377,8 +377,9 @@ def compute_impact(
     baseline: dict | None = None,
     economics: dict | None = None,
     ai_impact: list | None = None,
+    reach: dict | None = None,
 ) -> dict:
-    """ImpactReport {run_id, dimensions[6], summary{el,en}}.
+    """ImpactReport {run_id, dimensions[6], summary{el,en}, reach}.
 
     Unknown metrics are ignored. Economics indicators and clearly-labelled AI
     estimates are merged into the six dimensions.
@@ -431,4 +432,18 @@ def compute_impact(
         "run_id": run_id,
         "dimensions": dimensions,
         "summary": _summary(dimensions, has_baseline),
+        "reach": _reach_block(reach),
+    }
+
+
+def _reach_block(reach: dict | None) -> dict:
+    """Normalised reach block: population x area x facilities covered by the run."""
+    source = reach if isinstance(reach, dict) else {}
+    population = _number(source.get("population"))
+    area_km2 = _number(source.get("area_km2"))
+    facilities = _number(source.get("facilities"))
+    return {
+        "population": int(population) if population is not None else None,
+        "area_km2": round(area_km2, 3) if area_km2 is not None else None,
+        "facilities": int(facilities) if facilities is not None else None,
     }

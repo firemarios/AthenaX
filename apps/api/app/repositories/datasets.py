@@ -87,10 +87,9 @@ def _sort_rows(rows: list[dict[str, Any]], sort: str | None) -> list[dict[str, A
 
 
 async def _db_rows() -> list[dict[str, Any]]:
-    from sqlalchemy import select
-
     from app.database import session_scope
     from app.models import Dataset
+    from sqlalchemy import select
 
     async with session_scope() as session:
         rows = (await session.execute(select(Dataset))).scalars()
@@ -180,10 +179,9 @@ async def search_relevant_datasets(
 async def get_dataset(dataset_id: str) -> dict[str, Any] | None:
     """Single dataset by id (DB → memory). Never raises."""
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Dataset
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -204,10 +202,9 @@ async def get_dataset(dataset_id: str) -> dict[str, Any] | None:
 async def list_versions(dataset_id: str) -> tuple[list[dict[str, Any]], bool]:
     """DatasetVersion[] for a dataset (DB → memory). Never raises."""
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import DatasetVersion
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (
@@ -240,10 +237,9 @@ async def upsert_dataset(payload: dict[str, Any]) -> str:
     payload = dict(payload)
     payload["id"] = dataset_id
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Dataset
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -281,10 +277,9 @@ async def upsert_dataset(payload: dict[str, Any]) -> str:
 async def save_quality_report(dataset_id: str, report: dict[str, Any]) -> dict[str, Any]:
     """Persist a quality recompute result (data_quality_reports + datasets.quality)."""
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import DataQualityReport, Dataset
+        from sqlalchemy import select
 
         async with session_scope() as session:
             ds = (

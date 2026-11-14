@@ -51,10 +51,9 @@ def comment_from_row(row: Any) -> dict[str, Any]:
 
 async def _comments_count(proposal_id: str) -> int:
     try:
-        from sqlalchemy import func, select
-
         from app.database import session_scope
         from app.models import Comment
+        from sqlalchemy import func, select
 
         async with session_scope() as session:
             count = (
@@ -73,10 +72,9 @@ async def _comments_count(proposal_id: str) -> int:
 async def list_consultations() -> tuple[list[dict[str, Any]], int, bool]:
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Consultation
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = list(
@@ -100,10 +98,9 @@ async def list_consultations() -> tuple[list[dict[str, Any]], int, bool]:
 
 async def get_consultation(consultation_id: str) -> dict[str, Any] | None:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Consultation
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -160,10 +157,9 @@ async def create_consultation(payload: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------- proposals
 async def _proposals_for(consultation_id: str) -> list[dict[str, Any]]:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Proposal
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (
@@ -183,10 +179,9 @@ async def _proposals_for(consultation_id: str) -> list[dict[str, Any]]:
 async def list_proposals() -> tuple[list[dict[str, Any]], int, bool]:
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Proposal
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = list(
@@ -207,10 +202,9 @@ async def list_proposals() -> tuple[list[dict[str, Any]], int, bool]:
 
 async def get_proposal(proposal_id: str) -> dict[str, Any] | None:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Proposal
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -264,10 +258,9 @@ async def create_proposal(payload: dict[str, Any]) -> dict[str, Any]:
 async def list_comments(proposal_id: str) -> tuple[list[dict[str, Any]], int, bool]:
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Comment
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (

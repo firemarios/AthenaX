@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from fastapi import APIRouter, Request
-
 from app.deps import get_request_id
 from app.envelope import build_meta, ok
+from fastapi import APIRouter, Request
+
 from services.simulation_engine.registry import list_models
 
 router = APIRouter()

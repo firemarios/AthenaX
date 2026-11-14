@@ -12,17 +12,20 @@ TABLE = "simulation_runs"
 
 
 def run_from_row(row: Any) -> dict[str, Any]:
+    results = as_json(row.results, None)
+    snapshot = results.get("snapshot") if isinstance(results, dict) else None
     return {
         "id": str(row.id),
         "policy_id": row.policy_id,
         "model_name": str(row.model_name or ""),
         "model_version": row.model_version,
         "parameters": as_json(row.parameters, {}) or {},
-        "results": as_json(row.results, None),
+        "results": results,
         "passport": as_json(row.passport, None),
         "status": str(row.status or "queued"),
         "error": row.error,
         "seed": row.seed,
+        "snapshot_mode": (snapshot or {}).get("mode") if isinstance(snapshot, dict) else None,
         "created_at": iso(row.created_at),
     }
 
@@ -36,10 +39,9 @@ async def list_runs(policy_id: str | None = None) -> tuple[list[dict[str, Any]],
     rows: list[Any] = []
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import SimulationRun
+        from sqlalchemy import select
 
         async with session_scope() as session:
             stmt = select(SimulationRun).order_by(SimulationRun.created_at.desc())
@@ -65,10 +67,9 @@ async def list_runs(policy_id: str | None = None) -> tuple[list[dict[str, Any]],
 
 async def get_run(run_id: str) -> dict[str, Any] | None:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import SimulationRun
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -118,10 +119,9 @@ async def get_runs_by_ids(run_ids: list[str]) -> list[dict[str, Any]]:
         return []
     items: list[dict[str, Any]] = []
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import SimulationRun
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (

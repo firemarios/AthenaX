@@ -1,13 +1,12 @@
 """Citizen Lab module (07): consultations, proposals, comments."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import citizen as citizen_repo
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 

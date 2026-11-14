@@ -81,11 +81,10 @@ async def seed_registry() -> bool:
 
 
 async def _seed_feature_flags() -> None:
-    from sqlalchemy import select
-
     from app.database import session_scope
     from app.models import FeatureFlag
     from app.repositories.admin import DEFAULT_FLAGS
+    from sqlalchemy import select
 
     async with session_scope() as session:
         existing = {
@@ -106,10 +105,9 @@ async def _seed_feature_flags() -> None:
 
 
 async def _seed_cities() -> None:
-    from sqlalchemy import select
-
     from app.database import session_scope
     from app.models import City
+    from sqlalchemy import select
 
     async with session_scope() as session:
         existing = (await session.execute(select(City))).scalars().first()
@@ -127,10 +125,9 @@ async def _seed_cities() -> None:
 
 
 async def _seed_settings() -> None:
-    from sqlalchemy import select
-
     from app.database import session_scope
     from app.models import Setting
+    from sqlalchemy import select
 
     async with session_scope() as session:
         existing = {row.key for row in ((await session.execute(select(Setting))).scalars())}
@@ -146,10 +143,10 @@ async def _seed_settings() -> None:
 
 
 async def _seed_models() -> None:
-    from sqlalchemy import select
-
     from app.database import session_scope
     from app.models import ModelRegistry
+    from sqlalchemy import select
+
     from services.simulation_engine.registry import list_models
 
     specs = list_models()
@@ -173,12 +170,10 @@ async def _seed_models() -> None:
 
 async def _seed_api_registry() -> None:
     """Record the endpoint catalogue (contract §2) for /v1/admin introspection."""
-    from sqlalchemy import select
-
+    from app.api.v1.router import ROUTE_CATALOG
     from app.database import session_scope
     from app.models import ApiRegistry
-
-    from app.api.v1.router import ROUTE_CATALOG
+    from sqlalchemy import select
 
     async with session_scope() as session:
         existing = {
@@ -344,10 +339,9 @@ def _demo_city_features() -> list[dict]:
 
 async def _seed_city_features() -> None:
     """Populate demo city_features on SQLite (PostGIS deployments import OSM instead)."""
-    from sqlalchemy import func, select
-
     from app.database import engine, session_scope
     from app.models import CityFeature
+    from sqlalchemy import func, select
 
     if engine.url.get_backend_name() != "sqlite":
         return
@@ -536,10 +530,9 @@ def _demo_decisions() -> list[dict]:
 
 async def _seed_govtech() -> None:
     """Populate demo decisions/projects when the live feeds are unavailable."""
-    from sqlalchemy import func, select
-
     from app.database import session_scope
     from app.models import Decision, Project
+    from sqlalchemy import func, select
 
     async with session_scope() as session:
         project_count = (await session.execute(select(func.count(Project.id)))).scalar_one()

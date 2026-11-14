@@ -4,10 +4,9 @@ from __future__ import annotations
 import logging
 from uuid import uuid4
 
-from fastapi import Request
-
 from app.config import get_settings  # noqa: F401 — re-exported per contract
 from app.database import AsyncSessionLocal
+from fastapi import Request
 
 logger = logging.getLogger("policylab.deps")
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.repositories.common import as_json, iso
+from app.repositories.common import as_json
 
 logger = logging.getLogger("policylab.repositories.decisions")
 
@@ -63,10 +63,9 @@ async def list_from_db(
 ) -> tuple[list[dict[str, Any]], int, bool, bool]:
     """(Decision[], total, db_reachable, populated). Never raises."""
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Decision as DecisionModel
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (await session.execute(select(DecisionModel))).scalars()
@@ -84,10 +83,9 @@ async def list_from_db(
 
 async def get_from_db(decision_id: str) -> dict[str, Any] | None:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Decision as DecisionModel
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -101,10 +99,9 @@ async def get_from_db(decision_id: str) -> dict[str, Any] | None:
 async def linked_to_project(project_id: str) -> list[dict[str, Any]]:
     """Decisions linked to a project (DB only; graceful empty). Never raises."""
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Decision as DecisionModel
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (

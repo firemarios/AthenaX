@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from app.database import Base
 from geoalchemy2 import Geometry
 from sqlalchemy import (
     JSON,
@@ -21,8 +22,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
-
-from app.database import Base
 
 JSON_TYPE = JSON().with_variant(JSONB(), "postgresql")
 

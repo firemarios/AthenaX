@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     s3_bucket: str = ""
     storage_dir: str = "./storage"
     redis_url: str = ""
+    snapshot_live: bool = True
+    snapshot_overpass_timeout: float = 12.0
+    snapshot_cache_seconds: int = 900
 
     @property
     def cors_origins_list(self) -> list[str]:

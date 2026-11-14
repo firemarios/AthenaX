@@ -6,14 +6,13 @@ import logging
 import re
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import Response
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import research as research_repo
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel, Field
+
 from services.reporting_engine.reports import build_research_report, to_csv
 
 logger = logging.getLogger("policylab.api.research")

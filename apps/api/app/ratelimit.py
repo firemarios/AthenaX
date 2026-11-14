@@ -9,12 +9,11 @@ import logging
 import time
 from collections import deque
 
+from app.config import get_settings
+from app.envelope import fail
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-
-from app.config import get_settings
-from app.envelope import fail
 
 logger = logging.getLogger("policylab.ratelimit")
 

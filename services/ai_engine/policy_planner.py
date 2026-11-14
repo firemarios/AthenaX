@@ -11,6 +11,7 @@ import json
 import logging
 import math
 import re
+import unicodedata
 from typing import Any
 
 from services.ai_engine.providers import get_provider
@@ -82,6 +83,19 @@ Return ONLY a JSON object with this shape:
 
 Rules:
 - Pick exactly one model from the supplied catalog and use only its parameter names.
+- Model choice must follow the policy mechanism, not a metaphor:
+  * accessibility ONLY when the policy changes physical walking distance or proximity
+    to facilities (new/closed facilities, a different max walk distance). Never use it
+    for digital access, data access, platforms, software, transparency or citizen
+    participation, even when they are described as "access".
+  * cost for digital platforms, software, data integration, procurement, administrative
+    services, or policies with no physical footprint. Prefer cost when a budget is given
+    and no domain model measures the policy.
+  * traffic_sumo for roads, traffic, pedestrianisation, parking or street mobility.
+  * greenspace for parks, trees, gardens or green area.
+- Findings and risks must only claim effects the selected model measures. Do not mention
+  accessibility, walkability, health or environmental benefits unless that is the selected
+  model's actual output.
 - Respect each parameter's label, unit and choices in the catalog.
 - For traffic_sumo, demand and capacity are vehicles per hour. Keep them on the
   same scale as the defaults (around 1,200 demand and 1,600 capacity); never put
@@ -448,17 +462,66 @@ def _model_catalog() -> list[dict[str, Any]]:
     return catalog
 
 
+def _fold(value: Any) -> str:
+    """Lowercase and strip accents so Greek keyword matching is stable."""
+    text = str(value or "").lower()
+    text = unicodedata.normalize("NFD", text)
+    return "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+
+
+def _has_term(text: str, term: str) -> bool:
+    if term.isascii():
+        return re.search(rf"\b{re.escape(term)}", text) is not None
+    return term in text
+
+
+_GREENSPACE_TERMS = (
+    "πρασιν", "παρκ", "δενδρ", "κηπ", "green", "park", "tree", "garden", "forest",
+)
+_TRAFFIC_TERMS = (
+    "κυκλοφορ", "δρομ", "πεζ", "κινητικοτητ", "ποδηλατ",
+    "traffic", "road", "pedestrian", "mobility", "sidewalk", "bike", "parking",
+)
+_COST_TERMS = (
+    "κοστο", "προυπολογ", "συμβασ", "λογισμικ", "πλατφορμ", "ψηφιακ", "δεδομεν",
+    "υπηρεσι", "διαφανει", "συμμετοχ", "διοικησ", "διακυβερν",
+    "govtech", "digital", "software", "platform", "data", "api", "service",
+    "transparency", "participation", "governance", "administration",
+    "procurement", "budget", "cost", "finance", "funding",
+)
+_ACCESSIBILITY_TERMS = (
+    "προσβασ", "εγκαταστασ", "εγγυτητ",
+    "accessib", "walk", "facilit", "proximity", "foot",
+)
+
+
 def _fallback_model(category: str | None, topic: str, factors: Any) -> str:
-    text = f"{category or ''} {topic or ''}".lower()
-    if any(word in text for word in ("πράσιν", "παρκ", "green", "park", "δένδρ", "tree")):
+    text = _fold(f"{category or ''} {topic or ''}")
+    if any(_has_term(text, term) for term in _GREENSPACE_TERMS):
         return "greenspace"
-    if any(word in text for word in ("κυκλοφορ", "δρόμ", "traffic", "road", "πεζ", "pedestrian")):
+    if any(_has_term(text, term) for term in _TRAFFIC_TERMS):
         return "traffic_sumo"
-    if any(word in text for word in ("κόστος", "budget", "προϋπολογ", "cost")):
+    if any(_has_term(text, term) for term in _COST_TERMS):
         return "cost"
+    if any(_has_term(text, term) for term in _ACCESSIBILITY_TERMS):
+        return "accessibility"
     if _factor_value(factors, "new_buildings") is not None:
         return "accessibility"
-    return "accessibility"
+    return "cost"
+
+
+def _guard_model(
+    model_name: str, *, category: str | None, topic: str, requested: str | None
+) -> str:
+    """Keep the LLM from reusing accessibility for non-physical policies."""
+    if requested in MODELS or model_name != "accessibility":
+        return model_name
+    text = _fold(f"{category or ''} {topic or ''}")
+    if any(_has_term(text, term) for term in _ACCESSIBILITY_TERMS + _TRAFFIC_TERMS):
+        return model_name
+    if any(_has_term(text, term) for term in _COST_TERMS):
+        return "cost"
+    return model_name
 
 
 def _normalise_parameters(
@@ -698,8 +761,14 @@ async def plan_policy_simulation(
             raise ValueError("invalid JSON from policy planner")
 
         model_name = str(payload.get("model") or "").strip()
-        if model_name not in MODELS:
+        if model in MODELS:
+            model_name = model
+        elif model_name not in MODELS:
             model_name = fallback_model
+        else:
+            model_name = _guard_model(
+                model_name, category=category, topic=topic, requested=model
+            )
         normalised_parameters = _normalise_parameters(
             model_name, payload.get("parameters"), fallback_parameters, area
         )

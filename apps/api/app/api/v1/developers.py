@@ -1,12 +1,11 @@
 """Developer module (10): GET /v1/developers/examples + /info."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
-
 from app.config import API_VERSION, get_settings
 from app.deps import get_request_id
 from app.envelope import build_meta, ok
 from app.repositories.sources import catalog_sources
+from fastapi import APIRouter, Request
 
 router = APIRouter()
 

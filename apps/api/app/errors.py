@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import logging
 
+from app.envelope import fail
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
-from app.envelope import fail
 
 logger = logging.getLogger("policylab.errors")
 

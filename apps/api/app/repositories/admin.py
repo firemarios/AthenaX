@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from datetime import datetime, timezone
 from typing import Any
 
 from app.repositories.common import iso, mem_get, mem_list, mem_put, new_id, utcnow_iso
@@ -36,10 +35,9 @@ def clear_audit_buffer() -> None:
 # ---------------------------------------------------------------- feature flags
 async def list_flags() -> tuple[list[dict[str, Any]], bool]:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import FeatureFlag
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = list((await session.execute(select(FeatureFlag).order_by(FeatureFlag.name))).scalars())
@@ -77,10 +75,9 @@ async def patch_flag(name: str, enabled: bool) -> dict[str, Any] | None:
         "description": current.get("description"),
     }
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import FeatureFlag
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -127,10 +124,9 @@ async def list_connectors() -> tuple[list[dict[str, Any]], bool]:
     items = _yaml_connectors()
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Connector
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = list((await session.execute(select(Connector))).scalars())
@@ -163,10 +159,9 @@ async def patch_connector(
         updated["endpoint_url"] = str(endpoint_url)
     mem_put(CONNECTORS_MEM, updated)
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Connector
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (
@@ -190,10 +185,9 @@ async def patch_connector(
 async def list_audit(page: int = 1, page_size: int = 50) -> tuple[list[dict[str, Any]], int, bool]:
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import AuditLog
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = list(
@@ -311,7 +305,104 @@ async def persist_ingest_records(source_name: str, records: list[Any]) -> int:
                 "related_ids": [],
             }
             await upsert_dataset(dataset)
+            await _persist_city_feature(payload, source_name)
             ingested += 1
         except Exception:  # noqa: BLE001
             logger.warning("persist_ingest_records: αποτυχία εγγραφής", exc_info=True)
     return ingested
+
+
+_PARK_LEISURE = {"park", "garden", "nature_reserve", "recreation_ground"}
+_FACILITY_LAYERS = {
+    "schools": {"school", "university", "college", "kindergarten"},
+    "hospitals": {"hospital", "clinic", "doctors", "pharmacy", "healthcare"},
+    "public_facilities": {
+        "townhall",
+        "police",
+        "library",
+        "courthouse",
+        "fire_station",
+        "public_building",
+    },
+}
+
+
+def _feature_layer(payload: dict[str, Any]) -> str:
+    extra = payload.get("extra") if isinstance(payload.get("extra"), dict) else {}
+    tags = extra.get("tags") if isinstance(extra.get("tags"), dict) else {}
+    leisure = str(tags.get("leisure") or "").lower()
+    amenity = str(tags.get("amenity") or "").lower()
+    category = str(payload.get("category") or "").lower()
+    if leisure in _PARK_LEISURE:
+        return "green_spaces"
+    if amenity:
+        for layer, values in _FACILITY_LAYERS.items():
+            if amenity in values:
+                return layer
+    if category in {"park", "garden", "green_space"}:
+        return "green_spaces"
+    if category in {"school", "education"}:
+        return "schools"
+    if category in {"hospital", "health", "clinic"}:
+        return "hospitals"
+    if category in {"public", "government"}:
+        return "public_facilities"
+    return "pois"
+
+
+def _feature_id(payload: dict[str, Any], source_name: str, lat: float, lon: float) -> str:
+    import hashlib
+
+    extra = payload.get("extra") if isinstance(payload.get("extra"), dict) else {}
+    osm_type = extra.get("osm_type")
+    osm_id = extra.get("osm_id")
+    if osm_type is not None and osm_id is not None:
+        return f"{source_name}:{osm_type}/{osm_id}"
+    seed = f"{source_name}|{payload.get('title')}|{lat:.6f}|{lon:.6f}"
+    return f"{source_name}:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:20]}"
+
+
+async def _persist_city_feature(payload: dict[str, Any], source_name: str) -> None:
+    """Map a geolocated ingest record into city_features (Digital Twin). Never raises."""
+    lat = payload.get("lat")
+    lon = payload.get("lon")
+    if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+        return
+    layer = _feature_layer(payload)
+    feature_id = _feature_id(payload, source_name, float(lat), float(lon))
+    extra = payload.get("extra") if isinstance(payload.get("extra"), dict) else {}
+    props = {
+        "title": payload.get("title"),
+        "name": payload.get("title"),
+        "source_name": payload.get("source_name") or source_name,
+        "source_url": payload.get("source_url"),
+        "category": payload.get("category"),
+        "tags": extra.get("tags") if isinstance(extra.get("tags"), dict) else {},
+    }
+    wkt = f"POINT({float(lon)} {float(lat)})"
+    try:
+        from app.database import session_scope
+        from app.models import CityFeature
+        from sqlalchemy import select
+
+        geometry: Any = wkt
+        try:
+            from geoalchemy2.elements import WKTElement
+
+            geometry = WKTElement(wkt, srid=4326)
+        except Exception:  # noqa: BLE001 — SQLite stores WKT text
+            geometry = wkt
+
+        async with session_scope() as session:
+            row = (
+                await session.execute(select(CityFeature).where(CityFeature.id == feature_id))
+            ).scalar_one_or_none()
+            if row is None:
+                row = CityFeature(id=feature_id, layer=layer)
+                session.add(row)
+            row.layer = layer
+            row.properties = props
+            row.geom = geometry
+            await session.flush()
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("persist city feature skipped (%s)", exc)

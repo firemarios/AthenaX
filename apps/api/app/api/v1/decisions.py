@@ -1,11 +1,10 @@
 """GovTech module (02): decisions list/detail."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.services import catalog as catalog_service
+from fastapi import APIRouter, HTTPException, Query, Request
 
 router = APIRouter()
 

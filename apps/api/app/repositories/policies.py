@@ -44,10 +44,9 @@ def variant_from_row(row: Any) -> dict[str, Any]:
 
 async def list_variants(policy_id: str) -> list[dict[str, Any]]:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import PolicyVariant
+        from sqlalchemy import select
 
         async with session_scope() as session:
             rows = (
@@ -70,10 +69,9 @@ async def list_policies() -> tuple[list[dict[str, Any]], int, bool]:
     rows: list[Any] = []
     degraded = False
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Policy
+        from sqlalchemy import select
 
         async with session_scope() as session:
             result = await session.execute(select(Policy).order_by(Policy.created_at.desc()))
@@ -101,10 +99,9 @@ async def list_policies() -> tuple[list[dict[str, Any]], int, bool]:
 
 async def get_policy(policy_id: str) -> dict[str, Any] | None:
     try:
-        from sqlalchemy import select
-
         from app.database import session_scope
         from app.models import Policy
+        from sqlalchemy import select
 
         async with session_scope() as session:
             row = (

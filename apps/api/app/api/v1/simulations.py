@@ -4,17 +4,19 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel, Field
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import policies as policies_repo
 from app.repositories import simulations as simulations_repo
 from app.repositories.common import new_id, utcnow_iso
+from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel, Field
+
 from services.ai_engine.policy_planner import plan_policy_simulation
 from services.ai_engine.report_composer import compose_simulation_report
+from services.data_ingestion.snapshot import build_snapshot, summarise
 from services.reporting_engine.economics import compute_economics
+from services.reporting_engine.sensitivity import compute_sensitivity
 from services.simulation_engine.registry import get_model
 from services.simulation_engine.runner import build_passport, run_model
 
@@ -32,6 +34,7 @@ class SimulationCreate(BaseModel):
     compare_baseline: bool = False
     budget_eur: float | None = Field(None, ge=0)
     use_ai: bool = False
+    seed: int | None = Field(None, ge=0, description="Seed for a reproducible run")
 
 
 def _model_version(name: str) -> str:
@@ -104,9 +107,25 @@ async def create_simulation(payload: SimulationCreate, request: Request):
     if payload.area and "area_id" not in parameters:
         parameters["area_id"] = payload.area
 
+    area_ref = (
+        payload.area
+        or parameters.get("area_id")
+        or (policy or {}).get("area")
+    )
+    snapshot: dict[str, Any] | None = None
+    if area_ref:
+        try:
+            snapshot = await build_snapshot(str(area_ref))
+        except Exception as exc:  # noqa: BLE001 — snapshot never blocks a run
+            logger.info("snapshot unavailable for %s: %s", area_ref, exc)
+
     try:
         result = run_model(
-            model_name, parameters, compare_baseline=bool(payload.compare_baseline)
+            model_name,
+            parameters,
+            snapshot=snapshot,
+            seed=payload.seed,
+            compare_baseline=bool(payload.compare_baseline),
         )
     except Exception as exc:  # noqa: BLE001 — run_model must never raise; belt & braces
         logger.warning("run_model εξαιρέθηκε: %s", exc)
@@ -126,7 +145,9 @@ async def create_simulation(payload: SimulationCreate, request: Request):
     passport = result.get("passport")
     if not isinstance(passport, dict):
         try:
-            passport = build_passport(model_name, parameters, seed=result.get("seed"))
+            passport = build_passport(
+                model_name, parameters, snapshot=snapshot, seed=result.get("seed")
+            )
         except Exception:  # noqa: BLE001
             passport = None
 
@@ -143,6 +164,8 @@ async def create_simulation(payload: SimulationCreate, request: Request):
             "baseline": baseline,
             "uncertainty": dict(result.get("uncertainty") or {}),
         }
+        if snapshot is not None:
+            results["snapshot"] = summarise(snapshot)
         try:
             results["economics"] = compute_economics(
                 model_name,
@@ -155,6 +178,19 @@ async def create_simulation(payload: SimulationCreate, request: Request):
             )
         except Exception as exc:  # noqa: BLE001 — economics must not fail the run
             logger.warning("compute_economics: %s", exc)
+
+        try:
+            sensitivity = compute_sensitivity(
+                model_name,
+                parameters,
+                metrics,
+                snapshot=snapshot,
+                seed=result.get("seed"),
+            )
+            if sensitivity:
+                results["sensitivity"] = sensitivity
+        except Exception as exc:  # noqa: BLE001 — sensitivity must not fail the run
+            logger.warning("compute_sensitivity: %s", exc)
 
         if ai_plan is not None:
             if ai_plan.get("ai_used"):
@@ -183,6 +219,7 @@ async def create_simulation(payload: SimulationCreate, request: Request):
         "status": status,
         "error": warnings[0] if status != "succeeded" else None,
         "seed": result.get("seed"),
+        "snapshot_mode": (snapshot or {}).get("mode"),
         "assumptions": list(result.get("assumptions") or []),
         "warnings": warnings,
         "logs": list(result.get("logs") or []),

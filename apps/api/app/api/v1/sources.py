@@ -1,11 +1,10 @@
 """Data module (01): GET /v1/sources, /v1/sources/{id}, POST /v1/sources/{id}/health."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request
-
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import sources as sources_repo
+from fastapi import APIRouter, HTTPException, Query, Request
 
 router = APIRouter()
 

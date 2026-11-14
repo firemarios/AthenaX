@@ -1,0 +1,102 @@
+# POLICYLAB city pack — Berlin (BYO-city example).
+#
+# Activate with:
+#   POLICYLAB_CATALOG_FILE=data/source-registry/catalog.berlin.yaml
+# Restart the API afterwards. Sources reuse the existing connector classes; only the
+# endpoints, the city centre and the intervention areas change.
+#
+# Verified endpoints (2026-11): datenregister.berlin.de is CKAN (package_search works);
+# Overpass, Eurostat, Open-Meteo and Wikipedia are global. Berlin's statistical office has
+# no public JSON search API, so no fake statistics source is declared.
+
+city:
+  id: berlin
+  name_el: "Βερολίνο"
+  name_en: "Berlin"
+  country: DE
+  center: [52.5200, 13.4050]
+  population: 3_878_100        # Amt für Statistik Berlin-Brandenburg, 2024 (public)
+  area_km2: 891.7
+
+sources:
+  - name: ckan
+    display_name: "Datenregister Berlin — Ανοικτά δεδομένα"
+    source_type: open_data
+    base_url: "https://datenregister.berlin.de"
+    endpoint_url: "https://datenregister.berlin.de/api/3/action/package_search"
+    license: "DL-DE Zero 2.0 / CC BY / CC0 — ελέγχεται ανά dataset"
+    update_frequency: daily
+    reliability: 0.9
+    enabled: true
+    priority: P0
+    config:
+      rows: 50
+
+  - name: overpass
+    display_name: "OpenStreetMap (Overpass API) — Βερολίνο"
+    source_type: geospatial
+    base_url: "https://www.openstreetmap.org"
+    endpoint_url: "https://overpass-api.de/api/interpreter"
+    license: "ODbL 1.0"
+    update_frequency: daily
+    reliability: 0.9
+    enabled: true
+    priority: P0
+    config: {}
+
+  - name: eurostat
+    display_name: "Eurostat — Ευρωπαϊκοί δείκτες"
+    source_type: statistics
+    base_url: "https://ec.europa.eu/eurostat"
+    endpoint_url: "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"
+    license: "CC BY 4.0 (EU)"
+    update_frequency: daily
+    reliability: 0.97
+    enabled: true
+    priority: P0
+    config: {}
+
+  - name: openmeteo
+    display_name: "Open-Meteo — Καιρός Βερολίνου"
+    source_type: weather
+    base_url: "https://open-meteo.com"
+    endpoint_url: "https://api.open-meteo.com/v1/forecast"
+    license: "CC BY 4.0"
+    update_frequency: hourly
+    reliability: 0.9
+    enabled: true
+    priority: P1
+    config: {}
+
+  - name: wikipedia
+    display_name: "Wikipedia (Deutsch) — Εγκυκλοπαιδικό πλαίσιο"
+    source_type: web
+    base_url: "https://de.wikipedia.org"
+    endpoint_url: "https://de.wikipedia.org/w/api.php"
+    license: "CC BY-SA 4.0"
+    update_frequency: daily
+    reliability: 0.6
+    enabled: true
+    priority: P1
+    config: {}
+
+  - name: websearch
+    display_name: "Διαδικτυακή αναζήτηση — DuckDuckGo"
+    source_type: web
+    base_url: "https://duckduckgo.com"
+    endpoint_url: "https://html.duckduckgo.com/html/"
+    license: "Ποικίλες — ελέγχεται ανά πηγή"
+    update_frequency: hourly
+    reliability: 0.55
+    enabled: true
+    priority: P2
+    config: {}
+
+# Berlin intervention areas (WGS84 points + radius). The same policy models run unchanged.
+city_areas:
+  - { id: "mitte",            name_el: "Μίτε",             name_en: "Mitte",            lat: 52.5200, lon: 13.4050, radius_m: 900 }
+  - { id: "kreuzberg",        name_el: "Κρόιτσμπεργκ",     name_en: "Kreuzberg",        lat: 52.4986, lon: 13.4180, radius_m: 900 }
+  - { id: "prenzlauerberg",   name_el: "Πρένσλαουερ Μπεργκ", name_en: "Prenzlauer Berg", lat: 52.5400, lon: 13.4240, radius_m: 900 }
+  - { id: "neukoelln",        name_el: "Νόικολν",           name_en: "Neukölln",         lat: 52.4810, lon: 13.4350, radius_m: 1000 }
+  - { id: "charlottenburg",   name_el: "Σαρλότενμπουργκ",   name_en: "Charlottenburg",   lat: 52.5160, lon: 13.3040, radius_m: 900 }
+  - { id: "friedrichshain",   name_el: "Φρίντριχσχαϊν",     name_en: "Friedrichshain",   lat: 52.5150, lon: 13.4540, radius_m: 850 }

@@ -7,6 +7,7 @@ import json
 import pytest
 
 from services.ai_engine.policy_planner import (
+    _fallback_model,
     _normalise_sections,
     plan_policy_simulation,
 )
@@ -220,6 +221,23 @@ def test_policy_factors_and_simulation_economics(client):
     assert economics["verdict"] in {"yes", "marginal", "no", "unknown"}
     assert economics["cost_breakdown"]
 
+    sensitivity = run["results"].get("sensitivity")
+    assert sensitivity and sensitivity["parameters"]
+    assert all(entry["total_swing"] >= 0 for entry in sensitivity["parameters"])
+
+    reproduced = client.post(
+        "/v1/simulations",
+        json={
+            "model": run["model_name"],
+            "parameters": run["parameters"],
+            "compare_baseline": True,
+            "area": run["parameters"]["area_id"],
+            "seed": run["passport"]["seed"],
+        },
+    ).json()["data"]
+    assert reproduced["passport"]["inputs_checksum"] == run["passport"]["inputs_checksum"]
+    assert reproduced["results"]["metrics"] == run["results"]["metrics"]
+
 
 class _FakePlannerProvider:
     def __init__(self, content: str) -> None:
@@ -402,6 +420,57 @@ def test_policy_planner_falls_back_without_failing():
     assert plan["model"] == "accessibility"
     assert plan["tax"]["annual_tax_revenue_eur"] == 16000
     assert plan["report"]["summary"]["en"]
+
+
+def test_fallback_model_routes_services_to_cost_and_handles_accented_greek():
+    assert _fallback_model(
+        "services", "Ψηφιακή πλατφόρμα GovTech με ανοικτά δεδομένα και APIs", None
+    ) == "cost"
+    assert _fallback_model(
+        "environment", "Αύξηση διαθέσιμου πρασίνου στα Εξάρχεια", None
+    ) == "greenspace"
+    assert _fallback_model("mobility", "Νέα πεζοδρόμια και πεζοδρομήσεις", None) == "traffic_sumo"
+
+
+class _AccessibilityForEverythingProvider:
+    async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
+        return json.dumps(
+            {
+                "title": {"el": "Ψηφιακή πλατφόρμα", "en": "Digital platform"},
+                "model": "accessibility",
+                "model_reason": {
+                    "el": "Αναλογικό μοντέλο πρόσβασης.",
+                    "en": "Analogous access model.",
+                },
+                "parameters": {},
+                "confidence": 0.6,
+            }
+        )
+
+
+def test_planner_does_not_use_accessibility_for_a_digital_platform():
+    plan = asyncio.run(
+        plan_policy_simulation(
+            title="Ψηφιακή πλατφόρμα GovTech με ανοικτά δεδομένα",
+            description="Πλατφόρμα λογισμικού και δημόσιες ψηφιακές υπηρεσίες.",
+            category="services",
+            provider=_AccessibilityForEverythingProvider(),
+        )
+    )
+    assert plan["ai_used"] is True
+    assert plan["model"] == "cost"
+
+
+def test_planner_respects_an_explicit_model_request():
+    plan = asyncio.run(
+        plan_policy_simulation(
+            title="Ψηφιακή πλατφόρμα GovTech",
+            category="services",
+            model="greenspace",
+            provider=_AccessibilityForEverythingProvider(),
+        )
+    )
+    assert plan["model"] == "greenspace"
 
 
 def test_simulation_use_ai_persists_plan_and_tax(client, monkeypatch):

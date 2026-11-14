@@ -1,10 +1,15 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Badge, ExportButton, Skeleton, useI18n } from "@policylab/ui";
-import type { ImpactIndicator, ImpactReport, SimulationRun } from "@policylab/types";
+import type {
+  ImpactIndicator,
+  ImpactReport,
+  SimulationRun,
+  SimulationSensitivity,
+} from "@policylab/types";
 import { API_BASE } from "@policylab/api-client";
 import { useApi } from "@/_shared/hooks";
 import { deltaTone, downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "@/_shared/format";
@@ -44,6 +49,18 @@ const STR = {
   },
   retry: { el: "Δοκιμάστε ξανά", en: "Try again" },
   exportJson: { el: "Λήψη JSON", en: "Download JSON" },
+  sensitivity: { el: "Ευαισθησία (tornado)", en: "Sensitivity (tornado)" },
+  sensitivityDesc: {
+    el: "Ποια παράμετρος μετακινεί περισσότερο τον δείκτη όταν αλλάξει ±20%, κρατώντας το ίδιο snapshot και seed.",
+    en: "Which input moves the indicator most when varied ±20%, holding the snapshot and seed fixed.",
+  },
+  sensitivityMetric: { el: "Δείκτης", en: "Indicator" },
+  sensitivityNoData: {
+    el: "Δεν υπολογίστηκε ευαισθησία για αυτή την εκτέλεση.",
+    en: "No sensitivity was computed for this run.",
+  },
+  sensitivityNoEffect: { el: "καμία επίδραση", en: "no effect" },
+  parameter: { el: "Παράμετρος", en: "Parameter" },
 };
 
 function DeltaBadge({ indicator }: { indicator: ImpactIndicator }) {
@@ -63,6 +80,112 @@ function DeltaBadge({ indicator }: { indicator: ImpactIndicator }) {
         {t(STR.delta)}: {fmtDelta(indicator.delta, lang)} {indicator.unit}
       </span>
     </Badge>
+  );
+}
+
+function SensitivityTornado({ sensitivity }: { sensitivity: SimulationSensitivity }) {
+  const { t, lang } = useI18n();
+  const metricKeys = Array.from(
+    new Set(sensitivity.parameters.flatMap((param) => Object.keys(param.metrics))),
+  );
+  const [metric, setMetric] = useState(metricKeys[0] ?? "");
+  if (metricKeys.length === 0) return null;
+  const activeMetric = metricKeys.includes(metric) ? metric : metricKeys[0];
+
+  const rows = sensitivity.parameters.flatMap((param) => {
+    const movement = param.metrics[activeMetric];
+    return movement ? [{ param, movement }] : [];
+  });
+  const maxAbs = Math.max(
+    1e-9,
+    ...rows.flatMap(({ movement }) => [
+      Math.abs(movement.low - movement.base),
+      Math.abs(movement.high - movement.base),
+    ]),
+  );
+
+  return (
+    <SectionCard title={t(STR.sensitivity)}>
+      <p className={`mb-3 text-sm ${mutedText}`}>{t(STR.sensitivityDesc)}</p>
+      <label className="mb-4 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+        <span>{t(STR.sensitivityMetric)}</span>
+        <select
+          value={activeMetric}
+          onChange={(event) => setMetric(event.target.value)}
+          className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+        >
+          {metricKeys.map((key) => (
+            <option key={key} value={key}>
+              {key}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="space-y-3">
+        <div className="flex justify-between text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <span>−20%</span>
+          <span>{t({ el: "βάση", en: "base" })}</span>
+          <span>+20%</span>
+        </div>
+        {rows.map(({ param, movement }) => {
+          const lowDelta = movement.low - movement.base;
+          const highDelta = movement.high - movement.base;
+          const left = (Math.abs(Math.min(0, lowDelta)) / maxAbs) * 50;
+          const right = (Math.abs(Math.max(0, highDelta)) / maxAbs) * 50;
+          const leftValue = (Math.abs(Math.min(0, highDelta)) / maxAbs) * 50;
+          const rightValue = (Math.abs(Math.max(0, lowDelta)) / maxAbs) * 50;
+          return (
+            <div key={param.parameter}>
+              <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2 text-xs">
+                <span className="font-mono font-medium text-zinc-800 dark:text-zinc-200">
+                  {param.parameter}
+                </span>
+                <span className="tabular-nums text-zinc-500 dark:text-zinc-400">
+                  {fmtNum(param.low_input, lang)} → {fmtNum(param.high_input, lang)}
+                </span>
+              </div>
+              <div className="relative h-5 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
+                <span className="absolute inset-y-0 left-1/2 w-px bg-zinc-400 dark:bg-zinc-500" />
+                {lowDelta < 0 ? (
+                  <span
+                    className="absolute inset-y-1 rounded-sm bg-blue-500/80"
+                    style={{ right: "50%", width: `${Math.max(left, leftValue)}%` }}
+                    title={`${activeMetric}: ${fmtNum(movement.low, lang)}`}
+                  />
+                ) : (
+                  <span
+                    className="absolute inset-y-1 rounded-sm bg-emerald-500/80"
+                    style={{ left: "50%", width: `${rightValue}%` }}
+                    title={`${activeMetric}: ${fmtNum(movement.low, lang)}`}
+                  />
+                )}
+                {highDelta > 0 ? (
+                  <span
+                    className="absolute inset-y-1 rounded-sm bg-blue-500/80"
+                    style={{ left: "50%", width: `${right}%` }}
+                    title={`${activeMetric}: ${fmtNum(movement.high, lang)}`}
+                  />
+                ) : null}
+              </div>
+              <div className="mt-1 flex justify-between text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                <span>{fmtNum(movement.low, lang)}</span>
+                <span>
+                  {movement.swing === 0
+                    ? t(STR.sensitivityNoEffect)
+                    : `Δ ${fmtNum(movement.swing, lang)}`}
+                </span>
+                <span>{fmtNum(movement.high, lang)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {sensitivity.note ? (
+        <p className="mt-4 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+          {sensitivity.note}
+        </p>
+      ) : null}
+    </SectionCard>
   );
 }
 
@@ -280,6 +403,10 @@ function ImpactDetailView() {
             {t(data.summary)}
           </p>
         </SectionCard>
+
+        {run.data?.results?.sensitivity ? (
+          <SensitivityTornado sensitivity={run.data.results.sensitivity} />
+        ) : null}
 
         {data.dimensions.length === 0 ? (
           <SectionCard>

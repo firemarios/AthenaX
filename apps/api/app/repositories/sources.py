@@ -6,15 +6,15 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import yaml
-
 from app.database import session_scope
 from app.models import DataSource
-from app.repositories.common import iso, mem_get, mem_list, mem_put, repo_root
+from app.repositories.common import iso, repo_root
 
 logger = logging.getLogger("policylab.repositories.sources")
 
@@ -23,6 +23,9 @@ _HEALTH: dict[str, dict[str, Any]] = {}
 
 
 def catalog_path() -> Path:
+    override = os.getenv("POLICYLAB_CATALOG_FILE")
+    if override:
+        return Path(override).expanduser()
     return repo_root() / "data" / "source-registry" / "catalog.yaml"
 
 
@@ -53,6 +56,11 @@ def catalog_entry(name: str) -> dict[str, Any] | None:
         if str(entry.get("name")) == str(name):
             return entry
     return None
+
+
+def health_map() -> dict[str, dict[str, Any]]:
+    """Last-known health per source id (in-memory). Never raises."""
+    return {str(name): dict(state) for name, state in _HEALTH.items()}
 
 
 def _provider_from(base_url: str | None) -> str | None:
@@ -149,9 +157,8 @@ async def list_sources(
 
     # attach dataset counts when the DB is reachable
     try:
-        from sqlalchemy import func, select
-
         from app.models import Dataset
+        from sqlalchemy import func, select
 
         async with session_scope() as session:
             rows = (
@@ -248,9 +255,8 @@ async def upsert_connector(entry: dict[str, Any]) -> None:
     name = str(entry.get("name") or "").strip()
     if not name:
         return
-    from sqlalchemy import select
-
     from app.models import Connector
+    from sqlalchemy import select
 
     async with session_scope() as session:
         row = (

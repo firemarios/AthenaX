@@ -76,6 +76,9 @@ Return ONLY a JSON object with this shape:
 
 Rules:
 - Use the ACTUAL metrics/economics for numbers. Never contradict them.
+- Report only what the selected model measures. Do not mention accessibility,
+  walkability or pedestrian access unless the selected model is accessibility or the
+  supplied metrics include such a measure.
 - Prefer real metric values over invented ones. Only add custom metrics/impact
   estimates when they add insight that the actual metrics do not cover.
 - Never emit 0 or null placeholders for values that are simply not applicable.
