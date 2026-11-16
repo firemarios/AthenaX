@@ -18,11 +18,11 @@ powershell -ExecutionPolicy Bypass -File infrastructure/deployment/smoke.ps1 `
 ```
 
 Open in tabs: `/ask`, `/data`, `/policies`, `/simulations`, `/impact/<last-run>`, `/metrics`.
-Have `docs/evidence/model-sensitivity.md` open as a backup.
+Have `docs/_internal/evidence/model-sensitivity.md` open as a backup.
 
 > **Measured on 2026-11-14:** the AI step took **113.9s** on the demo gateway. Pre-warm the
 > `/ask` question in a background tab before the audience joins, or ask it at 0:00 and narrate
-> `/data` while it runs. See [`docs/evidence/dry-run.md`](evidence/dry-run.md).
+> `/data` while it runs. See [`docs/_internal/evidence/dry-run.md`](_internal/evidence/dry-run.md).
 
 ## 5-minute script
 
@@ -46,12 +46,12 @@ After 4:50:
 
 | Time | Screen | Say | Do |
 |---|---|---|---|
-| 5:00 | `docs/evidence/connector-health.md` | "We measure connectors, including the ones that are down." | Point at `down/degraded` rows and the known-limitations section. |
-| 5:45 | `docs/evidence/model-sensitivity.md` | "The model is deterministic and sensitivity-tested; green m² per capita moves linearly with park area." | Show the sweep tables. |
+| 5:00 | `docs/_internal/evidence/connector-health.md` | "We measure connectors, including the ones that are down." | Point at `down/degraded` rows and the known-limitations section. |
+| 5:45 | `docs/_internal/evidence/model-sensitivity.md` | "The model is deterministic and sensitivity-tested; green m² per capita moves linearly with park area." | Show the sweep tables. |
 | 6:30 | `research/validation/greenspace-v1.0.0.md` | "V1 = methodology review; we do **not** claim a benchmark we do not have." | Point at §5.2 "not claimed" and §8. |
-| 7:15 | `docs/evidence/ai-eval.md` | "20 Greek questions: source-hit rate, correct refusals, zero unsourced claims." | Show the pass/fail table (run `python scripts/ai_eval.py` beforehand). |
+| 7:15 | `docs/_internal/evidence/ai-eval.md` | "20 Greek questions: source-hit rate, correct refusals, zero unsourced claims." | Show the pass/fail table (run `python scripts/ai_eval.py` beforehand). |
 | 8:00 | `docs/business-model.md` | "Who pays: a €9-18k/year municipality licence; pilot runs on free tiers." | Show the cost table and procurement path. |
-| 8:45 | `docs/pilot/README.md` | "Internal usability pilot, n=6-8, honest sample; results pending." | Show the protocol and `research/reports/pilot-2026-11.md` status. |
+| 8:45 | `docs/_internal/pilot/README.md` | "Internal usability pilot, n=6-8, honest sample; results pending." | Show the protocol and `docs/_internal/research/reports/pilot-2026-11.md` status. |
 | 9:30 | `data/source-registry/catalog.berlin.yaml` | "Same stack, second city: swap the catalog, restart." | Show `ATHENAX_CATALOG_FILE`. |
 
 ## Fallbacks (when the demo environment fights back)

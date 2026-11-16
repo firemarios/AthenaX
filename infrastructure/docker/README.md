@@ -10,7 +10,7 @@ root [`.dockerignore`](../../.dockerignore) applies.
 |---|---|---|---|---|
 | `athenax-api` | `apps/api/Dockerfile` (owned by backend agent B) | repo root | `8000` | FastAPI + uvicorn; runs Alembic migrations on start or via `alembic upgrade head` |
 | `athenax-web` | `apps/web/Dockerfile` (owned by frontend agent D) | repo root | `3000` | Next.js 16 production build (`next start`) |
-| `db` | none (image `postgis/postgis:16-3.4`) | — | `5432` | `CREATE EXTENSION IF NOT EXISTS postgis;` only — **no pgvector** (contracts §9.3) |
+| `db` | none (image `postgis/postgis:16-3.4`) | — | `5432` | `CREATE EXTENSION IF NOT EXISTS postgis;` only — **no pgvector** |
 
 Both Dockerfiles may not exist yet while the repo is being built in parallel — `docker compose up`
 fails with a clear "dockerfile not found" until they land. Compose references them anyway so the

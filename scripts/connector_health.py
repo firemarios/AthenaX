@@ -1,11 +1,11 @@
 """Connector health report (Phase 0, A).
 
 Runs every registered connector's `health()` check and writes
-`docs/evidence/connector-health.md` with status, latency and timestamp.
+`docs/_internal/evidence/connector-health.md` with status, latency and timestamp.
 
 Usage:
     python scripts/connector_health.py
-    python scripts/connector_health.py --output docs/evidence/connector-health.md
+    python scripts/connector_health.py --output docs/_internal/evidence/connector-health.md
 """
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ async def main() -> int:
     parser = argparse.ArgumentParser(description="Check every AthenaX connector and write a report.")
     parser.add_argument(
         "--output",
-        default=str(ROOT / "docs" / "evidence" / "connector-health.md"),
+        default=str(ROOT / "docs" / "_internal" / "evidence" / "connector-health.md"),
         help="Markdown output path",
     )
     args = parser.parse_args()

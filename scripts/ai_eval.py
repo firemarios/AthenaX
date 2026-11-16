@@ -186,12 +186,12 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument(
         "--output",
-        default=str(ROOT / "docs" / "evidence" / "ai-eval.md"),
+        default=str(ROOT / "docs" / "_internal" / "evidence" / "ai-eval.md"),
         help="Markdown report path",
     )
     parser.add_argument(
         "--json-output",
-        default=str(ROOT / "docs" / "evidence" / "ai-eval.json"),
+        default=str(ROOT / "docs" / "_internal" / "evidence" / "ai-eval.json"),
         help="JSON results path",
     )
     parser.add_argument("--dry-run", action="store_true", help="Validate the set without calling the API")

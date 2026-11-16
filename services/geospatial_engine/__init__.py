@@ -1,1 +1,1 @@
-"""Geospatial engine (Module 04). See docs/architecture/contracts.md §5.4."""
+"""Geospatial engine (Module 04). See docs/architecture/technical-specification.md."""

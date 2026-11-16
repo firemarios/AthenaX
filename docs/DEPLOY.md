@@ -105,9 +105,9 @@ A failure exits non-zero and prints the failing step.
 - `GET /metrics` — Prometheus text: request count/latency, connector health gauges, DB status.
   Scrape it from Grafana Cloud / Uptime Kuma if desired; no agent required.
 - `GET /health` — dependency matrix (`ok` / `degraded` / `down` / `disabled`).
-- `python scripts/connector_health.py` — writes `docs/evidence/connector-health.md`.
-- `python scripts/validate_model.py` — writes `docs/evidence/model-sensitivity.md`.
-- `python scripts/ai_eval.py --base-url https://<api>` — writes `docs/evidence/ai-eval.md`
+- `python scripts/connector_health.py` — writes `docs/_internal/evidence/connector-health.md`.
+- `python scripts/validate_model.py` — writes `docs/_internal/evidence/model-sensitivity.md`.
+- `python scripts/ai_eval.py --base-url https://<api>` — writes `docs/_internal/evidence/ai-eval.md`
   (needs a working LLM key).
 
 ## 7. BYO city (second deployment)
@@ -119,7 +119,7 @@ ATHENAX_CATALOG_FILE=data/source-registry/catalog.berlin.yaml
 Restart the API. The source registry, city centre and intervention areas come from the pack;
 the same models and UI run unchanged. See `data/source-registry/catalog.berlin.yaml`.
 A real second deployment should also re-run the connector health report and the AI eval, and
-record both in `docs/evidence/`.
+record both in `docs/_internal/evidence/`.
 
 ## 8. Known limitations (honest)
 

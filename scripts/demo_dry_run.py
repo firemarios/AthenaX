@@ -1,7 +1,7 @@
 """Timed Day-4 rehearsal of the flagship journey.
 
 Starts a local API if one is not already listening, runs the E2E smoke script
-with per-step timings, and writes docs/evidence/dry-run.md plus the raw log.
+with per-step timings, and writes docs/_internal/evidence/dry-run.md plus the raw log.
 
 Run: python scripts/demo_dry_run.py
 """
@@ -21,8 +21,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "http://127.0.0.1:8000"
 SMOKE = ROOT / "infrastructure" / "deployment" / "smoke.ps1"
-OUTPUT = ROOT / "docs" / "evidence" / "dry-run.md"
-LOG = ROOT / "docs" / "evidence" / "dry-run-smoke.log"
+OUTPUT = ROOT / "docs" / "_internal" / "evidence" / "dry-run.md"
+LOG = ROOT / "docs" / "_internal" / "evidence" / "dry-run-smoke.log"
 TEMP = Path.home() / "AppData" / "Local" / "Temp" / "opencode"
 API_OUT = TEMP / "dry-run-api-out.log"
 API_ERR = TEMP / "dry-run-api-err.log"

@@ -1,4 +1,4 @@
-"""Connector kit: shared base + connector catalog. See docs/architecture/contracts.md §5.1/§5.2."""
+"""Connector kit: shared base + connector catalog. See docs/architecture/technical-specification.md."""
 from services.connector_kit.base import BaseConnector, NormalizedRecord, utcnow
 
 __all__ = ["BaseConnector", "NormalizedRecord", "utcnow", "CONNECTOR_CLASSES"]

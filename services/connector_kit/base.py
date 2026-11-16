@@ -1,4 +1,4 @@
-"""Shared connector primitives — build contract (docs/architecture/contracts.md §5.1)."""
+"""Shared connector primitives — technical spec (docs/architecture/technical-specification.md)."""
 
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
 
 AthenaX ships a **minimal OpenTelemetry Collector config** and documents how tracing *would* be
 enabled. Observability is deliberately **off by default**: the MVP must run with zero extra
-dependencies (contracts §0: no new deps).
+dependencies (no new deps).
 
 ## What is here
 
@@ -14,7 +14,7 @@ dependencies (contracts §0: no new deps).
 
 - **The `opentelemetry-*` Python packages are NOT installed.** `requirements.txt` /
   `requirements-dev.txt` contain no OpenTelemetry entry, and adding one requires orchestrator
-  approval (see `docs/ai-development-master-prompt.md`, hard guardrails).
+  approval (hard guardrails).
 - **Instrumentation hooks are documented, not active.** If/when the packages are approved, the
   integration points are:
   - `apps/api/app/main.py` — FastAPI app: `opentelemetry.instrumentation.fastapi.FastAPIInstrumentor.instrument_app(app)`
@@ -59,7 +59,7 @@ dependencies (contracts §0: no new deps).
 ## What we do instead (MVP)
 
 - **Health endpoint** `GET /health` → `{db, llm, storage, rate_limiter}` each
-  `ok|degraded|down|disabled` (contracts §2) — surfaced as a health chip in the UI nav.
+  `ok|degraded|down|disabled` — surfaced as a health chip in the UI nav.
 - **Audit logs** table `audit_logs` (method, path, status, ip, created_at) exposed via
   `GET /v1/admin/audit`.
 - **Connector health** per source (`POST /v1/sources/{id}/health`, `Source.status`).

@@ -54,6 +54,9 @@ venv/
 storage/
 *.sqlite3
 
+# internal build/process docs (kept locally, never published)
+docs/_internal/
+
 # editors
 .vscode/
 .idea/

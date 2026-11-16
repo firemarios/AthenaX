@@ -5,8 +5,8 @@
 | **Product** | AthenaX — Open GovTech Intelligence & Policy Experimentation |
 | **Tagline** | Connect public data. Understand the city. Test better policies. |
 | **Version** | 1.0 (MVP) |
-| **Status** | Approved for parallel build |
-| **Normative companion** | [`contracts.md`](architecture/contracts.md) (interfaces) · [`technical-specification.md`](architecture/technical-specification.md) (architecture) |
+| **Status** | Approved (MVP) |
+| **Technical companion** | [`technical-specification.md`](architecture/technical-specification.md) (architecture & interfaces) |
 
 ---
 
@@ -53,8 +53,8 @@ carry an explicit disclaimer that online input is not a representative or instit
 
 ## 3. Modules
 
-Each module: **Goal → Features → Acceptance criteria (AC)**. Endpoint references are normative
-in [contracts §2](architecture/contracts.md).
+Each module: **Goal → Features → Acceptance criteria (AC)**. Endpoint references are defined
+in [technical-specification](architecture/technical-specification.md).
 
 ### Module 01 — Open Data Hub
 
@@ -288,8 +288,7 @@ in [contracts §2](architecture/contracts.md).
 | K9 | i18n coverage | 100% of user-facing strings in `el` + `en` |
 | K10 | Quality gates | `pytest`, `npm run lint`, `npm run build` all green |
 
-Validation methodology for K4–K6: [`research/methodology/README.md`](../research/methodology/README.md);
-report template: [`research/validation/TEMPLATE.md`](../research/validation/TEMPLATE.md).
+Validation for K4–K6: see [`research/validation/greenspace-v1.0.0.md`](../research/validation/greenspace-v1.0.0.md).
 
 ---
 
@@ -300,11 +299,11 @@ report template: [`research/validation/TEMPLATE.md`](../research/validation/TEMP
 | Source APIs change/break | Connectors degrade gracefully + health status + raw snapshots retained |
 | LLM unavailable or hallucinating | Fallback answer, mandatory sources/limitations, strict system prompt, record grounding |
 | Licence ambiguity of third-party data | Per-source licence table, "public ≠ free" rule, exports attribute sources |
-| Scope creep toward "smart city platform" | MVP scope table is binding; new features go through contracts update |
+| Scope creep toward "smart city platform" | MVP scope table is binding; new features go through a spec update |
 | No-auth abuse | Rate limiting + validation + audit logs + sandboxed workers (NFR-6/7) |
 | Model mistrust | Simulation Passport + validation reports + uncertainty ranges always shown |
 
 ---
 
-*This PRD is normative for product scope; interfaces are normative in
-[`contracts.md`](architecture/contracts.md). Deviations require an agreed contract update.*
+*This PRD is normative for product scope; architecture and interfaces are defined in
+[`technical-specification.md`](architecture/technical-specification.md).*

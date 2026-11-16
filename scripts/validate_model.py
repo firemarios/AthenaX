@@ -1,11 +1,11 @@
 """Model validation helper (Phase 2): sensitivity sweeps + determinism checks.
 
 Stdlib + repository code only (no new dependencies). Produces the tables used in
-`research/validation/greenspace-v1.0.0.md` and `docs/evidence/model-sensitivity.md`.
+`research/validation/greenspace-v1.0.0.md` and `docs/_internal/evidence/model-sensitivity.md`.
 
 Usage:
     python scripts/validate_model.py
-    python scripts/validate_model.py --output docs/evidence/model-sensitivity.md
+    python scripts/validate_model.py --output docs/_internal/evidence/model-sensitivity.md
 """
 from __future__ import annotations
 
@@ -154,7 +154,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate model sensitivity tables.")
     parser.add_argument(
         "--output",
-        default=str(ROOT / "docs" / "evidence" / "model-sensitivity.md"),
+        default=str(ROOT / "docs" / "_internal" / "evidence" / "model-sensitivity.md"),
         help="Output markdown path",
     )
     args = parser.parse_args()

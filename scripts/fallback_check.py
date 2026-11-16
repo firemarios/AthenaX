@@ -5,7 +5,7 @@ ATHENAX_SNAPSHOT_LIVE=0, then checks that:
   * /v1/ai/query still returns a valid envelope with explicit limitations;
   * a greenspace simulation still succeeds with a snapshot/passport.
 
-Writes docs/evidence/fallback-check.md.
+Writes docs/_internal/evidence/fallback-check.md.
 Run: python scripts/fallback_check.py
 """
 from __future__ import annotations
@@ -22,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "http://127.0.0.1:8011"
-OUTPUT = ROOT / "docs" / "evidence" / "fallback-check.md"
+OUTPUT = ROOT / "docs" / "_internal" / "evidence" / "fallback-check.md"
 TEMP = Path.home() / "AppData" / "Local" / "Temp" / "opencode"
 API_OUT = TEMP / "fallback-api-out.log"
 API_ERR = TEMP / "fallback-api-err.log"

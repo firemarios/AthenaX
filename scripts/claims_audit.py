@@ -2,7 +2,7 @@
 
 Day 4 asks for "every claim on the slides has proof in the repo". This script
 walks the six-slide deck, checks the artifacts it points at (files, CI steps,
-generated metrics), and writes docs/evidence/claims-audit.md. Exit code is
+generated metrics), and writes docs/_internal/evidence/claims-audit.md. Exit code is
 non-zero if any claim is unverifiable.
 
 Run: python scripts/claims_audit.py
@@ -17,7 +17,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "docs" / "evidence" / "claims-audit.md"
+OUTPUT = ROOT / "docs" / "_internal" / "evidence" / "claims-audit.md"
 DECK = "docs/slides/pitch-6-slides.md"
 
 
@@ -44,9 +44,9 @@ def main() -> int:
         check(claim, rel, ok, f"expected `{needle}`")
 
     # Slide 1 - product and normative docs
-    for rel in ("README.md", "docs/PRD.md", "docs/architecture/contracts.md"):
-        exists("Public product and contract docs", rel)
-    contains("API-first envelope contract documented", "docs/architecture/contracts.md", "/v1")
+    for rel in ("README.md", "docs/PRD.md", "docs/architecture/technical-specification.md"):
+        exists("Public product and architecture docs", rel)
+    contains("API-first envelope contract documented", "docs/architecture/technical-specification.md", "/v1")
 
     # Slide 2 - it runs, and we prove it
     contains("CI runs pytest", ".github/workflows/ci.yml", "pytest")
@@ -54,13 +54,13 @@ def main() -> int:
     contains("CI runs frontend lint", ".github/workflows/ci.yml", "npm run lint")
     contains("CI runs frontend typecheck", ".github/workflows/ci.yml", "npm run typecheck")
     contains("CI runs frontend build", ".github/workflows/ci.yml", "npm run build")
-    contains("Backend suite result recorded", "docs/evidence/rehearsal.md", "85 passed")
-    contains("E2E smoke result recorded", "docs/evidence/smoke.md", "SMOKE PASSED (21 checks)")
-    contains("Timed dry run recorded", "docs/evidence/dry-run.md", "SMOKE PASSED (21 checks)")
-    contains("Connector health report exists", "docs/evidence/connector-health.md", "Sources checked: **11**")
+    contains("Backend suite result recorded", "docs/_internal/evidence/rehearsal.md", "85 passed")
+    contains("E2E smoke result recorded", "docs/_internal/evidence/smoke.md", "SMOKE PASSED (21 checks)")
+    contains("Timed dry run recorded", "docs/_internal/evidence/dry-run.md", "SMOKE PASSED (21 checks)")
+    contains("Connector health report exists", "docs/_internal/evidence/connector-health.md", "Sources checked: **11**")
     contains(
         "Connector degradations are documented",
-        "docs/evidence/connector-health.md",
+        "docs/_internal/evidence/connector-health.md",
         "Known limitations",
     )
     exists("Prometheus metrics endpoint exists", "apps/api/app/metrics.py")
@@ -71,7 +71,7 @@ def main() -> int:
     exists("Snapshot builder exists", "services/data_ingestion/snapshot.py")
     contains("Snapshot exposes source URLs", "services/data_ingestion/snapshot.py", "https://www.openstreetmap.org")
     contains("Snapshot labels synthetic fallback", "services/data_ingestion/snapshot.py", "synthetic")
-    contains("Snapshot mode recorded in evidence", "docs/evidence/smoke.md", "mode=snapshot")
+    contains("Snapshot mode recorded in evidence", "docs/_internal/evidence/smoke.md", "mode=snapshot")
     contains("Passport carries an inputs checksum", "services/simulation_engine/runner.py", "inputs_checksum")
 
     # Slide 4 - adoption, pricing, deployment
@@ -86,15 +86,15 @@ def main() -> int:
     exists("Demo script exists", "docs/DEMO.md")
 
     # Slide 5 - impact, validation, pilot honesty
-    contains("Six-dimension impact recorded", "docs/evidence/smoke.md", "6 dimensions")
-    contains("Reach block recorded", "docs/evidence/smoke.md", "reach")
+    contains("Six-dimension impact recorded", "docs/_internal/evidence/smoke.md", "6 dimensions")
+    contains("Reach block recorded", "docs/_internal/evidence/smoke.md", "reach")
     contains("Tornado chart exists", "apps/web/app/impact/[id]/page.tsx", "SensitivityTornado")
     contains("V2 benchmark not claimed", "research/validation/greenspace-v1.0.0.md", "not claimed", lower=True)
-    contains("Pilot results marked pending", "research/reports/pilot-2026-11.md", "_pending_")
-    contains("Determinism uses a fixed seed", "docs/evidence/model-sensitivity.md", "seed=42")
+    contains("Pilot results marked pending", "docs/_internal/research/reports/pilot-2026-11.md", "_pending_")
+    contains("Determinism uses a fixed seed", "docs/_internal/evidence/model-sensitivity.md", "seed=42")
 
     # Slide 6 - innovation proof
-    eval_path = ROOT / "docs/evidence/ai-eval.json"
+    eval_path = ROOT / "docs/_internal/evidence/ai-eval.json"
     eval_ok = False
     eval_note = "missing ai-eval.json"
     if eval_path.exists():
@@ -112,13 +112,13 @@ def main() -> int:
             f"unsourced={result.get('unsourced_claims')} "
             f"over_refusal={result.get('over_refusal_rate')}"
         )
-    check("AI eval numbers match the slide", "docs/evidence/ai-eval.json", eval_ok, eval_note)
+    check("AI eval numbers match the slide", "docs/_internal/evidence/ai-eval.json", eval_ok, eval_note)
     contains(
         "Over-refusal reported as a diagnostic",
-        "docs/evidence/ai-eval.md",
+        "docs/_internal/evidence/ai-eval.md",
         "not gating",
     )
-    contains("Over-refusal remediation documented", "docs/evidence/ai-eval-notes.md", "remediation", lower=True)
+    contains("Over-refusal remediation documented", "docs/_internal/evidence/ai-eval-notes.md", "remediation", lower=True)
     contains("Provenance chain exists", "apps/web/app/simulations/[id]/page.tsx", "ProvenanceChain")
     contains("Reproduce control exists", "apps/web/app/simulations/[id]/page.tsx", "Reproduce (same seed)")
     contains("Catalog override is wired", "apps/api/app/repositories/sources.py", "ATHENAX_CATALOG_FILE")
@@ -153,7 +153,7 @@ def main() -> int:
         "# Claims audit - slides to repo evidence",
         "",
         f"- Generated: **{generated}**",
-        f"- Deck: [`{DECK}`](../slides/pitch-6-slides.md)",
+        f"- Deck: [`{DECK}`](../../slides/pitch-6-slides.md)",
         f"- Checks: **{len(checks)}** - passed **{passed}** - failed **{failed}**",
         f"- Result: **{'PASS' if failed == 0 else 'FAIL'}**",
         "",

@@ -2,13 +2,9 @@
 
 | | |
 |---|---|
-| **Status** | Normative for architecture; **[`contracts.md`](contracts.md) is normative for interfaces** |
+| **Status** | Normative for architecture and interfaces |
 | **Scope** | 7-layer architecture, stack, data pipeline, standards, API design, AI, digital twin, simulations, security, deployment |
-| **Audience** | All build agents and contributors |
-
-> If this document and [`contracts.md`](contracts.md) disagree on an *interface* (endpoint,
-> type, table, function signature), **contracts.md wins**. Report discrepancies instead of
-> diverging silently.
+| **Audience** | Contributors and reviewers |
 
 ---
 
@@ -68,7 +64,7 @@ apps/web ──HTTP──▶ apps/api (FastAPI) ──▶ services/* ──▶ P
 | Containers | **Docker / Compose** | `docker-compose.yml` at root: `db`, `api`, `web` (+ `redis`, `minio` under `--profile full`) | required |
 | HTTP client (Py) | `httpx` + `tenacity` | 3 attempts, exponential backoff, in all connectors/providers | required |
 | Observability | health endpoint + audit logs (MVP) | OpenTelemetry config provided but **packages not installed / exporter off** (`infrastructure/monitoring/`) | optional |
-| Test stack | `pytest`, `ruff` (py110), `eslint-config-next`, `tsc` | gates in contracts §7 | required |
+| Test stack | `pytest`, `ruff` (py110), `eslint-config-next`, `tsc` | required before merge | required |
 
 ---
 
@@ -81,7 +77,7 @@ database — but with hard internal module boundaries.
 
 - MVP risk lives in *integration* (connectors → store → AI → simulation), not in scaling.
 - One `docker compose up` for contributors; no service mesh, no distributed transactions.
-- Contracts §9.1 already fixes the module seams via explicit import lists.
+- Module seams are fixed via explicit import lists.
 
 **Internal module map (extraction-ready)**
 
@@ -94,7 +90,7 @@ database — but with hard internal module boundaries.
 | Reporting | `services/reporting_engine` | stays (cheap, pure functions) | — |
 
 **Extraction rules:** (1) never extract before the module has its own tests and a stable
-contract; (2) cross-module calls go through the contract interfaces (contracts §9.1), never
+contract; (2) cross-module calls go through the documented interfaces, never
 through shared DB tables; (3) each extractable module must already run as a subprocess/CLI
 (`python -m services.simulation_engine.worker`) — the seam exists before the network does.
 
@@ -137,14 +133,14 @@ Raw snapshots make ingestion replayable without re-hitting the source.
 | **SDMX** | Official statistics exchange | reference for ELSTAT/Eurostat indicator structures (dimension codes → tags); no runtime dependency |
 
 All standards are **document-level conventions** — no extra Python/TS dependencies are added
-for them (contracts §0: no new deps).
+for them.
 
 ---
 
 ## 6. Database schema summary
 
-Authoritative table list: **contracts §5.7 + §9.2**; physical models live in
-`apps/api/app/models/` (agent B); Alembic migrations in `infrastructure/database/alembic/`.
+Physical models live in `apps/api/app/models/`; Alembic migrations in
+`infrastructure/database/alembic/`.
 
 ```text
 data_sources · datasets · dataset_versions · data_quality_reports · documents
@@ -164,7 +160,7 @@ Conventions:
 - Geometry via GeoAlchemy2 — but code must also work with the DB down (tests mock sessions).
 - Startup seeds registry/flags/cities/settings from `data/source-registry/catalog.yaml`
   (non-fatal if the DB is unreachable; YAML is also the fallback for `/v1/sources`).
-- The DB runs `CREATE EXTENSION IF NOT EXISTS postgis;` **only** (no pgvector — contracts §9.3).
+- The DB runs `CREATE EXTENSION IF NOT EXISTS postgis;` **only** (no pgvector).
 
 ---
 
@@ -199,7 +195,7 @@ Conventions:
 - Developer Portal renders the catalogue from `/openapi.json` (no drift) and exposes
   `GET /v1/developers/info`.
 
-### 7.4 Endpoint catalog (reproduced from contracts §2)
+### 7.4 Endpoint catalog
 
 | Group | Endpoints |
 |---|---|
@@ -214,7 +210,7 @@ Conventions:
 | **Developer (10)** | `GET /v1/developers/examples` · `GET /v1/developers/info` |
 | **Admin** | `GET /v1/admin/flags` · `PATCH /v1/admin/flags/{name}` · `GET /v1/admin/connectors` · `PATCH /v1/admin/connectors/{name}` · `GET /v1/admin/audit` · `POST /v1/admin/ingest` |
 
-Full request/response shapes: **contracts §2** (normative).
+Full request/response shapes: see the OpenAPI schema at `/openapi.json`.
 
 ---
 
@@ -242,7 +238,7 @@ AIAnswer {detailed_result, summary, sources[], limitations[]}
 
 - **Controlled tools only.** The model never emits SQL. Retrieval goes through
   `services/geospatial_engine` whitelisted query builders and pre-fetched records passed as
-  `records=[...]` (contracts §4). No arbitrary tool execution.
+  `records=[...]`. No arbitrary tool execution.
 - **Evidence layer is code, not prompt.** `build_sources()` derives citations from the
   retrieved records themselves; a citation that is not in the record set cannot appear.
 - **Provider abstraction:** `LLMProvider` with `chat/ping/embed`; `OllamaProvider`
@@ -266,13 +262,13 @@ AIAnswer {detailed_result, summary, sources[], limitations[]}
 | **L4** | **3D + scenario twin** | CesiumJS 3D (buildings from footprints + heights, fallback to fill-extrusion), scenario overlays ("what if" policy geometries on the twin), time slider | Post-MVP (3D shell in MVP) |
 
 Elevation/heights come from building footprints + approximated heights; the 3D path must
-degrade to L2 on any Cesium failure (contracts §6.3).
+degrade to L2 on any Cesium failure.
 
 ---
 
 ## 10. Simulation Passport specification
 
-Every `SimulationRun` that succeeds carries a `Passport` (contracts §3) — the reproducibility
+Every `SimulationRun` that succeeds carries a `Passport` — the reproducibility
 receipt shown on `/simulations/[id]`:
 
 | Field | Meaning |
@@ -287,7 +283,7 @@ receipt shown on `/simulations/[id]`:
 | `seed` | RNG seed — **determinism: same inputs + seed ⇒ identical metrics** |
 | `inputs_checksum` | hash of the parameter snapshot — detects input drift |
 
-Rules: passport built by `build_passport()` (contracts §5.5); unknown/failed runs never raise
+Rules: passport built by `build_passport()`; unknown/failed runs never raise
 to HTTP (status `failed` + warnings); unvalidated models must render a visible warning badge;
 exports (md/csv/json) embed the passport's provenance section.
 
@@ -348,8 +344,6 @@ Runbooks: [`infrastructure/deployment/README.md`](../../infrastructure/deploymen
 
 | Document | Role |
 |---|---|
-| [`contracts.md`](contracts.md) | **Normative interfaces** — endpoints, TS types, Python signatures, DB tables, ownership matrix, validation gates |
 | [`../PRD.md`](../PRD.md) | Normative product scope, journeys, KPIs |
-| [`../ai-development-master-prompt.md`](../ai-development-master-prompt.md) | Agent working rules |
 | [`../data-governance/README.md`](../data-governance/README.md) | Licensing, provenance, retention |
 | [`../../infrastructure/`](../../infrastructure/) | Compose, images, monitoring, deployment |

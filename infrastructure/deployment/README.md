@@ -14,7 +14,7 @@
 | Telemetry | off | off (collector optional) | off unless OTel packages approved — see `infrastructure/monitoring/README.md` |
 
 **Rules:** no secrets in git (`.env*` is git-ignored except `*.example`); every setting uses the
-`ATHENAX_` prefix (contracts §1); `NEXT_PUBLIC_*` values are fixed at **build** time.
+`ATHENAX_` prefix; `NEXT_PUBLIC_*` values are fixed at **build** time.
 
 ## Runbook — development (Docker path)
 
@@ -54,7 +54,7 @@ docker compose down -v                # stop and DELETE the db volume
 ## Runbook — staging / production
 
 1. Provision PostgreSQL 16 + PostGIS 3.4; create db `athenax`; run
-   `CREATE EXTENSION IF NOT EXISTS postgis;` (no pgvector — contracts §9.3).
+   `CREATE EXTENSION IF NOT EXISTS postgis;` (no pgvector).
 2. Copy `.env.production.example` → `.env.production`, fill values, keep out of git.
 3. Build images: `docker compose build` (or per-service CI builds of
    `apps/api/Dockerfile` and `apps/web/Dockerfile`).

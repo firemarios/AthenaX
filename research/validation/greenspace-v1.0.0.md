@@ -86,7 +86,7 @@ a literature-validated health threshold (that is exactly why it is a V1, not V2,
 ## 5. Results
 
 All numbers below are reproducible with `python scripts/validate_model.py` (generated file:
-`docs/evidence/model-sensitivity.md`).
+`docs/_internal/evidence/model-sensitivity.md`).
 
 ### 5.1 Determinism
 
@@ -167,4 +167,4 @@ review session.
 ---
 
 *File naming: `<model_name>-v<version>.md` · Generated sensitivity tables:
-`docs/evidence/model-sensitivity.md`.*
+`docs/_internal/evidence/model-sensitivity.md`.*

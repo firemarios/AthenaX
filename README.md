@@ -14,10 +14,8 @@ Athens, built to work for any city.
 
 - **License:** [Apache-2.0](LICENSE)
 - **Language:** Greek-first UI (English fully available) - every user-facing string ships `el` + `en`
-- **Contracts (normative):** [`docs/architecture/contracts.md`](docs/architecture/contracts.md)
-- **Evidence for reviewers:** [`docs/evidence/`](docs/evidence/) - smoke run, connector health,
-  AI evidence-first eval, model determinism, rehearsal checklist. Demo/deploy:
-  [`docs/DEMO.md`](docs/DEMO.md), [`docs/DEPLOY.md`](docs/DEPLOY.md).
+- **Architecture (normative):** [`docs/architecture/technical-specification.md`](docs/architecture/technical-specification.md)
+- **Demo & deploy:** [`docs/DEMO.md`](docs/DEMO.md), [`docs/DEPLOY.md`](docs/DEPLOY.md)
 
 ---
 
@@ -100,8 +98,8 @@ Detailed specification: [`docs/architecture/technical-specification.md`](docs/ar
 ```text
 athenax/
 ├── apps/
-│   ├── api/                 FastAPI backend (agent B) — app.main:app, /v1 routes
-│   └── web/                 Next.js 16 frontend (agents D & E)
+│   ├── api/                 FastAPI backend — app.main:app, /v1 routes
+│   └── web/                 Next.js 16 frontend
 ├── packages/                shared TS packages (@athenax/ui, types, api-client)
 ├── services/                Python domain services (ai_engine, connector_kit,
 │                            data_ingestion, geospatial_engine, simulation_engine,
@@ -109,14 +107,14 @@ athenax/
 ├── data/
 │   └── source-registry/     catalog.yaml — 9 sources + 6 Athens intervention areas
 ├── infrastructure/
-│   ├── database/            Alembic migrations + init-db (agent B)
+│   ├── database/            Alembic migrations + init-db
 │   ├── docker/              image build docs
 │   ├── monitoring/          OTel collector config (opt-in)
 │   └── deployment/          env templates, dev.ps1, runbooks
-├── research/                methodology, validation templates, experiments, reports
-├── docs/                    PRD, technical spec, contracts, AI prompt, data governance
+├── research/                model validation reports
+├── docs/                    PRD, technical spec, data governance, demo, deploy
 ├── docker-compose.yml       db + api + web (+ redis/minio via --profile full)
-└── CONTRIBUTING.md · LICENSE · README.md
+└── LICENSE · README.md
 ```
 
 ---
@@ -143,7 +141,7 @@ docker compose ps                # wait until "healthy"
 # from the repo root
 python -m pip install -r requirements-dev.txt
 
-# migrations — PYTHONPATH must include the repo root AND apps/api (contracts §1)
+# migrations — PYTHONPATH must include the repo root AND apps/api
 $env:PYTHONPATH = "$PWD;$PWD\apps/api"
 alembic upgrade head             # schema; run after every pull
 
@@ -185,8 +183,7 @@ npm.cmd run lint                # eslint (eslint-config-next, strict)
 npm.cmd run build               # Next.js production build — must pass before PR
 ```
 
-Agent-specific gates are listed in [`docs/architecture/contracts.md` §7](docs/architecture/contracts.md);
-the orchestrator runs the final combined gates.
+All of the above must pass before merging.
 
 ---
 
@@ -195,12 +192,11 @@ the orchestrator runs the final combined gates.
 | Document | Purpose |
 |---|---|
 | [`docs/PRD.md`](docs/PRD.md) | Master product requirements: personas, 10 modules, journeys, MVP scope, KPIs |
-| [`docs/architecture/contracts.md`](docs/architecture/contracts.md) | **Normative** shared build contracts (endpoints, types, DB tables, ownership) |
-| [`docs/architecture/technical-specification.md`](docs/architecture/technical-specification.md) | 7-layer technical spec, stack, standards, security posture |
-| [`docs/ai-development-master-prompt.md`](docs/ai-development-master-prompt.md) | Instructions for AI coding agents working in this repo |
+| [`docs/architecture/technical-specification.md`](docs/architecture/technical-specification.md) | **Normative** 7-layer architecture, API design, stack, standards, security posture |
 | [`docs/data-governance/README.md`](docs/data-governance/README.md) | Data licensing, provenance, retention, personal-data stance |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Workflow, code style, i18n & evidence rules |
-| [`research/`](research/) | Validation methodology, report templates, experiment log |
+| [`docs/DEMO.md`](docs/DEMO.md) | 5- and 10-minute demo script |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Deployment runbook (Render + Neon + Vercel, Docker) |
+| [`research/validation/greenspace-v1.0.0.md`](research/validation/greenspace-v1.0.0.md) | Validation report for the `greenspace` model |
 
 ---
 
