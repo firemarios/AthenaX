@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
 import type { ResearchProject } from "@policylab/types";
-import { GENERIC_ERROR, doGet, doPost } from "@/_shared/hooks";
+import { GENERIC_ERROR, doDelete, doGet, doPost } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
 import {
+  DeleteButton,
   ErrorPanel,
   Field,
   PageHeader,
@@ -34,7 +35,7 @@ const STR = {
   submitting: { el: "Δημιουργία…", en: "Creating…" },
   count: { el: "έργα", en: "projects" },
   experiments: { el: "πειράματα", en: "experiments" },
-  loading: { el: "Φόρτωση εργων…", en: "Loading projects…" },
+  loading: { el: "Φόρτωση έργων…", en: "Loading projects…" },
   empty: { el: "Κανένα έργο έρευνας ακόμη", en: "No research projects yet" },
   emptyDesc: {
     el: "Αποθηκεύστε πειράματα, συγκρίνετε μοντέλα και επαναλάβετε αποτελέσματα.",
@@ -204,12 +205,25 @@ export default function ResearchPage() {
                   </span>
                 }
                 footer={
-                  <Link
-                    href={`/research/${project.id}`}
-                    className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                  >
-                    {t(STR.open)}
-                  </Link>
+                  <span className="flex w-full flex-wrap items-center justify-between gap-2">
+                    <Link
+                      href={`/research/${project.id}`}
+                      className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      {t(STR.open)}
+                    </Link>
+                    <DeleteButton
+                      compact
+                      onConfirm={async () => {
+                        const res = await doDelete(`/v1/research/projects/${encodeURIComponent(project.id)}`);
+                        if (res.error) return res.error;
+                        setList((prev) =>
+                          (prev ?? []).filter((item) => item.id !== project.id)
+                        );
+                        return null;
+                      }}
+                    />
+                  </span>
                 }
               />
             </li>

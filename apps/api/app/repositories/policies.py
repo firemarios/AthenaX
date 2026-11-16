@@ -4,7 +4,15 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.repositories.common import as_json, iso, mem_get, mem_list, mem_put, new_id
+from app.repositories.common import (
+    as_json,
+    iso,
+    mem_delete,
+    mem_get,
+    mem_list,
+    mem_put,
+    new_id,
+)
 
 logger = logging.getLogger("policylab.repositories.policies")
 
@@ -168,6 +176,30 @@ async def create_policy(payload: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         logger.debug("create_policy: DB μη διαθέσιμη (%s) — ενδομοική αποθήκευση", exc)
         return mem_put(TABLE, row_data)
+
+
+async def delete_policy(policy_id: str) -> bool:
+    """Delete a policy and its variants (DB first, then memory fallback)."""
+    wanted = str(policy_id)
+    try:
+        from app.database import session_scope
+        from app.models import Policy, PolicyVariant
+        from sqlalchemy import delete
+
+        async with session_scope() as session:
+            await session.execute(
+                delete(PolicyVariant).where(PolicyVariant.policy_id == wanted)
+            )
+            result = await session.execute(delete(Policy).where(Policy.id == wanted))
+            if (result.rowcount or 0) > 0:
+                return True
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("delete_policy: DB μη διαθέσιμη (%s)", exc)
+
+    for variant in mem_list(VARIANTS_TABLE):
+        if str(variant.get("policy_id")) == wanted:
+            mem_delete(VARIANTS_TABLE, str(variant.get("id")))
+    return mem_delete(TABLE, wanted)
 
 
 async def add_variant(policy_id: str, title: str, parameters: dict[str, Any]) -> dict[str, Any] | None:

@@ -66,6 +66,15 @@ async def create_policy(payload: PolicyCreate, request: Request):
     return JSONResponse(status_code=201, content=ok(item, build_meta(get_request_id(request))))
 
 
+@router.delete("/policies/{id}")
+async def delete_policy(id: str, request: Request):
+    """Delete a policy and its variants (404 when it does not exist)."""
+    deleted = await policies_repo.delete_policy(id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Η πολιτική δεν βρέθηκε.")
+    return ok({"id": id, "deleted": True}, build_meta(get_request_id(request)))
+
+
 @router.post("/policies/{id}/variants")
 async def create_variant(id: str, payload: VariantCreate, request: Request):
     item = await policies_repo.add_variant(id, payload.title, payload.parameters)

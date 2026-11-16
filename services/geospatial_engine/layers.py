@@ -45,7 +45,7 @@ LAYER_REGISTRY: dict[str, dict] = {
         "title": {"el": "Δημόσιες υπηρεσίες", "en": "Public facilities"},
         "geometry_type": "Point",
         "source": "OpenStreetMap",
-        "description": {"el": "Δημαρχεία, λειτουργεία, αστυνομικά τμήματα", "en": "City halls, offices, police stations"},
+        "description": {"el": "Δημαρχεία, γραφεία, αστυνομικά τμήματα", "en": "City halls, offices, police stations"},
         "table": "city_features",
     },
     "pois": {

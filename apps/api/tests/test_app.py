@@ -8,7 +8,7 @@ def test_root_envelope(client):
     body = resp.json()
     assert body["ok"] is True and body["error"] is None
     assert body["data"]["name"] == "POLICYLAB"
-    assert body["data"]["endpoints"] == 46
+    assert body["data"]["endpoints"] == 52
     assert body["meta"]["request_id"]
 
 
@@ -70,7 +70,7 @@ def test_openapi_matches_contract_catalog(client):
     assert catalog_paths == {path for path in paths if path.startswith("/v1/")}
     for entry in ROUTE_CATALOG:
         assert entry["method"].lower() in paths[entry["path"]]
-    assert len(ROUTE_CATALOG) == 46
+    assert len(ROUTE_CATALOG) == 52
 
 
 def test_rate_limit_429(client, monkeypatch):

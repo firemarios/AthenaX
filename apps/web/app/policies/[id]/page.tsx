@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Badge, Skeleton, useI18n } from "@policylab/ui";
 import type { Policy, PolicyVariant, SimulationRun } from "@policylab/types";
-import { doPost, useApi } from "@/_shared/hooks";
+import { doDelete, doPost, useApi } from "@/_shared/hooks";
 import { fmtDate, fmtEUR } from "@/_shared/format";
 import { areaName, type CityArea } from "@/_shared/geo";
 import { KeyValueEditor, rowsToKv, type KvRow } from "@/_shared/forms";
@@ -18,6 +18,7 @@ import {
   statusTone,
 } from "@/_shared/terms";
 import {
+  DeleteButton,
   ErrorPanel,
   Field,
   KeyValueTable,
@@ -277,6 +278,14 @@ function PolicyDetailView() {
               {t(statusLabel(data.status, POLICY_STATUS_LABELS))}
             </Badge>
             <Badge tone="info">{cat ? t(cat) : data.category}</Badge>
+            <DeleteButton
+              onConfirm={async () => {
+                const res = await doDelete(`/v1/policies/${encodeURIComponent(data.id)}`);
+                if (res.error) return res.error;
+                router.push("/policies");
+                return null;
+              }}
+            />
           </>
         }
       />

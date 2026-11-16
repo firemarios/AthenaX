@@ -242,8 +242,10 @@ def test_policy_factors_and_simulation_economics(client):
 class _FakePlannerProvider:
     def __init__(self, content: str) -> None:
         self.content = content
+        self.calls = 0
 
     async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
+        self.calls += 1
         return self.content
 
 
@@ -291,6 +293,38 @@ def test_policy_planner_calculates_model_factors_and_tax():
     assert plan["tax"]["annual_tax_revenue_eur"] == 67200
     assert plan["report"]["findings"][0]["en"] == "Finding"
     assert plan["confidence"] == 0.81
+
+
+def test_policy_planner_reuses_cached_plan_for_identical_inputs():
+    claim = {
+        "model": "greenspace",
+        "parameters": {"area_id": "Exarchia", "park_count": 12},
+        "benefit": {
+            "annual_benefit_eur": 51000,
+            "rationale": {"el": "Δεδομένα OSM", "en": "OSM data"},
+        },
+        "report": {"summary": {"el": "Σύνοψη", "en": "Summary"}},
+        "grounding_used": ["OpenStreetMap Overpass API"],
+    }
+    provider = _FakePlannerProvider(json.dumps(claim))
+    kwargs = {
+        "title": "Deterministic cached plan check",
+        "category": "environment",
+        "area": "Exarchia",
+        "provider": provider,
+        "grounding": {
+            "snapshot_mode": "snapshot",
+            "retrieved_at": "t1",
+            "area_profile": {"population": 9000, "parks": 4},
+            "comparables": [{"capex_eur": 250000}],
+        },
+    }
+    first = asyncio.run(plan_policy_simulation(**kwargs))
+    second = asyncio.run(plan_policy_simulation(**kwargs))
+    assert provider.calls == 1
+    assert first == second
+    assert second["benefit"]["annual_benefit_eur"] == 51000
+    assert second["grounding_used"] == ["OpenStreetMap Overpass API"]
 
 
 def test_report_sections_normalizer_drops_invalid_blocks():
@@ -522,13 +556,72 @@ def test_simulation_use_ai_persists_plan_and_tax(client, monkeypatch):
         "/v1/simulations",
         json={"policy_id": policy["id"], "use_ai": True, "parameters": {}, "compare_baseline": True},
     )
-    run = resp.json()["data"]
+    created = resp.json()["data"]
+    assert created["status"] == "running"
+    run = client.get(f"/v1/simulations/{created['id']}").json()["data"]
     assert run["status"] == "succeeded"
     assert run["model_name"] == "accessibility"
     assert run["results"]["ai"]["tax"]["annual_tax_revenue_eur"] == 67200
     assert run["parameters"]["area_id"] == "Κυψέλη"
     assert run["results"]["economics"]["annual_tax_revenue_eur"] == 67200
     assert run["results"]["economics"]["new_buildings"] == 40
+
+
+def test_delete_policy_and_simulation(client):
+    policy = client.post(
+        "/v1/policies", json={"title": "Προς διαγραφή", "category": "environment"}
+    ).json()["data"]
+    client.post(
+        f"/v1/policies/{policy['id']}/variants",
+        json={"title": "Παραλλαγή", "parameters": {"budget": 1000}},
+    )
+
+    deleted = client.delete(f"/v1/policies/{policy['id']}")
+    assert deleted.status_code == 200
+    assert deleted.json()["data"] == {"id": policy["id"], "deleted": True}
+    assert client.get(f"/v1/policies/{policy['id']}").status_code == 404
+    assert client.delete(f"/v1/policies/{policy['id']}").status_code == 404
+
+    run = client.post("/v1/simulations", json={"model": "cost", "parameters": {}}).json()["data"]
+    assert client.delete(f"/v1/simulations/{run['id']}").status_code == 200
+    assert client.get(f"/v1/simulations/{run['id']}").status_code == 404
+    assert client.delete(f"/v1/simulations/{run['id']}").status_code == 404
+
+
+def test_economics_cost_model_always_gets_a_verdict():
+    economics = compute_economics(
+        "cost",
+        {"unit_cost_eur": 250, "length_m": 1000, "contingency_pct": 10},
+        {
+            "cost_eur": 275000.0,
+            "cost_low_eur": 212500.0,
+            "cost_high_eur": 316250.0,
+        },
+        None,
+    )
+    assert economics["capex_eur"] == 275000.0
+    assert economics["annual_benefit_eur"] > 0
+    assert economics["benefit_source"] == "heuristic"
+    assert economics["benefit_cost_ratio"] is not None
+    assert economics["verdict"] != "unknown"
+    assert economics["benefit_breakdown"][0]["label"]["en"] == "Estimated annual benefit"
+
+
+def test_economics_uses_ai_benefit_estimate():
+    economics = compute_economics(
+        "cost",
+        {"unit_cost_eur": 250, "length_m": 1000, "contingency_pct": 10},
+        {
+            "cost_eur": 275000.0,
+            "cost_low_eur": 212500.0,
+            "cost_high_eur": 316250.0,
+        },
+        None,
+        annual_benefit_eur=90000,
+    )
+    assert economics["annual_benefit_eur"] == 90000
+    assert economics["benefit_source"] == "ai"
+    assert economics["verdict"] != "unknown"
 
 
 def test_economics_negative_greenspace_delta_is_not_worth_it():

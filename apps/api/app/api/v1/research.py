@@ -53,6 +53,15 @@ async def get_project(id: str, request: Request):
     return ok(item, build_meta(get_request_id(request)))
 
 
+@router.delete("/research/projects/{id}")
+async def delete_project(id: str, request: Request):
+    """Delete a research project and its experiments."""
+    deleted = await research_repo.delete_project(id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Το ερευνητικό έργο δεν βρέθηκε.")
+    return ok({"id": id, "deleted": True}, build_meta(get_request_id(request)))
+
+
 def _metric_rows(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for run in runs or []:

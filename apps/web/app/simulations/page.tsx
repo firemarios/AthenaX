@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
 import type { Policy, SimulationRun } from "@policylab/types";
-import { useApi } from "@/_shared/hooks";
+import { useApi, doDelete } from "@/_shared/hooks";
 import { fmtDateTime } from "@/_shared/format";
 import {
+  DeleteButton,
   ErrorPanel,
   PageFallback,
   PageHeader,
@@ -232,21 +233,32 @@ function SimulationsView() {
                       </>
                     }
                     footer={
-                      <span className="flex flex-wrap gap-4">
-                        <Link
-                          href={`/simulations/${run.id}`}
-                          className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
-                        >
-                          {t(STR.details)}
-                        </Link>
-                        {run.status === "succeeded" ? (
+                      <span className="flex w-full flex-wrap items-center justify-between gap-2">
+                        <span className="flex flex-wrap gap-4">
                           <Link
-                            href={`/impact/${run.id}`}
+                            href={`/simulations/${run.id}`}
                             className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
                           >
-                            {t(STR.impact)}
+                            {t(STR.details)}
                           </Link>
-                        ) : null}
+                          {run.status === "succeeded" ? (
+                            <Link
+                              href={`/impact/${run.id}`}
+                              className="rounded font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                            >
+                              {t(STR.impact)}
+                            </Link>
+                          ) : null}
+                        </span>
+                        <DeleteButton
+                          compact
+                          onConfirm={async () => {
+                            const res = await doDelete(`/v1/simulations/${encodeURIComponent(run.id)}`);
+                            if (res.error) return res.error;
+                            runs.reload();
+                            return null;
+                          }}
+                        />
                       </span>
                     }
                   />

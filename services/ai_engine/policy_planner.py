@@ -7,11 +7,14 @@ deterministic plan so a simulation never fails because of AI.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import math
+import os
 import re
 import unicodedata
+from pathlib import Path
 from typing import Any
 
 from services.ai_engine.providers import get_provider
@@ -22,6 +25,8 @@ logger = logging.getLogger("policylab.ai.policy_planner")
 BASE_TAX_EUR_PER_BUILDING = 1_600.0
 MAX_NEW_BUILDINGS = 20_000
 PLANNER_TIMEOUT_SECONDS = 150.0
+
+_PLAN_CACHE_VERSION = "v1"
 
 _CHART_TYPES = {"bar", "line", "donut"}
 _CHART_FORMATS = {"number", "currency", "percent"}
@@ -72,6 +77,11 @@ Return ONLY a JSON object with this shape:
     "annual_tax_revenue_eur": 40000,
     "rationale": {"el": "...", "en": "..."}
   },
+  "benefit": {
+    "annual_benefit_eur": 55000,
+    "rationale": {"el": "...", "en": "..."}
+  },
+  "grounding_used": ["OpenStreetMap Overpass API"],
   "report": {
     "summary": {"el": "...", "en": "..."},
     "findings": [{"el": "...", "en": "..."}],
@@ -107,10 +117,23 @@ Rules:
 - "model_reason" must explain in one sentence why that model fits the policy.
 - Use the supplied default property tax proxy: 1600 EUR per new building per year,
   adjusted by tax_change_pct. If the user supplies a total tax change, apply it.
+- Always return `benefit.annual_benefit_eur`: the realistic annual monetary benefit of the
+  policy (avoided costs, time savings, tax revenue, or efficiency gains). Never leave it
+  null. Use 0 only when the policy genuinely has no measurable benefit, and explain the
+  basis in `benefit.rationale`.
 - If a factor or tax value is not applicable, omit it or use null; never invent 0
   placeholders just to fill the schema.
 - Numeric parameters must respect the catalog min/max. Do not invent locations.
 - Write report text in Greek (el) and English (en), concise but specific.
+- Ground every number in the supplied `grounding` object. Use its `area_profile`
+  (population, facilities, parks, area_km2), `observed` counts, `benchmarks`,
+  `datasets` and `comparables` before relying on general knowledge. Never invent
+  population, counts, areas or unit costs that contradict those values.
+- If `grounding.snapshot_mode` is "snapshot", state that real data were used in the
+  assumptions. If it is "synthetic", state that the area data are synthetic.
+- Prefer the benefit and benefit-cost ratio of the most similar entries in
+  `grounding.comparables` unless the supplied benchmarks justify a different value.
+- List the source names or URLs you actually relied on in `grounding_used`.
 - Keep findings and risks to at most 3 each, and assumptions to at most 3.
 - Do not include markdown fences or prose outside the JSON object.
 - Return a complete, valid JSON object; never stop mid-string.
@@ -183,6 +206,88 @@ def _finite(value: Any) -> float | None:
 def _slug(value: Any, fallback: str) -> str:
     slug = re.sub(r"[^a-z0-9_]+", "_", _text(value, 80).lower()).strip("_")
     return slug or fallback
+
+
+def _string_list(value: Any, *, limit: int = 12) -> list[str]:
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list):
+        return []
+    items: list[str] = []
+    seen: set[str] = set()
+    for raw in value[:limit]:
+        text = _text(raw, 300)
+        if text and text not in seen:
+            seen.add(text)
+            items.append(text)
+    return items
+
+
+def _cache_dir() -> Path:
+    try:
+        from app.config import get_settings
+
+        base = Path(get_settings().storage_dir or "./storage").expanduser()
+    except Exception:  # noqa: BLE001
+        base = Path("./storage").expanduser()
+    return base / "ai-plan-cache"
+
+
+def _plan_cache_key(payload: dict[str, Any]) -> str:
+    blob = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str
+    )
+    return hashlib.sha256(f"{_PLAN_CACHE_VERSION}:{blob}".encode("utf-8")).hexdigest()
+
+
+def _stable_grounding(grounding: dict[str, Any]) -> dict[str, Any]:
+    """Grounding subset for the cache key: stable facts only, no timestamps/statuses.
+
+    Comparables are excluded on purpose: they change as soon as a run is saved, and
+    including them would make a repeated run miss the cache and drift.
+    """
+    stable: dict[str, Any] = {}
+    for key in ("snapshot_mode", "area_profile", "observed", "coverage", "benchmarks"):
+        if key in grounding:
+            stable[key] = grounding.get(key)
+    stable["sources"] = [
+        {"name": src.get("name"), "url": src.get("url")}
+        for src in grounding.get("sources") or []
+        if isinstance(src, dict)
+    ]
+    stable["source_registry"] = [
+        {"name": src.get("name"), "provider": src.get("provider")}
+        for src in grounding.get("source_registry") or []
+        if isinstance(src, dict)
+    ]
+    stable["datasets"] = [
+        {"title": row.get("title"), "provider": row.get("provider")}
+        for row in grounding.get("datasets") or []
+        if isinstance(row, dict)
+    ]
+    return stable
+
+
+def _read_cached_plan(key: str) -> dict[str, Any] | None:
+    try:
+        path = _cache_dir() / f"{key}.json"
+        if not path.exists():
+            return None
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _write_cached_plan(key: str, plan: dict[str, Any]) -> None:
+    try:
+        directory = _cache_dir()
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / f"{key}.json").write_text(
+            json.dumps(plan, ensure_ascii=False, sort_keys=True), encoding="utf-8"
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("plan cache write skipped: %s", exc)
 
 
 def _normalise_kpis(raw_items: Any) -> list[dict[str, Any]]:
@@ -649,6 +754,17 @@ def _normalise_tax(raw_tax: Any, source_factors: Any) -> dict[str, Any]:
     }
 
 
+def _normalise_benefit(raw_benefit: Any) -> dict[str, Any]:
+    benefit = raw_benefit if isinstance(raw_benefit, dict) else {}
+    annual = _num(benefit.get("annual_benefit_eur"))
+    if annual is not None:
+        annual = max(0.0, min(annual, 1_000_000_000.0))
+    return {
+        "annual_benefit_eur": round(annual, 2) if annual is not None else None,
+        "rationale": _localized(benefit.get("rationale")),
+    }
+
+
 def _normalise_report(raw_report: Any, model_name: str) -> dict[str, Any]:
     report = raw_report if isinstance(raw_report, dict) else {}
     summary = _localized(report.get("summary"))
@@ -687,6 +803,8 @@ def _fallback_plan(
         "parameters": normalised_parameters,
         "factors": _normalise_factors([], factors, tax),
         "tax": tax,
+        "benefit": _normalise_benefit({}),
+        "grounding_used": [],
         "report": {
             "summary": {
                 "el": "Το AI δεν ήταν διαθέσιμο· χρησιμοποιήθηκε ντετερμινιστική εκτίμηση.",
@@ -719,8 +837,13 @@ async def plan_policy_simulation(
     budget_eur: float | None = None,
     model: str | None = None,
     provider: Any = None,
+    grounding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Return an AI plan, never raising. The result is safe to persist as JSON."""
+    """Return an AI plan, never raising. The result is safe to persist as JSON.
+
+    Identical inputs and grounding reuse the persisted plan, so repeated runs are
+    reproducible instead of drifting between LLM calls.
+    """
     topic = " · ".join(part for part in (title, description, changes) if part)
     fallback_parameters = dict(parameters or {})
     fallback_model = model if model in MODELS else _fallback_model(category, topic, factors)
@@ -747,13 +870,21 @@ async def plan_policy_simulation(
                 "base_eur_per_building_per_year": BASE_TAX_EUR_PER_BUILDING,
                 "explanation": "annual property tax revenue proxy for new buildings",
             },
+            "grounding": grounding or {},
         }
+        cache_key = _plan_cache_key(
+            {**prompt, "grounding": _stable_grounding(grounding or {})}
+        )
+        cached = _read_cached_plan(cache_key)
+        if cached is not None:
+            logger.info("policy planner: reused cached plan %s", cache_key[:12])
+            return cached
         messages = [
             {"role": "system", "content": PLANNER_SYSTEM_PROMPT},
             {"role": "user", "content": json.dumps(prompt, ensure_ascii=False)},
         ]
         content = await asyncio.wait_for(
-            active_provider.chat(messages, temperature=0.1, max_tokens=8192),
+            active_provider.chat(messages, temperature=0.0, max_tokens=8192),
             timeout=PLANNER_TIMEOUT_SECONDS,
         )
         payload = _parse_json_answer(content)
@@ -790,6 +921,8 @@ async def plan_policy_simulation(
             "parameters": normalised_parameters,
             "factors": _normalise_factors(payload.get("factors"), factors, tax),
             "tax": tax,
+            "benefit": _normalise_benefit(payload.get("benefit")),
+            "grounding_used": _string_list(payload.get("grounding_used"))[:8],
             "report": _normalise_report(payload.get("report"), model_name),
             "confidence": round(confidence, 2),
             "assumptions": _localized_list(payload.get("assumptions"))[:6],
@@ -798,6 +931,7 @@ async def plan_policy_simulation(
             "metrics": _normalise_ai_metrics(payload.get("metrics")),
             "impact": _normalise_ai_impact(payload.get("impact")),
         }
+        _write_cached_plan(cache_key, plan)
         return plan
     except Exception as exc:  # noqa: BLE001 — AI must never fail a simulation
         logger.warning("policy planner fallback: %s", exc)

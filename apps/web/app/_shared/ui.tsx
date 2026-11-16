@@ -1,14 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { Breadcrumbs, useI18n, type BreadcrumbItem } from "@policylab/ui";
 import type { Quality } from "@policylab/types";
 import { pctValue } from "./format";
+import { GENERIC_ERROR } from "./hooks";
 
 export const btnPrimary =
   "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-primary/90 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0";
 
 export const btnSecondary =
   "inline-flex items-center justify-center gap-2 rounded-full border border-zinc-200/80 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-zinc-50 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800";
+
+const dangerBase =
+  "inline-flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 font-semibold text-red-700 shadow-sm transition-all duration-200 hover:-translate-y-px hover:bg-red-100 hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20";
+
+export const btnDanger = `${dangerBase} px-4 py-2 text-sm`;
+
+export const btnDangerSm = `${dangerBase} px-3 py-1.5 text-xs`;
 
 export const inputCls =
   "w-full rounded-xl border border-zinc-200/80 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500";
@@ -43,7 +52,94 @@ const STR = {
   pageOf: { el: "Σελίδα", en: "Page" },
   of: { el: "από", en: "of" },
   back: { el: "Επιστροφή", en: "Back" },
+  delete: { el: "Διαγραφή", en: "Delete" },
+  confirmDelete: { el: "Οριστική διαγραφή;", en: "Delete permanently?" },
+  confirm: { el: "Επιβεβαίωση", en: "Confirm" },
+  deleting: { el: "Διαγραφή…", en: "Deleting…" },
+  cancel: { el: "Ακύρωση", en: "Cancel" },
 };
+
+export function DeleteButton({
+  onConfirm,
+  label,
+  className = "",
+  compact = false,
+}: {
+  onConfirm: () => Promise<string | null> | string | null;
+  label?: string;
+  className?: string;
+  compact?: boolean;
+}) {
+  const { t } = useI18n();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const base = compact ? btnDangerSm : btnDanger;
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        className={`${base} ${className}`}
+        onClick={() => {
+          setError(null);
+          setConfirming(true);
+        }}
+      >
+        {label ?? t(STR.delete)}
+      </button>
+    );
+  }
+
+  async function handleConfirm() {
+    setBusy(true);
+    setError(null);
+    try {
+      const message = await onConfirm();
+      if (message) {
+        setError(message);
+      } else {
+        setConfirming(false);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error && err.message ? err.message : GENERIC_ERROR);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <span
+      className={`inline-flex flex-wrap items-center gap-2 ${className}`}
+      role="group"
+      aria-label={t(STR.confirmDelete)}
+    >
+      <span className={`font-medium text-red-700 dark:text-red-300 ${compact ? "text-xs" : "text-sm"}`}>
+        {t(STR.confirmDelete)}
+      </span>
+      <button type="button" className={base} disabled={busy} onClick={handleConfirm}>
+        {busy ? t(STR.deleting) : t(STR.confirm)}
+      </button>
+      <button
+        type="button"
+        className={compact ? `${btnSecondary} px-3 py-1.5 text-xs` : btnSecondary}
+        disabled={busy}
+        onClick={() => {
+          setError(null);
+          setConfirming(false);
+        }}
+      >
+        {t(STR.cancel)}
+      </button>
+      {error ? (
+        <span role="alert" className="text-xs font-medium text-red-700 dark:text-red-300">
+          {error}
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 export function PageHeader({
   title,

@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, EmptyState, Skeleton, StatCard, useI18n } from "@policylab/ui";
 import type { Comment, Consultation, Proposal } from "@policylab/types";
-import { GENERIC_ERROR, doGet, doPost, useApi } from "@/_shared/hooks";
+import { GENERIC_ERROR, doDelete, doGet, doPost, useApi } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
 import { areaName, type CityArea } from "@/_shared/geo";
 import { CATEGORY_OPTIONS } from "@/_shared/terms";
 import {
+  DeleteButton,
   ErrorPanel,
   Field,
   KeyValueTable,
@@ -27,12 +28,8 @@ const STR = {
     el: "Διαβουλεύσεις, προτάσεις και σχόλια πολιτών — με διαφάνεια και σεβασμό στην αντιπροσωπευτική διαδικασία.",
     en: "Consultations, proposals and comments from residents — with transparency and respect for representative process.",
   },
-  disclaimerEl: {
+  disclaimer: {
     el: "Οι διαδικτυακές ψήφοι και προτάσεις δεν ταυτίζονται με αντιπροσωπευτική κοινωνική γνώμη ή θεσμική απόφαση.",
-    en: "Οι διαδικτυακές ψήφοι και προτάσεις δεν ταυτίζονται με αντιπροσωπευτική κοινωνική γνώμη ή θεσμική απόφαση.",
-  },
-  disclaimerEn: {
-    el: "Online votes and proposals do not constitute representative public opinion or an institutional decision.",
     en: "Online votes and proposals do not constitute representative public opinion or an institutional decision.",
   },
   statProposals: { el: "Προτάσεις", en: "Proposals" },
@@ -95,10 +92,12 @@ function consultationStatus(status: string): { tone: "neutral" | "success" | "wa
 
 function ProposalItem({
   proposal,
-  onCommentAdded,
+  onCommentCountChange,
+  onDeleted,
 }: {
   proposal: Proposal;
-  onCommentAdded: (id: string) => void;
+  onCommentCountChange: (id: string, delta: number) => void;
+  onDeleted: (id: string) => void;
 }) {
   const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
@@ -154,7 +153,17 @@ function ProposalItem({
     setComments((prev) => [...prev, res.data as Comment]);
     setBody("");
     setPosted(true);
-    onCommentAdded(proposal.id);
+    onCommentCountChange(proposal.id, 1);
+  };
+
+  const deleteComment = async (commentId: string): Promise<string | null> => {
+    const res = await doDelete(
+      `/v1/proposals/${encodeURIComponent(proposal.id)}/comments/${encodeURIComponent(commentId)}`
+    );
+    if (res.error) return res.error;
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    onCommentCountChange(proposal.id, -1);
+    return null;
   };
 
   return (
@@ -171,14 +180,25 @@ function ProposalItem({
             {proposal.comments_count} {t(STR.comments).toLowerCase()}
           </p>
         </div>
-        <button
-          type="button"
-          className={btnPrimary}
-          aria-expanded={open}
-          onClick={expand}
-        >
-          {open ? t(STR.collapse) : t(STR.expand)}
-        </button>
+        <span className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className={btnPrimary}
+            aria-expanded={open}
+            onClick={expand}
+          >
+            {open ? t(STR.collapse) : t(STR.expand)}
+          </button>
+          <DeleteButton
+            compact
+            onConfirm={async () => {
+              const res = await doDelete(`/v1/proposals/${encodeURIComponent(proposal.id)}`);
+              if (res.error) return res.error;
+              onDeleted(proposal.id);
+              return null;
+            }}
+          />
+        </span>
       </div>
 
       {open ? (
@@ -212,9 +232,12 @@ function ProposalItem({
                         <p className="whitespace-pre-line text-sm text-zinc-800 dark:text-zinc-200">
                           {c.body}
                         </p>
-                        <p className={`mt-1 text-xs ${mutedText}`}>
-                          {t(STR.postedBy)}: {fmtDate(c.created_at, lang)}
-                        </p>
+                        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                          <p className={`text-xs ${mutedText}`}>
+                            {t(STR.postedBy)}: {fmtDate(c.created_at, lang)}
+                          </p>
+                          <DeleteButton compact onConfirm={() => deleteComment(c.id)} />
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -355,12 +378,18 @@ export default function CitizenPage() {
     setSuccessNote(true);
   };
 
-  const handleCommentAdded = (id: string) => {
+  const handleCommentCountChange = (id: string, delta: number) => {
     setProposals((prev) =>
       (prev ?? []).map((p) =>
-        p.id === id ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p
+        p.id === id
+          ? { ...p, comments_count: Math.max(0, (p.comments_count || 0) + delta) }
+          : p
       )
     );
+  };
+
+  const handleProposalDeleted = (id: string) => {
+    setProposals((prev) => (prev ?? []).filter((p) => p.id !== id));
   };
 
   return (
@@ -370,8 +399,7 @@ export default function CitizenPage() {
       {disclaimerOpen ? (
         <div className="mb-6">
           <NoticeBox tone="warning" onDismiss={() => setDisclaimerOpen(false)}>
-            <p className="font-semibold">{t(STR.disclaimerEl)}</p>
-            <p className="mt-1 opacity-90">{t(STR.disclaimerEn)}</p>
+            <p className="font-semibold">{t(STR.disclaimer)}</p>
           </NoticeBox>
         </div>
       ) : null}
@@ -420,7 +448,21 @@ export default function CitizenPage() {
                       <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                         {c.title}
                       </h3>
-                      <Badge tone={st.tone}>{t(st.label)}</Badge>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <Badge tone={st.tone}>{t(st.label)}</Badge>
+                        <DeleteButton
+                          compact
+                          onConfirm={async () => {
+                            const res = await doDelete(
+                              `/v1/consultations/${encodeURIComponent(c.id)}`
+                            );
+                            if (res.error) return res.error;
+                            consultations.reload();
+                            loadProposals();
+                            return null;
+                          }}
+                        />
+                      </span>
                     </div>
                     <p className={`mt-2 text-sm ${mutedText}`}>{c.description}</p>
                     <p className={`mt-2 text-xs ${mutedText}`}>
@@ -575,7 +617,8 @@ export default function CitizenPage() {
                 <ProposalItem
                   key={p.id}
                   proposal={p}
-                  onCommentAdded={handleCommentAdded}
+                  onCommentCountChange={handleCommentCountChange}
+                  onDeleted={handleProposalDeleted}
                 />
               ))}
             </ul>

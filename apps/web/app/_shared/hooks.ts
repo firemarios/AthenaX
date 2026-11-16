@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { get, post } from "@policylab/api-client";
+import { del, get, post } from "@policylab/api-client";
 import type { Meta } from "@policylab/types";
 
 export const GENERIC_ERROR =
@@ -105,6 +105,22 @@ export async function doPost<T>(
 ): Promise<{ data: T | null; meta: Meta | null; error: string | null }> {
   try {
     const res = await post<T>(path, body, signal ? { signal } : undefined);
+    if (res.data === null || res.data === undefined) {
+      return { data: null, meta: res.meta ?? null, error: res.error?.message || GENERIC_ERROR };
+    }
+    return { data: res.data, meta: res.meta ?? null, error: null };
+  } catch (error: unknown) {
+    const message = errMessage(error);
+    return { data: null, meta: null, error: message || GENERIC_ERROR };
+  }
+}
+
+export async function doDelete<T>(
+  path: string,
+  signal?: AbortSignal
+): Promise<{ data: T | null; meta: Meta | null; error: string | null }> {
+  try {
+    const res = await del<T>(path, signal ? { signal } : undefined);
     if (res.data === null || res.data === undefined) {
       return { data: null, meta: res.meta ?? null, error: res.error?.message || GENERIC_ERROR };
     }

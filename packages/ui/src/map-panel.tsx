@@ -442,7 +442,7 @@ export function MapPanel({
           {failed ? (
             <p className="max-w-sm text-sm text-muted-foreground">
               {t({
-                el: "Το χάρτης δεν φορτώθηκε. Τα πλακίδια δεν είναι προσωρινά διαθέσιμα — δοκιμάστε ξανά αργότερα.",
+                el: "Ο χάρτης δεν φορτώθηκε. Τα πλακίδια δεν είναι προσωρινά διαθέσιμα — δοκιμάστε ξανά αργότερα.",
                 en: "The map failed to load. Tiles are temporarily unavailable — please try again later.",
               })}
             </p>

@@ -27,11 +27,11 @@ const DIMENSION_ICONS: Record<string, React.ComponentType<{ className?: string }
 
 const STR = {
   summary: { el: "Σύνοψη", en: "Summary" },
-  baseline: { el: "Βασικό σενάριο", en: "Baseline" },
+  baseline: { el: "Σενάριο βάσης", en: "Baseline" },
   scenario: { el: "Σενάριο", en: "Scenario" },
   confidence: { el: "Εμπιστοσύνη", en: "Confidence" },
   limitations: {
-    el: "Περιορισμοί: οι τιμές προέρχονται από προσομοίωση με δηλωμένη ασυμφωνία και δεν αποτελούν πρόβλεψη ή δέσμευση. Η σύγκριση με το βασικό σενάριο είναι σχετική στο ίδιο μοντέλο.",
+    el: "Περιορισμοί: οι τιμές προέρχονται από προσομοίωση με δηλωμένη αβεβαιότητα και δεν αποτελούν πρόβλεψη ή δέσμευση. Η σύγκριση με το σενάριο βάσης είναι σχετική στο ίδιο μοντέλο.",
     en: "Limitations: values come from a simulation with declared uncertainty and are not a forecast or commitment. Comparison with the baseline is relative to the same model.",
   },
   empty: { el: "Δεν υπάρχουν δείκτες σε αυτήν την έκθεση.", en: "No indicators in this report." },

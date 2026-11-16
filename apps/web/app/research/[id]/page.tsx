@@ -2,13 +2,14 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Badge, EmptyState, Skeleton, useI18n } from "@policylab/ui";
 import type { ResearchProject } from "@policylab/types";
 import { API_BASE } from "@policylab/api-client";
-import { useApi } from "@/_shared/hooks";
+import { doDelete, useApi } from "@/_shared/hooks";
 import { downloadBlob, fmtDate } from "@/_shared/format";
 import {
+  DeleteButton,
   ErrorPanel,
   NoticeBox,
   PageFallback,
@@ -24,7 +25,7 @@ const STR = {
   notFound: { el: "Το έργο δεν βρέθηκε.", en: "The project was not found." },
   experiments: { el: "Πειράματα", en: "Experiments" },
   noExperiments: {
-    el: "Κανένο πείραμα ακόμη σε αυτό το έργο.",
+    el: "Κανένα πείραμα ακόμη σε αυτό το έργο.",
     en: "No experiments in this project yet.",
   },
   model: { el: "Μοντέλο", en: "Model" },
@@ -62,6 +63,7 @@ const MIME: Record<ExportFormat, string> = {
 function ResearchDetailView() {
   const { t, lang } = useI18n();
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = params?.id ?? "";
 
   const project = useApi<ResearchProject>(
@@ -128,9 +130,19 @@ function ResearchDetailView() {
           { label: data.name },
         ]}
         actions={
-          <Badge tone="info">
-            {experiments.length} {t(STR.experimentCount)}
-          </Badge>
+          <>
+            <Badge tone="info">
+              {experiments.length} {t(STR.experimentCount)}
+            </Badge>
+            <DeleteButton
+              onConfirm={async () => {
+                const res = await doDelete(`/v1/research/projects/${encodeURIComponent(data.id)}`);
+                if (res.error) return res.error;
+                router.push("/research");
+                return null;
+              }}
+            />
+          </>
         }
       />
 

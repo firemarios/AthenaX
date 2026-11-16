@@ -55,6 +55,15 @@ async def get_consultation(id: str, request: Request):
     return ok(item, build_meta(get_request_id(request)))
 
 
+@router.delete("/consultations/{id}")
+async def delete_consultation(id: str, request: Request):
+    """Delete a consultation with its proposals and comments."""
+    deleted = await citizen_repo.delete_consultation(id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Η διαβούλευση δεν βρέθηκε.")
+    return ok({"id": id, "deleted": True}, build_meta(get_request_id(request)))
+
+
 # ---------------------------------------------------------------- proposals
 @router.get("/proposals")
 async def list_proposals(request: Request):
@@ -79,6 +88,15 @@ async def get_proposal(id: str, request: Request):
     return ok(item, build_meta(get_request_id(request)))
 
 
+@router.delete("/proposals/{id}")
+async def delete_proposal(id: str, request: Request):
+    """Delete a proposal and its comments."""
+    deleted = await citizen_repo.delete_proposal(id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Η πρόταση δεν βρέθηκε.")
+    return ok({"id": id, "deleted": True}, build_meta(get_request_id(request)))
+
+
 # ---------------------------------------------------------------- comments
 @router.get("/proposals/{id}/comments")
 async def list_comments(id: str, request: Request):
@@ -98,3 +116,12 @@ async def create_comment(id: str, payload: CommentCreate, request: Request):
     if item is None:
         raise HTTPException(status_code=404, detail="Η πρόταση δεν βρέθηκε.")
     return JSONResponse(status_code=201, content=ok(item, build_meta(get_request_id(request))))
+
+
+@router.delete("/proposals/{id}/comments/{comment_id}")
+async def delete_comment(id: str, comment_id: str, request: Request):
+    """Delete a single comment that belongs to the proposal."""
+    deleted = await citizen_repo.delete_comment(id, comment_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Το σχόλιο δεν βρέθηκε.")
+    return ok({"id": comment_id, "deleted": True}, build_meta(get_request_id(request)))

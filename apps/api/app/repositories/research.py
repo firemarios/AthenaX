@@ -4,7 +4,15 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.repositories.common import as_json, iso, mem_get, mem_list, mem_put, new_id
+from app.repositories.common import (
+    as_json,
+    iso,
+    mem_delete,
+    mem_get,
+    mem_list,
+    mem_put,
+    new_id,
+)
 
 logger = logging.getLogger("policylab.repositories.research")
 
@@ -130,6 +138,30 @@ async def create_project(payload: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         logger.debug("research.create_project: DB μη διαθέσιμη (%s)", exc)
         return dict(mem_put(PROJECTS, data), experiments=[])
+
+
+async def delete_project(project_id: str) -> bool:
+    """Delete a research project and its experiments (DB → memory)."""
+    wanted = str(project_id)
+    try:
+        from app.database import session_scope
+        from app.models import Experiment, ResearchProject
+        from sqlalchemy import delete
+
+        async with session_scope() as session:
+            await session.execute(delete(Experiment).where(Experiment.project_id == wanted))
+            result = await session.execute(
+                delete(ResearchProject).where(ResearchProject.id == wanted)
+            )
+            if (result.rowcount or 0) > 0:
+                return True
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("research.delete_project: DB μη διαθέσιμη (%s)", exc)
+
+    for experiment in mem_list(EXPERIMENTS):
+        if str(experiment.get("project_id")) == wanted:
+            mem_delete(EXPERIMENTS, str(experiment.get("id")))
+    return mem_delete(PROJECTS, wanted)
 
 
 async def runs_for_project(project: dict[str, Any]) -> list[dict[str, Any]]:

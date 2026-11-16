@@ -233,6 +233,11 @@ export interface AISimulationPlan {
   parameters: Record<string, unknown>;
   factors: AIPlanFactor[];
   tax: AITaxEstimate;
+  benefit?: {
+    annual_benefit_eur: number | null;
+    rationale: { el: string; en: string };
+  };
+  grounding_used?: string[];
   report: {
     summary: { el: string; en: string };
     findings: { el: string; en: string }[];
@@ -281,6 +286,7 @@ export interface PolicyEconomics {
   annual_maintenance_eur: number;
   annualized_cost_eur: number;
   annual_benefit_eur: number;
+  benefit_source?: "model" | "ai" | "heuristic" | "none";
   annual_tax_revenue_eur?: number;
   new_buildings?: number | null;
   net_annual_eur: number;

@@ -4,11 +4,20 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from app.repositories.common import as_json, iso, mem_get, mem_list, mem_put, new_id
+from app.repositories.common import (
+    as_json,
+    iso,
+    mem_delete,
+    mem_get,
+    mem_list,
+    mem_put,
+    new_id,
+)
 
 logger = logging.getLogger("policylab.repositories.simulations")
 
 TABLE = "simulation_runs"
+IMPACT_TABLE = "impact_metrics"
 
 
 def run_from_row(row: Any) -> dict[str, Any]:
@@ -111,6 +120,69 @@ async def create_run(payload: dict[str, Any]) -> dict[str, Any]:
         logger.debug("create_run: DB μη διαθέσιμη (%s) — ενδομοική αποθήκευση", exc)
         data.setdefault("created_at", _now())
         return mem_put(TABLE, data)
+
+
+async def update_run(run_id: str, fields: dict[str, Any]) -> dict[str, Any] | None:
+    """Patch a run's mutable fields (DB → memory). Never raises."""
+    wanted = str(run_id)
+    clean = dict(fields)
+    clean.pop("id", None)
+    try:
+        from app.database import session_scope
+        from app.models import SimulationRun
+        from sqlalchemy import select
+
+        async with session_scope() as session:
+            row = (
+                await session.execute(select(SimulationRun).where(SimulationRun.id == wanted))
+            ).scalar_one_or_none()
+            if row is not None:
+                for key in (
+                    "policy_id",
+                    "model_name",
+                    "model_version",
+                    "parameters",
+                    "results",
+                    "passport",
+                    "status",
+                    "error",
+                    "seed",
+                ):
+                    if key in clean:
+                        setattr(row, key, clean[key])
+                await session.flush()
+                return run_from_row(row)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("update_run: DB μη διαθέσιμη (%s)", exc)
+
+    stored = mem_get(TABLE, wanted)
+    if stored is None:
+        return None
+    updated = {**stored, **clean}
+    return mem_put(TABLE, updated)
+
+
+async def delete_run(run_id: str) -> bool:
+    """Delete a simulation run and any persisted impact metrics (DB → memory)."""
+    wanted = str(run_id)
+    try:
+        from app.database import session_scope
+        from app.models import ImpactMetric, SimulationRun
+        from sqlalchemy import delete
+
+        async with session_scope() as session:
+            await session.execute(delete(ImpactMetric).where(ImpactMetric.run_id == wanted))
+            result = await session.execute(
+                delete(SimulationRun).where(SimulationRun.id == wanted)
+            )
+            if (result.rowcount or 0) > 0:
+                return True
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("delete_run: DB μη διαθέσιμη (%s)", exc)
+
+    if mem_delete(TABLE, wanted):
+        return True
+    return mem_delete(IMPACT_TABLE, wanted)
 
 
 async def get_runs_by_ids(run_ids: list[str]) -> list[dict[str, Any]]:

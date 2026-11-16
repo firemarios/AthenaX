@@ -9,6 +9,12 @@ const apiOrigin = (
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // AI simulations run the planner + composer LLMs synchronously and can take
+    // a few minutes. The /api rewrite proxy defaults to a 30s upstream timeout,
+    // which aborts the request ("socket hang up" / 500). Allow up to 10 minutes.
+    proxyTimeout: 600_000,
+  },
   allowedDevOrigins: ["athenax.akcore.dev", "*.akcore.dev"],
   transpilePackages: ["@policylab/ui", "@policylab/types", "@policylab/api-client", "@policylab/schemas"],
   turbopack: {

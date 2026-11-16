@@ -45,7 +45,7 @@ export function AIResponse({ answer, meta, loading = false }: AIResponseProps) {
         className="space-y-4 rounded-[var(--radius-card)] border border-border bg-card p-4"
       >
         <p className="text-sm font-medium text-muted-foreground">
-          {t({ el: "Λήψη απάντησης…", en: "Fetching answer…" })}
+          {t({ el: "Ανάκτηση απάντησης…", en: "Fetching answer…" })}
         </p>
         <Skeleton rows={4} />
       </div>
@@ -124,7 +124,7 @@ export function AIResponse({ answer, meta, loading = false }: AIResponseProps) {
 
       {meta?.record_count !== undefined && meta?.record_count !== null ? (
         <p className="text-xs text-muted-foreground">
-          {t({ el: "Εγγραφές πηγής:", en: "Source records:" })}{" "}
+          {t({ el: "Εγγραφές πηγών:", en: "Source records:" })}{" "}
           {meta.record_count}
         </p>
       ) : null}

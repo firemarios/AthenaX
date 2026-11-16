@@ -32,7 +32,7 @@ export default function AppError({
         </p>
         {error.digest ? (
           <p className={`mt-2 ${mutedText}`}>
-            {t({ el: "Κωδικός", en: "Digest" })}: {error.digest}
+            {t({ el: "Κωδικός σφάλματος", en: "Error digest" })}: {error.digest}
           </p>
         ) : null}
       </div>

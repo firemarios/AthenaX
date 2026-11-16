@@ -49,7 +49,7 @@ const STR = {
   },
   colName: { el: "Όνομα", en: "Name" },
   colType: { el: "Τύπος", en: "Type" },
-  colEndpoint: { el: "Τερματικό", en: "Endpoint" },
+  colEndpoint: { el: "Endpoint", en: "Endpoint" },
   colReliability: { el: "Αξιοπιστότητα", en: "Reliability" },
   colEnabled: { el: "Ενεργός", en: "Enabled" },
   colStatus: { el: "Κατάσταση", en: "Status" },
@@ -372,7 +372,7 @@ type HealthStatus = "ok" | "degraded" | "down" | "disabled" | "unknown";
 const HEALTH_LABELS: Record<HealthKey, Record<Lang, string>> = {
   db: { el: "Βάση δεδομένων", en: "Database" },
   llm: { el: "Μοντέλο γλώσσας (LLM)", en: "Language model (LLM)" },
-  storage: { el: "Αποθήκευση", en: "Storage" },
+        storage: { el: "Αποθηκευτικός χώρος", en: "Storage" },
   rate_limiter: { el: "Όριο αιτημάτων", en: "Rate limiter" },
 };
 

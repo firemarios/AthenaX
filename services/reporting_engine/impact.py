@@ -249,7 +249,7 @@ _ECONOMICS_SPECS: list[tuple[str, dict, str]] = [
     ),
     (
         "annual_tax_revenue_eur",
-        {"el": "Έσοδα φόρου", "en": "Annual tax revenue"},
+        {"el": "Ετήσια φορολογικά έσοδα", "en": "Annual tax revenue"},
         "€",
     ),
     (

@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
 import type { Policy } from "@policylab/types";
-import { useApi } from "@/_shared/hooks";
+import { useApi, doDelete } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
 import {
+  DeleteButton,
   ErrorPanel,
   PageFallback,
   PageHeader,
@@ -192,12 +193,23 @@ function PoliciesView() {
                         </>
                       }
                       footer={
-                        <Link
-                          href={`/policies/${policy.id}`}
-                          className="rounded font-medium text-blue-600 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-400"
-                        >
-                          {t(STR.details)}
-                        </Link>
+                        <span className="flex w-full flex-wrap items-center justify-between gap-2">
+                          <Link
+                            href={`/policies/${policy.id}`}
+                            className="rounded font-medium text-blue-600 hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-400"
+                          >
+                            {t(STR.details)}
+                          </Link>
+                          <DeleteButton
+                            compact
+                            onConfirm={async () => {
+                              const res = await doDelete(`/v1/policies/${encodeURIComponent(policy.id)}`);
+                              if (res.error) return res.error;
+                              policies.reload();
+                              return null;
+                            }}
+                          />
+                        </span>
                       }
                     />
                   </li>

@@ -416,7 +416,7 @@ export const PRICING: HomePlan[] = [
     },
     features: [
       { el: "Απεριόριστες ερωτήσεις", en: "Unlimited questions" },
-      { el: "Όλοι οι σύνδετες και πηγές", en: "All connectors and sources" },
+      { el: "Όλοι οι σύνδετες και οι πηγές", en: "All connectors and sources" },
       { el: "Παραλλαγές πολιτικών", en: "Policy variants" },
       { el: "Αναφορές αντίκτυπου", en: "Impact reports" },
     ],

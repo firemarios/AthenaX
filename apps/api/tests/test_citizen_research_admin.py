@@ -38,6 +38,55 @@ def test_proposal_and_comments(client):
     assert client.get("/v1/proposals/unknown").status_code == 404
 
 
+def test_delete_consultation(client):
+    consultation = client.post(
+        "/v1/consultations", json={"title": "Προς διαγραφή", "description": "δοκιμή"}
+    ).json()["data"]
+
+    deleted = client.delete(f"/v1/consultations/{consultation['id']}")
+    assert deleted.status_code == 200
+    assert deleted.json()["data"] == {"id": consultation["id"], "deleted": True}
+
+    assert client.get(f"/v1/consultations/{consultation['id']}").status_code == 404
+    assert client.delete(f"/v1/consultations/{consultation['id']}").status_code == 404
+    assert client.delete("/v1/consultations/missing").status_code == 404
+
+
+def test_delete_proposal_comment_and_proposal(client):
+    proposal = client.post(
+        "/v1/proposals", json={"title": "Προς διαγραφή", "description": "δοκιμή"}
+    ).json()["data"]
+    comment = client.post(
+        f"/v1/proposals/{proposal['id']}/comments", json={"body": "προς διαγραφή"}
+    ).json()["data"]
+
+    deleted_comment = client.delete(
+        f"/v1/proposals/{proposal['id']}/comments/{comment['id']}"
+    )
+    assert deleted_comment.status_code == 200
+    assert deleted_comment.json()["data"]["deleted"] is True
+    comments = client.get(f"/v1/proposals/{proposal['id']}/comments").json()["data"]
+    assert all(row["id"] != comment["id"] for row in comments)
+    assert (
+        client.delete(f"/v1/proposals/{proposal['id']}/comments/{comment['id']}").status_code
+        == 404
+    )
+
+    assert client.delete(f"/v1/proposals/{proposal['id']}").status_code == 200
+    assert client.get(f"/v1/proposals/{proposal['id']}").status_code == 404
+    assert client.delete(f"/v1/proposals/{proposal['id']}").status_code == 404
+
+
+def test_delete_research_project(client):
+    project = client.post(
+        "/v1/research/projects", json={"name": "Προς διαγραφή", "description": "δοκιμή"}
+    ).json()["data"]
+
+    assert client.delete(f"/v1/research/projects/{project['id']}").status_code == 200
+    assert client.get(f"/v1/research/projects/{project['id']}").status_code == 404
+    assert client.delete(f"/v1/research/projects/{project['id']}").status_code == 404
+
+
 def test_validation_greek_missing_title(client):
     resp = client.post("/v1/consultations", json={})
     assert resp.status_code == 422

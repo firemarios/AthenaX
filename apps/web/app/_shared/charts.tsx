@@ -156,7 +156,7 @@ export function MetricComparisonChart({
         const data: ChartData<"bar"> = {
           labels: [
             t({ el: "Σενάριο", en: "Scenario" }),
-            t({ el: "Βασικό", en: "Baseline" }),
+            t({ el: "Βάση", en: "Baseline" }),
           ].slice(0, hasBase ? 2 : 1),
           datasets: [
             {
@@ -568,7 +568,7 @@ export function EconomicsPanel({ economics }: { economics: PolicyEconomics }) {
 
   const comparisonData: ChartData<"bar"> = {
     labels: [
-      t({ el: "Κεφάλαιο", en: "Capex" }),
+      t({ el: "Κεφαλαιουχικό κόστος", en: "Capex" }),
       t({ el: "Ετήσιο όφελος", en: "Annual benefit" }),
       t({ el: "Ετησιοποιημένο κόστος", en: "Annualised cost" }),
     ],
@@ -586,17 +586,23 @@ export function EconomicsPanel({ economics }: { economics: PolicyEconomics }) {
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label={t({ el: "Απαιτούμενο κεφάλαιο", en: "Required capex" })}
+          label={t({ el: "Απαιτούμενο κεφαλαιουχικό κόστος", en: "Required capex" })}
           value={fmtEUR(economics.capex_eur, lang)}
           hint={`${fmtEUR(economics.capex_low_eur, lang)} – ${fmtEUR(economics.capex_high_eur, lang)}`}
         />
         <StatCard
           label={t({ el: "Ετήσιο όφελος", en: "Annual benefit" })}
           value={fmtEUR(economics.annual_benefit_eur, lang)}
-          hint={t({ el: "Ετησιοποιημένο κόστος", en: "Annualised cost" }) + `: ${fmtEUR(economics.annualized_cost_eur, lang)}`}
+          hint={
+            economics.benefit_source === "ai"
+              ? t({ el: "Εκτίμηση AI", en: "AI estimate" })
+              : economics.benefit_source === "heuristic"
+                ? t({ el: "Εκτίμηση σεναρίου", en: "Scenario estimate" })
+                : `${t({ el: "Ετησιοποιημένο κόστος", en: "Annualised cost" })}: ${fmtEUR(economics.annualized_cost_eur, lang)}`
+          }
         />
         <StatCard
-          label={t({ el: "Οφελος / κόστος", en: "Benefit / cost" })}
+          label={t({ el: "Όφελος / κόστος", en: "Benefit / cost" })}
           value={economics.benefit_cost_ratio !== null ? `${fmtNum(economics.benefit_cost_ratio, lang)}×` : "—"}
           hint={
             economics.payback_years !== null
@@ -645,7 +651,7 @@ export function EconomicsPanel({ economics }: { economics: PolicyEconomics }) {
               label: line.label,
               value: line.amount_eur,
             }))}
-            centerLabel={{ el: "Κεφάλαιο", en: "Capex" }}
+            centerLabel={{ el: "Κεφαλαιουχικό κόστος", en: "Capex" }}
             centerValue={fmtEUR(economics.capex_eur, lang)}
             ariaLabel={{ el: "Γράφημα σύνθεσης κόστους", en: "Cost mix chart" }}
           />

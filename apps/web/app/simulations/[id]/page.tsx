@@ -1,15 +1,16 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Badge, Skeleton, useI18n } from "@policylab/ui";
 import type { Passport, SimulationRun } from "@policylab/types";
-import { doPost, useApi } from "@/_shared/hooks";
+import { doDelete, doPost, useApi } from "@/_shared/hooks";
 import { EconomicsPanel, MetricComparisonChart, metricLabel } from "@/_shared/charts";
 import { AIReportView } from "@/_shared/ai-report";
 import { fmtDateTime, fmtNum, fmtRange, metricTone } from "@/_shared/format";
 import {
+  DeleteButton,
   ErrorPanel,
   KeyValueTable,
   PageFallback,
@@ -34,10 +35,10 @@ const STR = {
   aiReport: { el: "Αναλυτική αναφορά AI", en: "Detailed AI report" },
   metrics: { el: "Αποτελέσματα (μετρικές)", en: "Results (metrics)" },
   metric: { el: "Μετρική", en: "Metric" },
-  baseline: { el: "Βασικό", en: "Baseline" },
+  baseline: { el: "Βάση", en: "Baseline" },
   value: { el: "Τιμή", en: "Value" },
   delta: { el: "Διαφορά", en: "Delta" },
-  uncertainty: { el: "Ασφάλεια (εύρος)", en: "Uncertainty (range)" },
+  uncertainty: { el: "Αβεβαιότητα (εύρος)", en: "Uncertainty (range)" },
   assumptions: { el: "Υποθέσεις", en: "Assumptions" },
   noAssumptions: { el: "Δεν καταγράφηκαν υποθέσεις.", en: "No assumptions recorded." },
   warnings: { el: "Προειδοποιήσεις", en: "Warnings" },
@@ -48,7 +49,7 @@ const STR = {
     en: "Simulation Passport",
   },
   passportDesc: {
-    el: "Πλήρες εγγυητικό ιστορικό: πηγές δεδομένων, υποθέσεις, ασφάλεια, επαλήθευση και ακεραιότητα εισόδων.",
+    el: "Πλήρες εγγυητικό ιστορικό: πηγές δεδομένων, υποθέσεις, αβεβαιότητα, επαλήθευση και ακεραιότητα εισόδων.",
     en: "Full accountability record: data sources, assumptions, reliability, validation and input integrity.",
   },
   dataSources: { el: "Πηγές δεδομένων", en: "Data sources" },
@@ -84,9 +85,9 @@ const STR = {
   },
   loading: { el: "Φόρτωση προσομοίωσης…", en: "Loading simulation…" },
   notFound: { el: "Η προσομοίωση δεν βρέθηκε.", en: "The simulation was not found." },
-  better: { el: "βελτίωση", en: "better" },
+  better: { el: "Βελτίωση", en: "better" },
   worse: { el: "Χειρότερο", en: "worse" },
-  neutral: { el: "όμοιο", en: "unchanged" },
+  neutral: { el: "Ίδιο", en: "unchanged" },
   params: { el: "Παράμετροι εισόδου", en: "Input parameters" },
   runId: { el: "Κωδικός εκτέλεσης", en: "Run ID" },
   provenance: { el: "Αλυσίδα προέλευσης", en: "Provenance chain" },
@@ -97,7 +98,32 @@ const STR = {
   provenanceVerified: { el: "Επαληθεύσιμο", en: "Verifiable" },
   provenanceDegraded: { el: "Μερικό", en: "Partial" },
   provenanceSynthetic: { el: "Συνθετικό", en: "Synthetic" },
+  inProgress: { el: "Σε εξέλιξη", en: "In progress" },
+  inProgressHint: {
+    el: "Η προσομοίωση εκτελείται στο παρασκήνιο· η σελίδα ενημερώνεται αυτόματα.",
+    en: "The simulation runs in the background; this page refreshes automatically.",
+  },
 };
+
+const RUN_STEPS: { el: string; en: string }[] = [
+  {
+    el: "Διαβάζω την πολιτική και το ελεύθερο κείμενο",
+    en: "Reading the policy and free text",
+  },
+  { el: "Επιλέγω το κατάλληλο μοντέλο", en: "Choosing the right model" },
+  {
+    el: "Υπολογίζω τις παραμέτρους και τους παράγοντες",
+    en: "Calculating parameters and factors",
+  },
+  { el: "Εκτελώ την προσομοίωση", en: "Running the simulation" },
+  {
+    el: "Υπολογίζω κόστος, οφέλη και φορολογικά έσοδα",
+    en: "Calculating costs, benefits and tax revenue",
+  },
+  { el: "Συντάσσω την αναφορά AI", en: "Composing the AI report" },
+];
+
+const RUN_STEP_MS = 8_000;
 
 const MODEL_LABELS: Record<string, { el: string; en: string }> = {
   accessibility: { el: "Προσβασιμότητα πεζών", en: "Walk accessibility" },
@@ -311,8 +337,30 @@ function SimulationDetailView() {
   const [reproResult, setReproResult] = useState<
     { ok: boolean; runId: string; checksum: string } | null
   >(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const data = run.data;
+
+  const runStatus = run.data?.status;
+  const reloadRun = run.reload;
+  const startedAt = run.data?.created_at ? Date.parse(run.data.created_at) : Number.NaN;
+  const runStep = Number.isFinite(startedAt)
+    ? Math.min(
+        Math.max(Math.floor((nowMs - startedAt) / RUN_STEP_MS), 0),
+        RUN_STEPS.length - 1,
+      )
+    : 0;
+  useEffect(() => {
+    if (runStatus !== "running" && runStatus !== "queued") return;
+    const timer = window.setTimeout(reloadRun, 3000);
+    return () => window.clearTimeout(timer);
+  }, [runStatus, reloadRun]);
+
+  useEffect(() => {
+    if (runStatus !== "running" && runStatus !== "queued") return;
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [runStatus]);
 
   const buildReproduceBody = (runData: SimulationRun): Record<string, unknown> => {
     const parameters = runData.parameters ?? {};
@@ -476,6 +524,82 @@ function SimulationDetailView() {
         }
       />
 
+      {data.status === "running" ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pl-reveal mb-6 overflow-hidden rounded-xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-800 dark:bg-blue-950/30"
+        >
+          <div className="flex items-start gap-3">
+            <span
+              className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white"
+              aria-hidden="true"
+            >
+              <span className="absolute inset-0 animate-ping rounded-full bg-blue-400 opacity-40" />
+              <span className="relative">✦</span>
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                  {t(STR.inProgress)}
+                </p>
+                <span className="text-xs tabular-nums text-blue-700/70 dark:text-blue-300/70">
+                  {runStep + 1}/{RUN_STEPS.length}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-blue-700/80 dark:text-blue-300/80">
+                {t(STR.inProgressHint)}
+              </p>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/60">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 transition-[width] duration-700 ease-out"
+                  style={{ width: `${((runStep + 1) / RUN_STEPS.length) * 100}%` }}
+                />
+              </div>
+              <p className="sr-only">{t(RUN_STEPS[runStep])}</p>
+            </div>
+          </div>
+          <ol className="mt-4 space-y-2" aria-hidden="true">
+            {RUN_STEPS.map((step, index) => {
+              const done = index < runStep;
+              const active = index === runStep;
+              return (
+                <li key={step.en} className="flex items-start gap-2.5 text-sm">
+                  <span
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${
+                      done
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : active
+                          ? "border-blue-500 bg-white text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                          : "border-blue-200 bg-white/60 text-blue-400 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-600"
+                    }`}
+                  >
+                    {done ? (
+                      "✓"
+                    ) : active ? (
+                      <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600 dark:border-blue-800 dark:border-t-blue-300" />
+                    ) : (
+                      index + 1
+                    )}
+                  </span>
+                  <span
+                    className={
+                      done
+                        ? "text-blue-900/80 dark:text-blue-100/80"
+                        : active
+                          ? "font-medium text-blue-900 dark:text-blue-100"
+                          : "text-blue-700/60 dark:text-blue-300/50"
+                    }
+                  >
+                    {t(step)}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : null}
+
       <div className="mb-6 flex flex-wrap gap-3">
         <Link href="/simulations" className={btnSecondary}>
           {t({ el: "Όλες οι προσομοιώσεις", en: "All simulations" })}
@@ -516,6 +640,14 @@ function SimulationDetailView() {
             {t(STR.impactLink)} →
           </Link>
         ) : null}
+        <DeleteButton
+          onConfirm={async () => {
+            const res = await doDelete(`/v1/simulations/${encodeURIComponent(data.id)}`);
+            if (res.error) return res.error;
+            router.push("/simulations");
+            return null;
+          }}
+        />
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-500 dark:text-zinc-400">

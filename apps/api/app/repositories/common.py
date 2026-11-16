@@ -62,6 +62,10 @@ def mem_list(table: str) -> list[dict[str, Any]]:
     return list(MEM[table].values())
 
 
+def mem_delete(table: str, row_id: str) -> bool:
+    return MEM[table].pop(str(row_id), None) is not None
+
+
 def mem_clear() -> None:
     MEM.clear()
 

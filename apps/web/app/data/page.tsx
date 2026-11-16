@@ -288,7 +288,7 @@ function DataView() {
                   subtitle={d.description ?? undefined}
                   badge={
                     <Badge tone="info">
-                      {providerLabel || t({ el: "I�I�I3Ir", en: "Source" })}
+                      {providerLabel || t({ el: "Πηγή", en: "Source" })}
                     </Badge>
                   }
                   meta={
