@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-logger = logging.getLogger("policylab.connectors")
+logger = logging.getLogger("athenax.connectors")
 
 
 def utcnow() -> datetime:

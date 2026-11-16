@@ -22,11 +22,11 @@ from services.ai_engine.policy_planner import (
 )
 from services.ai_engine.providers import get_provider
 
-logger = logging.getLogger("policylab.ai.report_composer")
+logger = logging.getLogger("athenax.ai.report_composer")
 
 COMPOSER_TIMEOUT_SECONDS = 180.0
 
-COMPOSER_SYSTEM_PROMPT = """You are POLICYLAB's simulation report writer for the City of Athens.
+COMPOSER_SYSTEM_PROMPT = """You are AthenaX's simulation report writer for the City of Athens.
 You receive a policy, the selected simulation model and its parameters, the ACTUAL
 simulation metrics, baseline, uncertainty, economics and passport assumptions.
 Write a short, specific, decision-useful bilingual report.

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { ExternalLink } from "lucide-react";
-import type { AIAnswer, Meta } from "@policylab/types";
+import type { AIAnswer, Meta } from "@athenax/types";
 import { useI18n } from "./providers";
 import { Badge, Skeleton } from "./primitives";
 import { formatLimitation } from "./limitations";

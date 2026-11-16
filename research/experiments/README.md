@@ -1,4 +1,4 @@
-# POLICYLAB — Experiment Log
+# AthenaX — Experiment Log
 
 This folder records **what was run, with what inputs, and what it showed** — the connective
 tissue between the platform (`/research` module), validation

@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-logger = logging.getLogger("policylab.db")
+logger = logging.getLogger("athenax.db")
 
 # Fast-fail circuit breaker: without it every request waits for the TCP/connect
 # timeout of an absent Postgres (the UI then appears to "hang").
@@ -26,7 +26,7 @@ RECHECK_AFTER_SUCCESS = 30.0
 
 
 class Base(DeclarativeBase):
-    """Declarative base for all POLICYLAB ORM models."""
+    """Declarative base for all AthenaX ORM models."""
 
 
 engine = None
@@ -49,7 +49,7 @@ def _init_engine() -> None:
     try:
         url = (get_settings().database_url or "").strip()
         if not url:
-            logger.warning("POLICYLAB_DATABASE_URL κενό — η βάση δεδομένων είναι ανενεργή.")
+            logger.warning("ATHENAX_DATABASE_URL κενό — η βάση δεδομένων είναι ανενεργή.")
             engine, AsyncSessionLocal = None, None
             return
         options: dict = {"future": True}

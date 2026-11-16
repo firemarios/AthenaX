@@ -1,7 +1,7 @@
 """Day-4 hardening: prove the local demo survives a dead LLM and no live data.
 
 Starts a second API on :8011 with an unreachable LLM endpoint and
-POLICYLAB_SNAPSHOT_LIVE=0, then checks that:
+ATHENAX_SNAPSHOT_LIVE=0, then checks that:
   * /v1/ai/query still returns a valid envelope with explicit limitations;
   * a greenspace simulation still succeeds with a snapshot/passport.
 
@@ -55,11 +55,11 @@ def start_api() -> subprocess.Popen | None:
     env = os.environ.copy()
     env.update(
         {
-            "POLICYLAB_LLM_PROVIDER": "openai_compatible",
-            "POLICYLAB_LLM_BASE_URL": "http://127.0.0.1:1/v1",
-            "POLICYLAB_LLM_API_KEY": "offline-check",
-            "POLICYLAB_LLM_MODEL": "offline-check",
-            "POLICYLAB_SNAPSHOT_LIVE": "0",
+            "ATHENAX_LLM_PROVIDER": "openai_compatible",
+            "ATHENAX_LLM_BASE_URL": "http://127.0.0.1:1/v1",
+            "ATHENAX_LLM_API_KEY": "offline-check",
+            "ATHENAX_LLM_MODEL": "offline-check",
+            "ATHENAX_SNAPSHOT_LIVE": "0",
         }
     )
     out = API_OUT.open("w", encoding="utf-8")
@@ -171,8 +171,8 @@ def main() -> int:
         "# Offline fallback check - dead LLM, no live Overpass",
         "",
         f"- Generated: **{datetime.now(timezone.utc).isoformat()}**",
-        "- API: `:8011` with `POLICYLAB_LLM_BASE_URL=http://127.0.0.1:1/v1` and",
-        "  `POLICYLAB_SNAPSHOT_LIVE=0`.",
+        "- API: `:8011` with `ATHENAX_LLM_BASE_URL=http://127.0.0.1:1/v1` and",
+        "  `ATHENAX_SNAPSHOT_LIVE=0`.",
         f"- Wall time: **{wall}s**",
         f"- `/health`: HTTP {health_status}, `llm={health_llm}`",
         "",

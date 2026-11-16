@@ -20,7 +20,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-logger = logging.getLogger("policylab.snapshot")
+logger = logging.getLogger("athenax.snapshot")
 
 _CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 _CACHE_TTL_SECONDS = 900
@@ -215,7 +215,7 @@ async def _collect_from_overpass(bbox: list[float], timeout: float) -> dict[str,
     }
     import httpx
 
-    headers = {"User-Agent": "POLICYLAB/1.0 (+https://github.com/firemarios/AthenaX-V2)"}
+    headers = {"User-Agent": "AthenaX/1.0 (+https://github.com/firemarios/AthenaX-V2)"}
     endpoints = (
         "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
@@ -362,7 +362,7 @@ async def build_snapshot(
     if origins:
         sources.append(
             {
-                "name": "POLICYLAB city_features (OpenStreetMap ingest)",
+                "name": "AthenaX city_features (OpenStreetMap ingest)",
                 "url": "https://www.openstreetmap.org",
                 "kind": "database",
                 "retrieved_at": retrieved_at,

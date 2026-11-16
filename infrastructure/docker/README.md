@@ -1,6 +1,6 @@
 # infrastructure/docker — image builds
 
-POLICYLAB ships **two application images** built from the repo root (build context `.`), plus the
+AthenaX ships **two application images** built from the repo root (build context `.`), plus the
 database image pulled from Docker Hub. This folder documents how they are built and how the
 root [`.dockerignore`](../../.dockerignore) applies.
 
@@ -8,8 +8,8 @@ root [`.dockerignore`](../../.dockerignore) applies.
 
 | Image | Dockerfile | Context | Exposed port | Notes |
 |---|---|---|---|---|
-| `policylab-api` | `apps/api/Dockerfile` (owned by backend agent B) | repo root | `8000` | FastAPI + uvicorn; runs Alembic migrations on start or via `alembic upgrade head` |
-| `policylab-web` | `apps/web/Dockerfile` (owned by frontend agent D) | repo root | `3000` | Next.js 16 production build (`next start`) |
+| `athenax-api` | `apps/api/Dockerfile` (owned by backend agent B) | repo root | `8000` | FastAPI + uvicorn; runs Alembic migrations on start or via `alembic upgrade head` |
+| `athenax-web` | `apps/web/Dockerfile` (owned by frontend agent D) | repo root | `3000` | Next.js 16 production build (`next start`) |
 | `db` | none (image `postgis/postgis:16-3.4`) | — | `5432` | `CREATE EXTENSION IF NOT EXISTS postgis;` only — **no pgvector** (contracts §9.3) |
 
 Both Dockerfiles may not exist yet while the repo is being built in parallel — `docker compose up`
@@ -53,7 +53,7 @@ do **not** create a second ignore file (they cannot be scoped per Dockerfile any
 
 ## Environment injection
 
-- Local dev: compose hard-codes safe defaults (`postgres:postgres@db:5432/policylab`).
+- Local dev: compose hard-codes safe defaults (`postgres:postgres@db:5432/athenax`).
 - Production: use [`../deployment/.env.production.example`](../deployment/.env.production.example)
   as the template; never commit a real `.env`.
 - The API reaches a host-level Ollama through `http://host.docker.internal:11434`

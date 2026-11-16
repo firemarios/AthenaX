@@ -40,7 +40,7 @@
   | Source | URL | Retrieved at | Licence |
   |---|---|---|---|
   | OpenStreetMap Overpass (live snapshot) | https://overpass-api.de/api/interpreter | runtime (`retrieved_at` in passport) | ODbL 1.0 |
-  | POLICYLAB `city_features` (Overpass ingest) | https://www.openstreetmap.org | ingest time | ODbL 1.0 |
+  | AthenaX `city_features` (Overpass ingest) | https://www.openstreetmap.org | ingest time | ODbL 1.0 |
   | Deterministic synthetic fixtures (fallback) | — | runtime | internal, flagged `mode=synthetic` |
 
 - **Input snapshot / `inputs_checksum`:** computed at runtime as SHA-256 of canonical JSON of

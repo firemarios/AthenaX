@@ -1,7 +1,7 @@
 import datasetSchemaJson from "../json/dataset.schema.json";
 import policySchemaJson from "../json/policy.schema.json";
 import simulationSchemaJson from "../json/simulation.schema.json";
-import type { AIAnswer, Dataset, Envelope } from "@policylab/types";
+import type { AIAnswer, Dataset, Envelope } from "@athenax/types";
 
 export const datasetSchema = datasetSchemaJson;
 export const policySchema = policySchemaJson;

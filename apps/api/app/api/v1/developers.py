@@ -83,7 +83,7 @@ async def developer_info(request: Request):
         "version": API_VERSION,
         "rate_limit": settings.rate_limit_per_minute,
         "license": "CC BY-NC-SA 4.0",
-        "contact": {"name": "POLICYLAB", "url": settings.api_base_url, "email": ""},
+        "contact": {"name": "AthenaX", "url": settings.api_base_url, "email": ""},
         "endpoints_count": len(ROUTE_CATALOG),
         "sources_count": len(catalog_sources()),
         "llm_provider": settings.llm_provider,

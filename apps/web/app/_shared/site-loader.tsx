@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useI18n } from "@policylab/ui";
+import { useI18n } from "@athenax/ui";
 
 const LOADER_CSS = `
 @keyframes pl-loader-in {

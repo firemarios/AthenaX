@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useI18n } from "@policylab/ui";
+import { useI18n } from "@athenax/ui";
 import { PageHeader, btnPrimary, btnSecondary, mutedText } from "./_shared/ui";
 
 export default function AppError({

@@ -1,7 +1,7 @@
-# POLICYLAB city pack — Berlin (BYO-city example).
+# AthenaX city pack — Berlin (BYO-city example).
 #
 # Activate with:
-#   POLICYLAB_CATALOG_FILE=data/source-registry/catalog.berlin.yaml
+#   ATHENAX_CATALOG_FILE=data/source-registry/catalog.berlin.yaml
 # Restart the API afterwards. Sources reuse the existing connector classes; only the
 # endpoints, the city centre and the intervention areas change.
 #

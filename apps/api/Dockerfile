@@ -1,4 +1,4 @@
-# POLICYLAB API image — build context is the repo root (docker-compose.yml: apps/api/Dockerfile)
+# AthenaX API image — build context is the repo root (docker-compose.yml: apps/api/Dockerfile)
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -18,7 +18,7 @@ COPY data ./data
 COPY infrastructure/database ./infrastructure/database
 
 ENV PYTHONPATH=/app:/app/apps/api \
-    POLICYLAB_STORAGE_DIR=/app/storage
+    ATHENAX_STORAGE_DIR=/app/storage
 
 EXPOSE 8000
 

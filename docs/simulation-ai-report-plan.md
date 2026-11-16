@@ -227,7 +227,7 @@ impact dimensions: society, economy, mobility.
 
 - Repo: `C:\MyApps\Sites\athenax-v2 - Copy`.
 - Dev: `http://localhost:3000` (do NOT use 127.0.0.1 for dev hydration).
-- API: `http://localhost:8000`; DB: repo-root `storage/policylab.db`.
+- API: `http://localhost:8000`; DB: repo-root `storage/athenax.db`.
 - Commands: `& "C:\Program Files\nodejs\npm.cmd" run build`,
   `& "C:\Program Files\nodejs\npx.cmd" tsc --noEmit`, `npm.cmd run lint`.
 - Python tests: `$env:PYTHONIOENCODING="utf-8"` then

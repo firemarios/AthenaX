@@ -1,4 +1,4 @@
-"""POLICYLAB FastAPI application (contracts §1 envelope/middleware, §2 endpoints).
+"""AthenaX FastAPI application (contracts §1 envelope/middleware, §2 endpoints).
 
 Startup NEVER fails: DB init, registry seed and LLM ping are all non-fatal.
 """
@@ -28,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
-logger = logging.getLogger("policylab")
+logger = logging.getLogger("athenax")
 
 LLM_PING_TIMEOUT = 5.0
 LLM_CACHE_TTL = 30.0
@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI):  # noqa: ANN001, ANN202
 
 
 app = FastAPI(
-    title="POLICYLAB",
+    title="AthenaX",
     version=API_VERSION,
     description="Ψηφιακή δίδυμη πόλη — Open Data, GovTech, City, AI, Policy, Citizen, Research.",
     lifespan=lifespan,
@@ -114,7 +114,7 @@ async def root(request: Request):
     settings = get_settings()
     return ok(
         {
-            "name": "POLICYLAB",
+            "name": "AthenaX",
             "version": API_VERSION,
             "docs": "/docs",
             "openapi": "/openapi.json",

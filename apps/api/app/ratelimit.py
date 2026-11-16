@@ -1,6 +1,6 @@
 """Per-IP in-memory sliding-window rate limiting (contract §1).
 
-Pure in-memory — NO redis import (POLICYLAB_REDIS_URL only logs a notice).
+Pure in-memory — NO redis import (ATHENAX_REDIS_URL only logs a notice).
 Exempt: /health, /openapi.json, /docs, static, OPTIONS preflights.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger("policylab.ratelimit")
+logger = logging.getLogger("athenax.ratelimit")
 
 EXEMPT_PATHS = {"/health", "/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"}
 EXEMPT_PREFIXES = ("/static", "/assets")
@@ -75,7 +75,7 @@ def create_rate_limit_middleware():  # noqa: ANN201 — returns an ASGI dispatch
         if (settings.redis_url or "").strip() and not _redis_notice_logged:
             _redis_notice_logged = True
             logger.info(
-                "POLICYLAB_REDIS_URL ορίστηκε — χρήση in-memory rate limiting (δεν εισάγεται redis)."
+                "ATHENAX_REDIS_URL ορίστηκε — χρήση in-memory rate limiting (δεν εισάγεται redis)."
             )
         if not is_exempt(request):
             allowed = limiter.allow(client_ip(request), int(settings.rate_limit_per_minute or 0))

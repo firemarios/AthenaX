@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Breadcrumbs, useI18n, type BreadcrumbItem } from "@policylab/ui";
-import type { Quality } from "@policylab/types";
+import { Breadcrumbs, useI18n, type BreadcrumbItem } from "@athenax/ui";
+import type { Quality } from "@athenax/types";
 import { pctValue } from "./format";
 import { GENERIC_ERROR } from "./hooks";
 

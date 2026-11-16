@@ -14,8 +14,8 @@ import {
   Sun,
   X,
 } from "lucide-react";
-import { request } from "@policylab/api-client";
-import type { Lang } from "@policylab/types";
+import { request } from "@athenax/api-client";
+import type { Lang } from "@athenax/types";
 import { useI18n, useTheme } from "./providers";
 import { CommandPalette } from "./command-palette";
 import {
@@ -269,7 +269,7 @@ function MoreMenu({
         type="button"
         aria-haspopup="true"
         aria-expanded={open}
-        aria-controls="policylab-more-menu"
+        aria-controls="athenax-more-menu"
         onClick={() => setOpen((value) => !value)}
         className={cn(
           "flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-300 hover:-translate-y-px active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -287,7 +287,7 @@ function MoreMenu({
 
       {open ? (
         <div
-          id="policylab-more-menu"
+          id="athenax-more-menu"
           className="pl-pop absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-white/60 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.18),inset_0_1px_1px_rgba(255,255,255,0.6)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900 dark:shadow-[0_18px_60px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.08)]"
         >
           <div className="max-h-[70vh] overflow-y-auto p-1.5">
@@ -607,7 +607,7 @@ export function Nav() {
               type="button"
               onClick={() => setMenuOpen((value) => !value)}
               aria-expanded={menuOpen}
-              aria-controls="policylab-header-menu"
+              aria-controls="athenax-header-menu"
               aria-label={t({ el: "Μενού", en: "Menu" })}
               className={cn(
                 GLASS_CONTROL,
@@ -631,7 +631,7 @@ export function Nav() {
           </div>
         </div>
         <HeaderMenu
-          id="policylab-header-menu"
+          id="athenax-header-menu"
           open={menuOpen}
           pathname={pathname}
           onClose={() => {

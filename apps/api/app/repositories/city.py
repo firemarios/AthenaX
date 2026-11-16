@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-logger = logging.getLogger("policylab.repositories.city")
+logger = logging.getLogger("athenax.repositories.city")
 
 # Athens default centre (contracts §2 / Digital Twin)
 DEFAULT_CENTER = (37.9838, 23.7275)

@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { ChevronDown, Download, ExternalLink } from "lucide-react";
-import type { Source } from "@policylab/types";
+import type { Source } from "@athenax/types";
 import { useI18n } from "./providers";
 import { cn } from "./cn";
 

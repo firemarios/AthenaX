@@ -1,12 +1,12 @@
 "use client";
 
-import { Badge, StatCard, useI18n } from "@policylab/ui";
+import { Badge, StatCard, useI18n } from "@athenax/ui";
 import type {
   AIReportBlock,
   AIReportKpi,
   AIReportSection,
   AISimulationPlan,
-} from "@policylab/types";
+} from "@athenax/types";
 import { AIPlanPanel, AIChart } from "./charts";
 import { fmtConfidence, fmtNum } from "./format";
 import { mutedText } from "./ui";

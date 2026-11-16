@@ -14,7 +14,7 @@ from app.repositories.common import (
     new_id,
 )
 
-logger = logging.getLogger("policylab.repositories.research")
+logger = logging.getLogger("athenax.repositories.research")
 
 PROJECTS = "research_projects"
 EXPERIMENTS = "experiments"

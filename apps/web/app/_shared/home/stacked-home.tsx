@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { useI18n } from "@policylab/ui";
+import { useI18n } from "@athenax/ui";
 import { CHAPTERS, HOME_ARIA, WHO } from "../home-content";
 import { HeroContent } from "./hero-content";
 import { HeroPoster } from "./hero-poster";

@@ -1,4 +1,4 @@
-# Contributing to POLICYLAB
+# Contributing to AthenaX
 
 Thanks for helping build open GovTech. This project is **open by design**: Apache-2.0 code,
 evidence-first AI, Greek-first UI. Please read [`docs/architecture/contracts.md`](docs/architecture/contracts.md)
@@ -34,7 +34,7 @@ evidence-first AI, Greek-first UI. Please read [`docs/architecture/contracts.md`
 ### TypeScript / React (web)
 
 - `eslint-config-next` + **strict** TypeScript (`npx tsc --noEmit` must be clean for your files).
-- Follow the existing component contracts in contracts §6 (`@policylab/ui`, `@policylab/api-client`).
+- Follow the existing component contracts in contracts §6 (`@athenax/ui`, `@athenax/api-client`).
 - Tailwind v4 utility classes with the design tokens in `globals.css`; WCAG AA contrast;
   keyboard focus rings; responsive.
 - Read the bundled Next.js docs in `node_modules/next/dist/docs/` before writing pages —
@@ -58,7 +58,7 @@ npm.cmd run build            # production build
 
 ## 4. i18n rule — Greek-first
 
-- The **default language is Greek** (`POLICYLAB_UI_LOCALE_DEFAULT=el`).
+- The **default language is Greek** (`ATHENAX_UI_LOCALE_DEFAULT=el`).
 - **Every user-facing string needs both `el` and `en`** — labels, buttons, empty states,
   errors, tooltips, map popups, disclaimers. Backend error messages are in **Greek**;
   code, identifiers and log messages are in English.

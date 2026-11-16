@@ -6,7 +6,7 @@
 
 ## Goal
 
-Verify that an analyst who has never seen POLICYLAB can complete the flagship journey and
+Verify that an analyst who has never seen AthenaX can complete the flagship journey and
 produce a defensible evidence dossier in under 20 minutes:
 
 1. Ask a question and read the sources/limitations.

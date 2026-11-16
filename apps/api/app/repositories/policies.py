@@ -14,7 +14,7 @@ from app.repositories.common import (
     new_id,
 )
 
-logger = logging.getLogger("policylab.repositories.policies")
+logger = logging.getLogger("athenax.repositories.policies")
 
 TABLE = "policies"
 VARIANTS_TABLE = "policy_variants"

@@ -11,8 +11,8 @@ import {
   ArrowDownRight,
   Minus,
 } from "lucide-react";
-import { Badge, ExportButton, useI18n } from "@policylab/ui";
-import type { ImpactIndicator, ImpactReport } from "@policylab/types";
+import { Badge, ExportButton, useI18n } from "@athenax/ui";
+import type { ImpactIndicator, ImpactReport } from "@athenax/types";
 import { downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "./format";
 import { SectionCard, headingCls, mutedText } from "./ui";
 

@@ -1,7 +1,7 @@
 ﻿#requires -version 5.1
 <#
 .SYNOPSIS
-  End-to-end smoke test for POLICYLAB (Phase 0).
+  End-to-end smoke test for AthenaX (Phase 0).
 
 .DESCRIPTION
   One command exercises the flagship journey against a running API:
@@ -146,7 +146,7 @@ try {
 
   Write-Step "Metrics endpoint"
   $metrics = Invoke-WebRequest -Method GET -Uri "$BaseUrl/metrics" -UseBasicParsing -TimeoutSec 30
-  Assert-True ($metrics.Content -match "policylab_requests_total") "GET /metrics exposes Prometheus counters"
+  Assert-True ($metrics.Content -match "athenax_requests_total") "GET /metrics exposes Prometheus counters"
 }
 catch {
   $script:Failures++

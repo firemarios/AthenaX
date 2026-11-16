@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@policylab/api-client": "*",
-    "@policylab/schemas": "*",
-    "@policylab/types": "*",
-    "@policylab/ui": "*",
+    "@athenax/api-client": "*",
+    "@athenax/schemas": "*",
+    "@athenax/types": "*",
+    "@athenax/ui": "*",
     "@react-three/fiber": "^9.8.2",
     "chart.js": "^4.4.7",
     "clsx": "^2.1.1",

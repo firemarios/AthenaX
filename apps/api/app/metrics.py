@@ -90,57 +90,57 @@ def _connector_states() -> dict[str, str]:
 
 def render_metrics() -> str:
     lines: list[str] = [
-        "# HELP policylab_up Always 1 while the API process is serving.",
-        "# TYPE policylab_up gauge",
-        "policylab_up 1",
-        "# HELP policylab_uptime_seconds Seconds since process start.",
-        "# TYPE policylab_uptime_seconds gauge",
-        f"policylab_uptime_seconds {time.time() - metrics.started_at:.3f}",
-        "# HELP policylab_requests_total Total HTTP requests observed.",
-        "# TYPE policylab_requests_total counter",
-        f"policylab_requests_total {metrics.requests_total}",
-        "# HELP policylab_requests_inflight Requests currently in flight.",
-        "# TYPE policylab_requests_inflight gauge",
-        f"policylab_requests_inflight {metrics.inflight}",
-        "# HELP policylab_request_duration_seconds Request latency.",
-        "# TYPE policylab_request_duration_seconds summary",
-        f"policylab_request_duration_seconds_sum {metrics.duration_sum:.6f}",
-        f"policylab_request_duration_seconds_count {metrics.duration_count}",
-        "# HELP policylab_requests_by_status Requests grouped by status class.",
-        "# TYPE policylab_requests_by_status counter",
+        "# HELP athenax_up Always 1 while the API process is serving.",
+        "# TYPE athenax_up gauge",
+        "athenax_up 1",
+        "# HELP athenax_uptime_seconds Seconds since process start.",
+        "# TYPE athenax_uptime_seconds gauge",
+        f"athenax_uptime_seconds {time.time() - metrics.started_at:.3f}",
+        "# HELP athenax_requests_total Total HTTP requests observed.",
+        "# TYPE athenax_requests_total counter",
+        f"athenax_requests_total {metrics.requests_total}",
+        "# HELP athenax_requests_inflight Requests currently in flight.",
+        "# TYPE athenax_requests_inflight gauge",
+        f"athenax_requests_inflight {metrics.inflight}",
+        "# HELP athenax_request_duration_seconds Request latency.",
+        "# TYPE athenax_request_duration_seconds summary",
+        f"athenax_request_duration_seconds_sum {metrics.duration_sum:.6f}",
+        f"athenax_request_duration_seconds_count {metrics.duration_count}",
+        "# HELP athenax_requests_by_status Requests grouped by status class.",
+        "# TYPE athenax_requests_by_status counter",
     ]
     for bucket in _STATUS_BUCKETS:
         count = sum(
             value for status, value in metrics.by_status.items() if bucket <= status < bucket + 100
         )
-        lines.append(f'policylab_requests_by_status{{class="{bucket}"}} {count}')
+        lines.append(f'athenax_requests_by_status{{class="{bucket}"}} {count}')
     lines.extend(
         [
-            "# HELP policylab_errors_total Responses with a 5xx status.",
-            "# TYPE policylab_errors_total counter",
-            f"policylab_errors_total {metrics.errors_total}",
+            "# HELP athenax_errors_total Responses with a 5xx status.",
+            "# TYPE athenax_errors_total counter",
+            f"athenax_errors_total {metrics.errors_total}",
         ]
     )
     if metrics.by_path:
         lines.extend(
             [
-                "# HELP policylab_requests_by_path Requests grouped by route pattern.",
-                "# TYPE policylab_requests_by_path counter",
+                "# HELP athenax_requests_by_path Requests grouped by route pattern.",
+                "# TYPE athenax_requests_by_path counter",
             ]
         )
         for path, count in sorted(metrics.by_path.items()):
-            lines.append(f'policylab_requests_by_path{{path="{path}"}} {count}')
+            lines.append(f'athenax_requests_by_path{{path="{path}"}} {count}')
     states = _connector_states()
     if states:
         lines.extend(
             [
-                "# HELP policylab_connector_up Last-known connector health (1 up, 0 down).",
-                "# TYPE policylab_connector_up gauge",
+                "# HELP athenax_connector_up Last-known connector health (1 up, 0 down).",
+                "# TYPE athenax_connector_up gauge",
             ]
         )
         for name, state in sorted(states.items()):
             up = 0 if state in {"down", "disabled"} else 1
-            lines.append(f'policylab_connector_up{{name="{name}",status="{state}"}} {up}')
+            lines.append(f'athenax_connector_up{{name="{name}",status="{state}"}} {up}')
     return "\n".join(lines) + "\n"
 
 

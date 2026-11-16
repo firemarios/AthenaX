@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ExternalLink, RefreshCw } from "lucide-react";
-import { Badge, EmptyState, Skeleton, StatCard, useI18n } from "@policylab/ui";
-import { API_BASE, get } from "@policylab/api-client";
-import type { Lang } from "@policylab/types";
+import { Badge, EmptyState, Skeleton, StatCard, useI18n } from "@athenax/ui";
+import { API_BASE, get } from "@athenax/api-client";
+import type { Lang } from "@athenax/types";
 
 const GENERIC_ERROR =
   "Δεν ήταν δυνατή η ανάκτηση των δεδομένων από τον διακομιστή. Δοκιμάστε ξανά.";

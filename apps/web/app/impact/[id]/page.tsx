@@ -3,14 +3,14 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Badge, ExportButton, Skeleton, useI18n } from "@policylab/ui";
+import { Badge, ExportButton, Skeleton, useI18n } from "@athenax/ui";
 import type {
   ImpactIndicator,
   ImpactReport,
   SimulationRun,
   SimulationSensitivity,
-} from "@policylab/types";
-import { API_BASE } from "@policylab/api-client";
+} from "@athenax/types";
+import { API_BASE } from "@athenax/api-client";
 import { useApi } from "@/_shared/hooks";
 import { deltaTone, downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "@/_shared/format";
 import {

@@ -5,7 +5,7 @@ import logging
 import uuid
 from typing import Any
 
-logger = logging.getLogger("policylab.reporting")
+logger = logging.getLogger("athenax.reporting")
 
 DIMENSIONS: list[dict] = [
     {"key": "environment", "label": {"el": "Περιβάλλον", "en": "Environment"}},

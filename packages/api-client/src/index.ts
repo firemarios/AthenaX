@@ -1,4 +1,4 @@
-import type { ApiError, Envelope, Meta } from "@policylab/types";
+import type { ApiError, Envelope, Meta } from "@athenax/types";
 
 function trimBase(value: string): string {
   return value.replace(/\/+$/, "");
@@ -39,7 +39,7 @@ function readBase(): string {
   return configured || "http://localhost:8000";
 }
 
-/** Base URL of the POLICYLAB API (override with NEXT_PUBLIC_API_BASE_URL). */
+/** Base URL of the AthenaX API (override with NEXT_PUBLIC_API_BASE_URL). */
 export const API_BASE: string = readBase();
 
 const GREEK_ERRORS: Record<number, string> = {
@@ -143,7 +143,7 @@ function networkEnvelope<T>(): Envelope<T> {
 }
 
 /**
- * Perform an HTTP request against the POLICYLAB API.
+ * Perform an HTTP request against the AthenaX API.
  *
  * - Always resolves to an `Envelope` (never throws).
  * - Retries once (2 attempts total, small backoff) on network errors and 5xx.

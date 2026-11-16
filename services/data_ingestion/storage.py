@@ -1,7 +1,7 @@
 """Object storage (contract §5.3): S3/MinIO when configured AND importable, else local disk.
 
 No new dependencies: S3 requires boto3 (optional, lazily imported); otherwise objects
-are stored under POLICYLAB_STORAGE_DIR (default ./storage) and addressed as file:// URIs.
+are stored under ATHENAX_STORAGE_DIR (default ./storage) and addressed as file:// URIs.
 """
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from typing import Any
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
-logger = logging.getLogger("policylab.storage")
+logger = logging.getLogger("athenax.storage")
 
 
 def _setting(settings: Any, name: str, env: str) -> Any:
@@ -39,11 +39,11 @@ class ObjectStore:
     """put(key, data) → uri; get(uri) → bytes. S3 only when endpoint set AND boto3 importable."""
 
     def __init__(self, settings: Any = None) -> None:
-        self.endpoint_url = _setting(settings, "s3_endpoint_url", "POLICYLAB_S3_ENDPOINT_URL")
-        self.bucket = _setting(settings, "s3_bucket", "POLICYLAB_S3_BUCKET") or "policylab"
-        self.access_key = _setting(settings, "s3_access_key", "POLICYLAB_S3_ACCESS_KEY")
-        self.secret_key = _setting(settings, "s3_secret_key", "POLICYLAB_S3_SECRET_KEY")
-        base_dir = _setting(settings, "storage_dir", "POLICYLAB_STORAGE_DIR") or "./storage"
+        self.endpoint_url = _setting(settings, "s3_endpoint_url", "ATHENAX_S3_ENDPOINT_URL")
+        self.bucket = _setting(settings, "s3_bucket", "ATHENAX_S3_BUCKET") or "athenax"
+        self.access_key = _setting(settings, "s3_access_key", "ATHENAX_S3_ACCESS_KEY")
+        self.secret_key = _setting(settings, "s3_secret_key", "ATHENAX_S3_SECRET_KEY")
+        base_dir = _setting(settings, "storage_dir", "ATHENAX_STORAGE_DIR") or "./storage"
         self.base_dir = str(Path(str(base_dir)).expanduser().resolve())
         self.s3_enabled = False
         self.note: str | None = None
@@ -54,7 +54,7 @@ class ObjectStore:
                 import boto3  # type: ignore  # noqa: PLC0415 — optional dependency
             except ImportError:
                 self.note = (
-                    "Ορίστηκε POLICYLAB_S3_ENDPOINT_URL αλλά ο boto3 δεν είναι διαθέσιμος — "
+                    "Ορίστηκε ATHENAX_S3_ENDPOINT_URL αλλά ο boto3 δεν είναι διαθέσιμος — "
                     "χρήση τοπικού αποθηκευτικού συστήματος."
                 )
                 logger.warning(self.note)

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Lang } from "@policylab/types";
-import { request } from "@policylab/api-client";
+import type { Lang } from "@athenax/types";
+import { request } from "@athenax/api-client";
 
 export interface HomeMetrics {
   sources: number | null;

@@ -8,7 +8,7 @@ from typing import Any
 
 from services.connector_kit.base import NormalizedRecord, utcnow
 
-logger = logging.getLogger("policylab.ingest")
+logger = logging.getLogger("athenax.ingest")
 
 _MAX_KEY_LEN = 120
 _MAX_STR_LEN = 10_000

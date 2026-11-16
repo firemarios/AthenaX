@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { cn } from "@policylab/ui";
+import { cn } from "@athenax/ui";
 
 export function TiltCard({
   children,

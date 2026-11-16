@@ -12,7 +12,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import type { Lang } from "@policylab/types";
+import type { Lang } from "@athenax/types";
 
 export type Copy = Record<Lang, string>;
 

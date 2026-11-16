@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
-import { cn, useI18n } from "@policylab/ui";
+import { cn, useI18n } from "@athenax/ui";
 import { PRICING, PRICING_SECTION } from "../home-content";
 
 export function Pricing() {

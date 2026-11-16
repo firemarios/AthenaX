@@ -10,7 +10,7 @@ from services.connector_kit.helpers import get_json, lang_text
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _SPACE_RE = re.compile(r"\s+")
-_HEADERS = {"User-Agent": "PolicyLab/1.0 (public policy research; https://policylab.local)"}
+_HEADERS = {"User-Agent": "AthenaX/1.0 (public policy research; https://athenax.local)"}
 
 
 def _clean(text: Any) -> str | None:

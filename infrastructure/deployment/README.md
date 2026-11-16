@@ -5,16 +5,16 @@
 | | Development | Staging | Production |
 |---|---|---|---|
 | Config file | `.env` (from repo-root `.env.example`) | `.env.staging` | `.env.production` (from [`.env.production.example`](.env.production.example)) |
-| `POLICYLAB_ENV` | `development` | `staging` | `production` |
+| `ATHENAX_ENV` | `development` | `staging` | `production` |
 | DB | `docker compose up -d db` (local PostGIS) | managed PostGIS or compose on a staging host | managed PostgreSQL + PostGIS (HA recommended) |
 | API | `python -m uvicorn app.main:app --app-dir apps/api --reload` | uvicorn behind reverse proxy, no `--reload` | uvicorn/gunicorn workers behind HTTPS reverse proxy |
 | Web | `npm.cmd dev` (Turbopack dev) | `npm.cmd build && npm.cmd start` | `npm.cmd build && npm.cmd start` (or `next start` in Docker) |
-| LLM | local Ollama (`http://localhost:11434`) | `POLICYLAB_LLM_BASE_URL` to a private endpoint | private endpoint; `POLICYLAB_LLM_API_KEY` from a secret store |
+| LLM | local Ollama (`http://localhost:11434`) | `ATHENAX_LLM_BASE_URL` to a private endpoint | private endpoint; `ATHENAX_LLM_API_KEY` from a secret store |
 | Redis / MinIO | optional `--profile full` | optional | optional — code degrades to in-memory / `./storage` |
 | Telemetry | off | off (collector optional) | off unless OTel packages approved — see `infrastructure/monitoring/README.md` |
 
 **Rules:** no secrets in git (`.env*` is git-ignored except `*.example`); every setting uses the
-`POLICYLAB_` prefix (contracts §1); `NEXT_PUBLIC_*` values are fixed at **build** time.
+`ATHENAX_` prefix (contracts §1); `NEXT_PUBLIC_*` values are fixed at **build** time.
 
 ## Runbook — development (Docker path)
 
@@ -53,7 +53,7 @@ docker compose down -v                # stop and DELETE the db volume
 
 ## Runbook — staging / production
 
-1. Provision PostgreSQL 16 + PostGIS 3.4; create db `policylab`; run
+1. Provision PostgreSQL 16 + PostGIS 3.4; create db `athenax`; run
    `CREATE EXTENSION IF NOT EXISTS postgis;` (no pgvector — contracts §9.3).
 2. Copy `.env.production.example` → `.env.production`, fill values, keep out of git.
 3. Build images: `docker compose build` (or per-service CI builds of

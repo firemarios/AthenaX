@@ -1,6 +1,6 @@
-# POLICYLAB — Validation Methodology
+# AthenaX — Validation Methodology
 
-How POLICYLAB audits data sources, validates simulation models, and evaluates pilots.
+How AthenaX audits data sources, validates simulation models, and evaluates pilots.
 Outputs live in [`../validation/`](../validation/) (reports) and feed
 [`../../docs/PRD.md`](../../docs/PRD.md) KPIs (K4–K7) and the Simulation Passport
 (`validated_by`).

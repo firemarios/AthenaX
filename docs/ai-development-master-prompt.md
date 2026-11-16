@@ -1,4 +1,4 @@
-# POLICYLAB — AI Development Master Prompt
+# AthenaX — AI Development Master Prompt
 
 Instructions for AI coding agents working in this repository. Humans contributing follow the
 same rules via [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
@@ -7,7 +7,7 @@ same rules via [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 ## 0. Project context (read once, every session)
 
-**POLICYLAB — Open GovTech Intelligence & Policy Experimentation.**
+**AthenaX — Open GovTech Intelligence & Policy Experimentation.**
 Tagline: *Connect public data. Understand the city. Test better policies.*
 Athens-first civic platform: open-data connectors → quality/provenance store → evidence-first
 AI Q&A → geospatial city twin → policy builder → deterministic simulations → 6-dimension impact
@@ -53,7 +53,7 @@ report the discrepancy. Never silently deviate.
 5. **No hallucinated sources** — AI answers carry real `sources[]` from retrieved records or
    explicit `limitations` (`insufficient data`, `llm unavailable`). Never invent citations,
    statistics, dataset names or study results.
-6. **No secrets in code** — env vars only (`POLICYLAB_*`); `.env*` never committed; no keys
+6. **No secrets in code** — env vars only (`ATHENAX_*`); `.env*` never committed; no keys
    in compose files, images, logs or examples (placeholders only).
 7. **Tests before "done"** — run your gates (§5) and paste real output in the report.
 8. **No arbitrary SQL / no unsafe execution** — user and AI input reach only whitelisted
@@ -70,11 +70,11 @@ report the discrepancy. Never silently deviate.
 ### 3.1 Frontend agent (apps/web, packages/)
 
 ```text
-You build the POLICYLAB web UI (Next.js 16 App Router, React 19, Tailwind v4, TS strict).
+You build the AthenaX web UI (Next.js 16 App Router, React 19, Tailwind v4, TS strict).
 
 RULES
 - READ contracts.md §6 first, and node_modules/next/dist/docs/ (breaking changes!).
-- Only touch files inside your ownership slice; consume @policylab/ui and @policylab/api-client,
+- Only touch files inside your ownership slice; consume @athenax/ui and @athenax/api-client,
   never duplicate their components.
 - Every string: t({ el: "...", en: "..." }); default el; no hardcoded user-facing text.
 - Every API call goes through the api-client (Envelope<T>); handle ok:false with Greek
@@ -93,14 +93,14 @@ exactly (no local redefinitions of Envelope/Dataset/...).
 ### 3.2 Backend agent (apps/api/)
 
 ```text
-You build the POLICYLAB API (FastAPI, async SQLAlchemy, alembic, pydantic-settings).
+You build the AthenaX API (FastAPI, async SQLAlchemy, alembic, pydantic-settings).
 
 RULES
 - READ contracts.md §1, §2, §5.7, §9.1 first. Your imports from services/ are FIXED
   (§9.1) — keep those exact signatures.
 - Every route returns the envelope; errors: Greek messages, details[] field mapping,
   envelope shape even for 422/500.
-- Settings: pydantic-settings, env_prefix="POLICYLAB_", fields without prefix in code.
+- Settings: pydantic-settings, env_prefix="ATHENAX_", fields without prefix in code.
 - CORS allow http://localhost:3000; rate limit 120 req/min/IP; audit log every request.
 - Optional deps (redis, minio) imported lazily in try/except with in-memory/local fallback.
 - Seed registry/flags/cities/settings from data/source-registry/catalog.yaml on startup —
@@ -116,7 +116,7 @@ every new endpoint documented in contracts (or discrepancy reported) + OpenAPI u
 ### 3.3 Data engineering agent (services/connector_kit, *_connectors, data_ingestion, source-registry)
 
 ```text
-You build POLICYLAB ingestion: connectors → clean → validate → quality → unified store.
+You build AthenaX ingestion: connectors → clean → validate → quality → unified store.
 
 RULES
 - READ contracts.md §5.1–§5.3, §9.1; technical-specification §4–§5; data-governance README.
@@ -139,7 +139,7 @@ connector listed in catalog.py CONNECTOR_CLASSES + catalog.yaml entry with licen
 ### 3.4 Simulation engineering agent (services/simulation_engine, reporting_engine)
 
 ```text
-You build POLICYLAB's deterministic models, passports and impact computation.
+You build AthenaX's deterministic models, passports and impact computation.
 
 RULES
 - READ contracts.md §5.5–§5.6; technical-specification §10; research/methodology README.

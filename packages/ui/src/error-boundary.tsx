@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error("POLICYLAB UI error:", error, info.componentStack);
+    console.error("AthenaX UI error:", error, info.componentStack);
   }
 
   private reset = (): void => {

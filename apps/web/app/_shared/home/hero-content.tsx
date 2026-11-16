@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { cn, ExampleChips, SearchBar, useI18n } from "@policylab/ui";
+import { cn, ExampleChips, SearchBar, useI18n } from "@athenax/ui";
 import { EXAMPLE_QUESTIONS, HERO } from "../home-content";
 
 export function HeroContent({

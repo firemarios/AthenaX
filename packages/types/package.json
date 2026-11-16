@@ -1,5 +1,5 @@
 {
-  "name": "@policylab/types",
+  "name": "@athenax/types",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",

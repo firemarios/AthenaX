@@ -2,7 +2,7 @@
 
 import { RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
-import { CountUp, useI18n } from "@policylab/ui";
+import { CountUp, useI18n } from "@athenax/ui";
 import { METRICS_SECTION } from "../home-content";
 import type { HomeMetrics } from "./use-home-metrics";
 import { healthLabel } from "./use-home-metrics";

@@ -1,6 +1,6 @@
 # Simulation system workflow
 
-How POLICYLAB turns a policy into a reproducible simulation run, a decision report
+How AthenaX turns a policy into a reproducible simulation run, a decision report
 and a six-dimension impact assessment.
 
 This document describes the current implementation. The code is the source of truth;

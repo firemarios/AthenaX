@@ -5,7 +5,7 @@ import logging
 
 from app.repositories.common import repo_root
 
-logger = logging.getLogger("policylab.repositories.seed")
+logger = logging.getLogger("athenax.repositories.seed")
 
 _DEFAULT_SETTINGS: list[tuple[str, object, str]] = [
     ("default_city", "Athens", "Προεπιλεγμένη πόλη"),

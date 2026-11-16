@@ -9,12 +9,12 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import type { Lang } from "@policylab/types";
+import type { Lang } from "@athenax/types";
 
-const LANG_KEY = "policylab_lang";
-const LANG_EVENT = "policylab:lang";
-const THEME_KEY = "policylab_theme";
-const THEME_EVENT = "policylab:theme";
+const LANG_KEY = "athenax_lang";
+const LANG_EVENT = "athenax:lang";
+const THEME_KEY = "athenax_theme";
+const THEME_EVENT = "athenax:theme";
 
 export type Theme = "light" | "dark";
 

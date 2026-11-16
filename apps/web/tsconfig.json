@@ -21,10 +21,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
-      "@policylab/ui": ["../../packages/ui/src/index.ts"],
-      "@policylab/types": ["../../packages/types/src/index.ts"],
-      "@policylab/api-client": ["../../packages/api-client/src/index.ts"],
-      "@policylab/schemas": ["../../packages/schemas/src/index.ts"]
+      "@athenax/ui": ["../../packages/ui/src/index.ts"],
+      "@athenax/types": ["../../packages/types/src/index.ts"],
+      "@athenax/api-client": ["../../packages/api-client/src/index.ts"],
+      "@athenax/schemas": ["../../packages/schemas/src/index.ts"]
     }
   },
   "include": [

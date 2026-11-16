@@ -17,7 +17,7 @@ from services.ai_engine.providers import get_provider
 from services.ai_engine.rag import retrieve
 from services.ai_engine.streaming import extract_string_field
 
-logger = logging.getLogger("policylab.ai")
+logger = logging.getLogger("athenax.ai")
 
 INSUFFICIENT_ANSWER = {
     "detailed_result": (

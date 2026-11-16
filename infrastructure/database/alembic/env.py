@@ -1,4 +1,4 @@
-"""Alembic environment (async, contract §5.7: asyncpg URL from POLICYLAB_* settings).
+"""Alembic environment (async, contract §5.7: asyncpg URL from ATHENAX_* settings).
 
 - offline mode:  alembic -c infrastructure/database/alembic.ini upgrade head --sql
 - online mode:   alembic -c infrastructure/database/alembic.ini upgrade head

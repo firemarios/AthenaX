@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRef, type RefObject } from "react";
 import { ArrowUpRight, Pause, Play } from "lucide-react";
-import { cn, useI18n, useTheme } from "@policylab/ui";
+import { cn, useI18n, useTheme } from "@athenax/ui";
 import { CHAPTERS, HERO, HOME_ARIA, STOPS, WHO } from "../home-content";
 import { useCityJourney } from "../use-city-journey";
 import { HeroContent } from "./hero-content";

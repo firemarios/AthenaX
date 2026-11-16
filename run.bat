@@ -5,7 +5,7 @@ title ATHENAX build - web :3000 ^| api :8000
 cd /d "%~dp0"
 
 echo ============================================================
-echo   ATHENAX / POLICYLAB - production build
+echo   ATHENAX - production build
 echo ============================================================
 echo   Mode         next build + next start (no dev server)
 echo   Web          http://localhost:3000

@@ -3,8 +3,8 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
-import type { Policy, SimulationRun } from "@policylab/types";
+import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@athenax/ui";
+import type { Policy, SimulationRun } from "@athenax/types";
 import { useApi, doDelete } from "@/_shared/hooks";
 import { fmtDateTime } from "@/_shared/format";
 import {

@@ -22,7 +22,7 @@ from services.connector_kit.base import NormalizedRecord
 from services.connector_kit.catalog import CONNECTOR_CLASSES
 from services.geospatial_engine.queries import bbox_from_center
 
-logger = logging.getLogger("policylab.intelligence")
+logger = logging.getLogger("athenax.intelligence")
 
 NO_CONNECTORS_ALERT = "Δεν υπάρχουν ενεργοποιημένοι συνθέτες δεδομένων."
 LLM_UNAVAILABLE_ALERT = "Η τεχνητή νοημοσύνη είναι προσωρινά μη διαθέσιμη."

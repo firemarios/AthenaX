@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://policylab.local/schemas/simulation.schema.json",
+  "$id": "https://athenax.local/schemas/simulation.schema.json",
   "title": "SimulationRun",
-  "description": "POLICYLAB simulation run entity (matches the TS SimulationRun type).",
+  "description": "AthenaX simulation run entity (matches the TS SimulationRun type).",
   "type": "object",
   "required": [
     "id",

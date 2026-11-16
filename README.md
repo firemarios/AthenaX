@@ -1,4 +1,4 @@
-# POLICYLAB
+# AthenaX
 
 [![CI](https://github.com/firemarios/AthenaX-V2/actions/workflows/ci.yml/badge.svg)](https://github.com/firemarios/AthenaX-V2/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -7,7 +7,7 @@
 
 > Connect public data. Understand the city. Test better policies.
 
-POLICYLAB is an open-source platform that connects public open-data and GovTech sources,
+AthenaX is an open-source platform that connects public open-data and GovTech sources,
 makes them explorable and question-able with **evidence-first AI**, and lets practitioners
 **design, simulate and compare policy scenarios** with full reproducibility — starting with
 Athens, built to work for any city.
@@ -23,7 +23,7 @@ Athens, built to work for any city.
 
 ## 1. Vision & principles
 
-POLICYLAB balances four forces instead of optimizing for one:
+AthenaX balances four forces instead of optimizing for one:
 
 | Force | What it means here |
 |---|---|
@@ -98,11 +98,11 @@ Detailed specification: [`docs/architecture/technical-specification.md`](docs/ar
 ## 4. Repository map
 
 ```text
-policylab/
+athenax/
 ├── apps/
 │   ├── api/                 FastAPI backend (agent B) — app.main:app, /v1 routes
 │   └── web/                 Next.js 16 frontend (agents D & E)
-├── packages/                shared TS packages (@policylab/ui, types, api-client)
+├── packages/                shared TS packages (@athenax/ui, types, api-client)
 ├── services/                Python domain services (ai_engine, connector_kit,
 │                            data_ingestion, geospatial_engine, simulation_engine,
 │                            reporting_engine, open_data_connectors, govtech_connectors)
@@ -128,7 +128,7 @@ policylab/
 - Docker Desktop (for the DB, or the full stack)
 - Python **3.11** (`python` on PATH; `requirements.txt` / `requirements-dev.txt`)
 - Node **≥ 20** (`npm.cmd` on Windows PowerShell)
-- Optional: [Ollama](https://ollama.com) for Ask-the-City (`POLICYLAB_LLM_BASE_URL=http://localhost:11434`)
+- Optional: [Ollama](https://ollama.com) for Ask-the-City (`ATHENAX_LLM_BASE_URL=http://localhost:11434`)
 
 ### 5.2 Docker path (database only — recommended)
 
@@ -207,7 +207,7 @@ the orchestrator runs the final combined gates.
 ## 8. License & language
 
 - Code: **Apache License 2.0** — see [`LICENSE`](LICENSE).
-- Documentation: CC BY 4.0 (attribution to POLICYLAB contributors); third-party datasets keep
+- Documentation: CC BY 4.0 (attribution to AthenaX contributors); third-party datasets keep
   **their own** licenses — see [`docs/data-governance/README.md`](docs/data-governance/README.md).
   *Public does not mean free to reuse.*
 - **Bilingual:** the product UI is **Greek-first** with English available everywhere

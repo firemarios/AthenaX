@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AIResponse, ExampleChips, MapPanel, formatLimitation, useI18n } from "@policylab/ui";
-import type { AIAnswer, Meta } from "@policylab/types";
+import { AIResponse, ExampleChips, MapPanel, formatLimitation, useI18n } from "@athenax/ui";
+import type { AIAnswer, Meta } from "@athenax/types";
 import { doPost } from "@/_shared/hooks";
 import { postStream } from "@/_shared/stream";
 import {

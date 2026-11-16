@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useId } from "react";
-import { useI18n } from "@policylab/ui";
+import { useI18n } from "@athenax/ui";
 import { HERO } from "../home-content";
 
 const SKYLINE: { x: number; width: number; height: number }[] = [

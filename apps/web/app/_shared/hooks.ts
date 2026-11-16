@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { del, get, post } from "@policylab/api-client";
-import type { Meta } from "@policylab/types";
+import { del, get, post } from "@athenax/api-client";
+import type { Meta } from "@athenax/types";
 
 export const GENERIC_ERROR =
   "Δεν ήταν δυνατή η ανάκτηση των δεδομένων από τον διακομιστή. Δοκιμάστε ξανά.";

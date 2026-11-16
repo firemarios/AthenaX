@@ -1,6 +1,6 @@
 "use client";
 
-import { API_BASE } from "@policylab/api-client";
+import { API_BASE } from "@athenax/api-client";
 
 export type StreamHandler = (event: string, payload: Record<string, unknown>) => void;
 

@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from services.reporting_engine.reports import build_research_report, to_csv
 
-logger = logging.getLogger("policylab.api.research")
+logger = logging.getLogger("athenax.api.research")
 
 router = APIRouter()
 

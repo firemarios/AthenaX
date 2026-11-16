@@ -1,4 +1,4 @@
-# POLICYLAB — Shared Build Contracts (v1)
+# AthenaX — Shared Build Contracts (v1)
 
 **This document is the single source of truth for all parallel build agents.**
 Every agent MUST implement exactly these interfaces. If you believe a contract is wrong,
@@ -41,9 +41,9 @@ Windows + PowerShell environment: `npm.cmd`, `python`.
 { "ok": false, "data": null, "meta": null, "error": {"code": 422, "message": "Μη έγκυρη είσοδος", "details": [{"field":"q","message":"..."}]} }
 ```
 
-- **Env prefix**: `POLICYLAB_` (see `.env.example` at repo root). Settings class uses
-  `env_prefix="POLICYLAB_"` AND also accepts unprefixed names for backwards compat is NOT required —
-  use prefix only, but list fields WITHOUT prefix in code (`database_url` ← `POLICYLAB_DATABASE_URL`).
+- **Env prefix**: `ATHENAX_` (see `.env.example` at repo root). Settings class uses
+  `env_prefix="ATHENAX_"` AND also accepts unprefixed names for backwards compat is NOT required —
+  use prefix only, but list fields WITHOUT prefix in code (`database_url` ← `ATHENAX_DATABASE_URL`).
 - **Optional deps** (redis, minio/prefect NOT installed): import lazily inside try/except and
   degrade gracefully (in-memory / local disk fallback).
 - **CORS**: allow `http://localhost:3000`.
@@ -284,7 +284,7 @@ def clean_record(raw: dict) -> dict                  # strip, dedupe keys, drop 
 def validate_record(record: dict, schema: dict | None = None) -> dict  # {"valid": bool, "errors": [str]}
 def score_quality(record: dict, fetched_at: datetime | None) -> dict   # Quality {completeness,freshness,validity,validation_status}
 class ObjectStore:
-    def __init__(self, settings): ...                 # S3 if POLICYLAB_S3_ENDPOINT_URL else local dir
+    def __init__(self, settings): ...                 # S3 if ATHENAX_S3_ENDPOINT_URL else local dir
     def put(self, key: str, data: bytes) -> str       # returns uri (s3://... or file://...)
     def get(self, uri: str) -> bytes
 async def ingest(connector: BaseConnector, *, query=None, limit=50, store: ObjectStore | None = None) -> dict
@@ -355,7 +355,7 @@ experiments, audit_logs, api_registry`.
 
 ## 6. Frontend contracts (agents D & E)
 
-### 6.1 `@policylab/ui` exports (agent D implements; agent E consumes)
+### 6.1 `@athenax/ui` exports (agent D implements; agent E consumes)
 ```ts
 export function I18nProvider({children}): JSX.Element        // client; persists lang in localStorage
 export function useI18n(): { lang: "el"|"en"; setLang: (l: "el"|"en") => void;
@@ -364,7 +364,7 @@ export function ThemeProvider({children}): JSX.Element       // dark/light, .dar
 export function useTheme(): { theme: "light"|"dark"; toggle: () => void }
 export function ErrorBoundary({children}): JSX.Element       // Greek friendly error + retry
 export function LayoutShell(props: { title?: string; children: React.ReactNode }): JSX.Element
-export function Nav(): JSX.Element                           // sticky bar: logo POLICYLAB, universal search
+export function Nav(): JSX.Element                           // sticky bar: logo AthenaX, universal search
                                                               // (Ctrl+K → /ask?q=), links:
                                                               // /data, /govtech, /ask, /city, /policies,
                                                               // /citizen, /research, /developers, /admin
@@ -394,7 +394,7 @@ export function MapPanel(props: { features?: GeoJSON.Feature[] | null; layers?: 
 - `MapPanel` is `"use client"`, mounts maplibre only in `useEffect` (SSR-safe), shows tiles from
   a free style (e.g. `https://demotiles.maplibre.org/style.json` fallback) + GeoJSON sources/layers.
 
-### 6.2 API client (`@policylab/api-client`)
+### 6.2 API client (`@athenax/api-client`)
 ```ts
 export const API_BASE: string  // process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
 export async function request<T>(path: string, opts?: { method?: string; body?: unknown;

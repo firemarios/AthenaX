@@ -6,7 +6,7 @@ from typing import Any
 
 from app.repositories.common import as_json, iso, mem_get, mem_list, mem_put, new_id
 
-logger = logging.getLogger("policylab.repositories.datasets")
+logger = logging.getLogger("athenax.repositories.datasets")
 
 _QUALITY_DEFAULT = {
     "completeness": None,
@@ -162,7 +162,7 @@ async def search_relevant_datasets(
                 "title": str(row.get("title") or "Χωρίς τίτλο"),
                 "description": row.get("description"),
                 "provider": row.get("provider") or row.get("source_name"),
-                "source_name": row.get("source_name") or row.get("provider") or "POLICYLAB",
+                "source_name": row.get("source_name") or row.get("provider") or "AthenaX",
                 "source_url": row.get("source_url") or "",
                 "category": row.get("category"),
                 "tags": list(as_json(row.get("tags"), []) or []),

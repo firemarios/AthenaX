@@ -13,7 +13,7 @@ import re
 import unicodedata
 from typing import Any
 
-logger = logging.getLogger("policylab.ai.rag")
+logger = logging.getLogger("athenax.ai.rag")
 
 _TOKEN_RE = re.compile(r"[0-9a-zα-ωά-ώ]+", re.IGNORECASE)
 

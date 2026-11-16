@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useI18n } from "@policylab/ui";
+import { useI18n } from "@athenax/ui";
 import { FINALE, FOOTER } from "../home-content";
 
 export function Finale() {

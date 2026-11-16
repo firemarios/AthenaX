@@ -121,7 +121,7 @@ def main() -> int:
     contains("Over-refusal remediation documented", "docs/evidence/ai-eval-notes.md", "remediation", lower=True)
     contains("Provenance chain exists", "apps/web/app/simulations/[id]/page.tsx", "ProvenanceChain")
     contains("Reproduce control exists", "apps/web/app/simulations/[id]/page.tsx", "Reproduce (same seed)")
-    contains("Catalog override is wired", "apps/api/app/repositories/sources.py", "POLICYLAB_CATALOG_FILE")
+    contains("Catalog override is wired", "apps/api/app/repositories/sources.py", "ATHENAX_CATALOG_FILE")
 
     berlin_ok = False
     berlin_note = "missing catalog.berlin.yaml"

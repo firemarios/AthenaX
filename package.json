@@ -1,8 +1,8 @@
 {
-  "name": "policylab",
+  "name": "athenax",
   "version": "1.0.0",
   "private": true,
-  "description": "POLICYLAB — Open GovTech Intelligence & Policy Experimentation",
+  "description": "AthenaX — Open GovTech Intelligence & Policy Experimentation",
   "license": "Apache-2.0",
   "workspaces": [
     "apps/web",

@@ -1,7 +1,7 @@
 [project]
-name = "policylab"
+name = "athenax"
 version = "1.0.0"
-description = "POLICYLAB — Open GovTech Intelligence & Policy Experimentation (backend + services)"
+description = "AthenaX — Open GovTech Intelligence & Policy Experimentation (backend + services)"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 

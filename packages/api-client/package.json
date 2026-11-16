@@ -1,5 +1,5 @@
 {
-  "name": "@policylab/api-client",
+  "name": "@athenax/api-client",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@policylab/types": "*"
+    "@athenax/types": "*"
   },
   "devDependencies": {
     "typescript": "^5"

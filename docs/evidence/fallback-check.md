@@ -1,8 +1,8 @@
 # Offline fallback check - dead LLM, no live Overpass
 
 - Generated: **2026-11-14T09:49:45.601533+00:00**
-- API: `:8011` with `POLICYLAB_LLM_BASE_URL=http://127.0.0.1:1/v1` and
-  `POLICYLAB_SNAPSHOT_LIVE=0`.
+- API: `:8011` with `ATHENAX_LLM_BASE_URL=http://127.0.0.1:1/v1` and
+  `ATHENAX_SNAPSHOT_LIVE=0`.
 - Wall time: **64.7s**
 - `/health`: HTTP 200, `llm=degraded`
 

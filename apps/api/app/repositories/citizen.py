@@ -13,7 +13,7 @@ from app.repositories.common import (
     new_id,
 )
 
-logger = logging.getLogger("policylab.repositories.citizen")
+logger = logging.getLogger("athenax.repositories.citizen")
 
 CONSULTATIONS = "consultations"
 PROPOSALS = "proposals"

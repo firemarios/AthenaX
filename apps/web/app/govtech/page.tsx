@@ -9,8 +9,8 @@ import {
   MapPanel,
   SearchBar,
   useI18n,
-} from "@policylab/ui";
-import type { Decision, Project } from "@policylab/types";
+} from "@athenax/ui";
+import type { Decision, Project } from "@athenax/types";
 import { doGet, useApi } from "@/_shared/hooks";
 import { geomToFeature, type Feature, type Geometry } from "@/_shared/geo";
 import { fmtDate, fmtEUR } from "@/_shared/format";

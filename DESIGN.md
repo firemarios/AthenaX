@@ -151,7 +151,7 @@ All spacing derives from **4px**.
 
 ### Hero search + example chips
 
-- **Source**: `@policylab/ui` `SearchBar` and `ExampleChips`.
+- **Source**: `@athenax/ui` `SearchBar` and `ExampleChips`.
 - **States**: inherited from the UI package; the home shell only supplies surface context.
 - **Layout**: max width `36rem`; chips wrap.
 

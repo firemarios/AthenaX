@@ -22,7 +22,7 @@ _CATALOG_CACHE: dict[str, dict] | None = None
 
 
 def _catalog_areas() -> dict[str, dict]:
-    """Extra areas from the active city pack (POLICYLAB_CATALOG_FILE or default catalog)."""
+    """Extra areas from the active city pack (ATHENAX_CATALOG_FILE or default catalog)."""
     global _CATALOG_CACHE
     if _CATALOG_CACHE is not None:
         return _CATALOG_CACHE
@@ -30,7 +30,7 @@ def _catalog_areas() -> dict[str, dict]:
     try:
         import yaml
 
-        path = os.getenv("POLICYLAB_CATALOG_FILE")
+        path = os.getenv("ATHENAX_CATALOG_FILE")
         if path:
             file_path = Path(path)
         else:

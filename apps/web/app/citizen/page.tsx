@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Badge, EmptyState, Skeleton, StatCard, useI18n } from "@policylab/ui";
-import type { Comment, Consultation, Proposal } from "@policylab/types";
+import { Badge, EmptyState, Skeleton, StatCard, useI18n } from "@athenax/ui";
+import type { Comment, Consultation, Proposal } from "@athenax/types";
 import { GENERIC_ERROR, doDelete, doGet, doPost, useApi } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
 import { areaName, type CityArea } from "@/_shared/geo";

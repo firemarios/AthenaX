@@ -12,7 +12,7 @@ from services.connector_kit.helpers import coerce_tags, post_json, sanitize_quer
 DEFAULT_BBOX = (23.65, 37.93, 23.87, 38.05)
 
 _CATEGORIES = ("amenity", "shop", "leisure", "tourism", "office", "healthcare", "railway", "highway")
-_USER_AGENT = "POLICYLAB/1.0 (+https://github.com/firemarios/AthenaX-V2)"
+_USER_AGENT = "AthenaX/1.0 (+https://github.com/firemarios/AthenaX-V2)"
 _FALLBACK_ENDPOINTS = (
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",

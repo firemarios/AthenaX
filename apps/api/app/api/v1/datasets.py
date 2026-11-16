@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from services.data_ingestion.quality import score_quality
 
-logger = logging.getLogger("policylab.api.datasets")
+logger = logging.getLogger("athenax.api.datasets")
 
 router = APIRouter()
 

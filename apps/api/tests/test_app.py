@@ -7,7 +7,7 @@ def test_root_envelope(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["ok"] is True and body["error"] is None
-    assert body["data"]["name"] == "POLICYLAB"
+    assert body["data"]["name"] == "AthenaX"
     assert body["data"]["endpoints"] == 52
     assert body["meta"]["request_id"]
 

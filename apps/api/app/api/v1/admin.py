@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from services.data_ingestion.pipeline import ingest
 
-logger = logging.getLogger("policylab.api.admin")
+logger = logging.getLogger("athenax.api.admin")
 
 router = APIRouter()
 

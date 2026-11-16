@@ -111,7 +111,7 @@ def _markdown(rows: list[dict], started_at: str) -> str:
 
 
 async def main() -> int:
-    parser = argparse.ArgumentParser(description="Check every POLICYLAB connector and write a report.")
+    parser = argparse.ArgumentParser(description="Check every AthenaX connector and write a report.")
     parser.add_argument(
         "--output",
         default=str(ROOT / "docs" / "evidence" / "connector-health.md"),

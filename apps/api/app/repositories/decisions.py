@@ -6,7 +6,7 @@ from typing import Any
 
 from app.repositories.common import as_json
 
-logger = logging.getLogger("policylab.repositories.decisions")
+logger = logging.getLogger("athenax.repositories.decisions")
 
 
 def decision_from_row(row: Any) -> dict[str, Any]:

@@ -49,7 +49,7 @@
 | 40 | Over-refusal remediation documented | `docs/evidence/ai-eval-notes.md` | **ok** | expected `remediation` |
 | 41 | Provenance chain exists | `apps/web/app/simulations/[id]/page.tsx` | **ok** | expected `ProvenanceChain` |
 | 42 | Reproduce control exists | `apps/web/app/simulations/[id]/page.tsx` | **ok** | expected `Reproduce (same seed)` |
-| 43 | Catalog override is wired | `apps/api/app/repositories/sources.py` | **ok** | expected `POLICYLAB_CATALOG_FILE` |
+| 43 | Catalog override is wired | `apps/api/app/repositories/sources.py` | **ok** | expected `ATHENAX_CATALOG_FILE` |
 | 44 | Second city pack is valid | `data/source-registry/catalog.berlin.yaml` | **ok** | areas=6 sources=['ckan', 'eurostat', 'openmeteo', 'overpass', 'websearch', 'wikipedia'] |
 | 45 | Six slides present | `docs/slides/pitch-6-slides.md` | **ok** | found 6 |
 | 46 | Deck keeps the honesty line | `docs/slides/pitch-6-slides.md` | **ok** | expected `pending` |

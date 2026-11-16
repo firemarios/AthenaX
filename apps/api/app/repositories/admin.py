@@ -7,7 +7,7 @@ from typing import Any
 
 from app.repositories.common import iso, mem_get, mem_list, mem_put, new_id, utcnow_iso
 
-logger = logging.getLogger("policylab.repositories.admin")
+logger = logging.getLogger("athenax.repositories.admin")
 
 FLAGS = "feature_flags"
 CONNECTORS_MEM = "connectors"

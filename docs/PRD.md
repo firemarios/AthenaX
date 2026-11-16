@@ -1,8 +1,8 @@
-# POLICYLAB — Master Product Requirements Document (PRD)
+# AthenaX — Master Product Requirements Document (PRD)
 
 | | |
 |---|---|
-| **Product** | POLICYLAB — Open GovTech Intelligence & Policy Experimentation |
+| **Product** | AthenaX — Open GovTech Intelligence & Policy Experimentation |
 | **Tagline** | Connect public data. Understand the city. Test better policies. |
 | **Version** | 1.0 (MVP) |
 | **Status** | Approved for parallel build |
@@ -12,7 +12,7 @@
 
 ## 1. Product vision
 
-POLICYLAB is an open-source civic intelligence platform that turns fragmented public data
+AthenaX is an open-source civic intelligence platform that turns fragmented public data
 into **understandable, question-able and testable** material for urban governance. It connects
 real public sources (open data portals, public decisions, statistics, maps), lets anyone ask
 the city questions with **evidence-first AI**, and lets practitioners design, simulate and
@@ -226,7 +226,7 @@ in [contracts §2](architecture/contracts.md).
 - **Researcher: "Reproduce this number"** — /research → open project → open experiment →
   open run → read passport (seed, inputs_checksum, sources) → re-run with same inputs →
   identical metrics → export md with provenance.
-- **Developer: "Build on POLICYLAB"** — /developers → read rate-limit + licence notes →
+- **Developer: "Build on AthenaX"** — /developers → read rate-limit + licence notes →
   fetch `/openapi.json` → copy example → call `GET /v1/datasets` with pagination → handle
   the envelope.
 - **Citizen: "I have an idea for my area"** — /citizen → read disclaimer → browse consultations

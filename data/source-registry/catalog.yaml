@@ -1,4 +1,4 @@
-# POLICYLAB source registry — loaded by apps/api on startup (non-fatal if DB down).
+# AthenaX source registry — loaded by apps/api on startup (non-fatal if DB down).
 # Keys MUST match services/connector_kit/catalog.py CONNECTOR_CLASSES (contract §5.2).
 
 sources:

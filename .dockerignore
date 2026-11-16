@@ -1,4 +1,4 @@
-# POLICYLAB root .dockerignore — shared by BOTH image builds
+# AthenaX root .dockerignore — shared by BOTH image builds
 # (apps/api/Dockerfile and apps/web/Dockerfile, context = repo root).
 # Owner: agent C (infra-docs). See infrastructure/docker/README.md.
 

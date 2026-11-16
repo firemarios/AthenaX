@@ -1,6 +1,6 @@
-# POLICYLAB — Data Governance
+# AthenaX — Data Governance
 
-Data licensing, provenance, retention and personal-data rules for everything POLICYLAB
+Data licensing, provenance, retention and personal-data rules for everything AthenaX
 ingests, stores, displays or exports. **Normative for data work**; interfaces live in
 [`../architecture/contracts.md`](../architecture/contracts.md).
 
@@ -75,7 +75,7 @@ unchanged how**:
 | **Simulation runs + passports** | Kept (research value; no personal data) | reproducibility of published results |
 | **Citizen Lab content** (proposals, comments, consultations) | Kept while the consultation is relevant; purge on documented request | see §4 |
 | **Feature flags / settings / registry** | Kept; current state only | operational |
-| **LLM prompts/completions** | Not persisted by POLICYLAB (transient per request) | minimization |
+| **LLM prompts/completions** | Not persisted by AthenaX (transient per request) | minimization |
 
 Purge job notes: audit-log purge is a simple `DELETE ... WHERE created_at < now() - 90 days`
 (admin or maintenance task); raw snapshots are **not** purged in MVP.
@@ -84,7 +84,7 @@ Purge job notes: audit-log purge is a simple `DELETE ... WHERE created_at < now(
 
 ## 4. Personal data stance
 
-- **POLICYLAB collects no personal data.** No accounts, no logins, no emails, no profiles,
+- **AthenaX collects no personal data.** No accounts, no logins, no emails, no profiles,
   no cookies for tracking, no analytics beacons (contracts §1: no auth anywhere).
 - The only free-text a visitor may submit is **Citizen Lab content** (proposal title/body,
   comment body) — submitted **anonymously, without identity**. Submitters must not include
@@ -103,7 +103,7 @@ Purge job notes: audit-log purge is a simple `DELETE ... WHERE created_at < now(
 | Asset | Licence | Where |
 |---|---|---|
 | **Source code** (apps, packages, services, infrastructure scripts) | **Apache License 2.0** | [`../../LICENSE`](../../LICENSE) |
-| **Documentation & guides** in `docs/`, `README.md`, `research/` prose | **CC BY 4.0** (attribution: POLICYLAB contributors) | stated in README §8 |
+| **Documentation & guides** in `docs/`, `README.md`, `research/` prose | **CC BY 4.0** (attribution: AthenaX contributors) | stated in README §8 |
 | **Contracts & specs** | CC BY 4.0 (same as docs) | `docs/architecture/` |
 | **Seed registry data** (`data/source-registry/catalog.yaml`) — our compilation | CC BY 4.0 | — |
 | **Third-party datasets** (fetched at runtime) | **Their own licences** — see §1 table | never re-licensed by us |

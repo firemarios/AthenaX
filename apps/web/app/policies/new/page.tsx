@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useI18n } from "@policylab/ui";
-import type { Policy } from "@policylab/types";
+import { useI18n } from "@athenax/ui";
+import type { Policy } from "@athenax/types";
 import { doPost, useApi } from "@/_shared/hooks";
 import { areaName, type CityArea } from "@/_shared/geo";
 import { FactorEditor, ListEditor, type FactorRow } from "@/_shared/forms";

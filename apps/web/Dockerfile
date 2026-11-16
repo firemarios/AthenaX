@@ -1,4 +1,4 @@
-# POLICYLAB — web image (agent D2).
+# AthenaX — web image (agent D2).
 # Compose build: context = repo root, dockerfile = apps/web/Dockerfile
 # Strategy: keep it straightforward and likely-to-work over minimal image size —
 # copy the workspace sources, install once, build, then ship node_modules + .next.

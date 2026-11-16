@@ -14,7 +14,7 @@ from app.repositories import datasets as datasets_repo
 from app.repositories import decisions as decisions_repo
 from app.repositories import projects as projects_repo
 
-logger = logging.getLogger("policylab.catalog")
+logger = logging.getLogger("athenax.catalog")
 
 EMPTY_NOTE = "Δεν βρέθηκαν εγγραφές ή οι πηγές δεν είναι διαθέσιμες προσωρινά."
 

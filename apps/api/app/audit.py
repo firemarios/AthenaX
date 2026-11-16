@@ -12,7 +12,7 @@ from uuid import uuid4
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger("policylab.audit")
+logger = logging.getLogger("athenax.audit")
 
 _AUDIT_EXEMPT = {"/health", "/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"}
 

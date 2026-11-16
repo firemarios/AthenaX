@@ -20,7 +20,7 @@ from typing import Any
 from services.ai_engine.providers import get_provider
 from services.simulation_engine.registry import MODELS, get_model
 
-logger = logging.getLogger("policylab.ai.policy_planner")
+logger = logging.getLogger("athenax.ai.policy_planner")
 
 BASE_TAX_EUR_PER_BUILDING = 1_600.0
 MAX_NEW_BUILDINGS = 20_000
@@ -53,7 +53,7 @@ _DIMENSION_ALIASES = {
     "διοίκηση": "administration",
 }
 
-PLANNER_SYSTEM_PROMPT = """You are POLICYLAB's policy simulation planner for the City of Athens.
+PLANNER_SYSTEM_PROMPT = """You are AthenaX's policy simulation planner for the City of Athens.
 You receive a policy topic, a free-text description of the changes, the user's
 changing factors (for example new_buildings or tax_change_pct), a location and a
 budget. Convert them into one simulation model and its parameters, estimate the

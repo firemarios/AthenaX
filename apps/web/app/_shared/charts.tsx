@@ -15,8 +15,8 @@ import {
   type ChartOptions,
 } from "chart.js";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
-import { Badge, StatCard, useI18n } from "@policylab/ui";
-import type { AIReportChart, AISimulationPlan, PolicyEconomics } from "@policylab/types";
+import { Badge, StatCard, useI18n } from "@athenax/ui";
+import type { AIReportChart, AISimulationPlan, PolicyEconomics } from "@athenax/types";
 import { fmtConfidence, fmtEUR, fmtNum } from "./format";
 import { mutedText } from "./ui";
 

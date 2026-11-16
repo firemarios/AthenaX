@@ -3,9 +3,9 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, EmptyState, Skeleton, useI18n } from "@policylab/ui";
-import type { ResearchProject } from "@policylab/types";
-import { API_BASE } from "@policylab/api-client";
+import { Badge, EmptyState, Skeleton, useI18n } from "@athenax/ui";
+import type { ResearchProject } from "@athenax/types";
+import { API_BASE } from "@athenax/api-client";
 import { doDelete, useApi } from "@/_shared/hooks";
 import { downloadBlob, fmtDate } from "@/_shared/format";
 import {

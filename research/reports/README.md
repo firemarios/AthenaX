@@ -1,6 +1,6 @@
-# POLICYLAB — Research Reports
+# AthenaX — Research Reports
 
-Published, citable outputs derived from POLICYLAB data and simulations.
+Published, citable outputs derived from AthenaX data and simulations.
 
 ## What belongs here
 
@@ -40,7 +40,7 @@ statements stay in [`../validation/`](../validation/).
 
 4. **Link it.** Add the file to the table below and, when relevant, attach it to the
    in-product research project so `/research` users can find it.
-5. **Licence.** Reports are **CC BY 4.0** (attribution: POLICYLAB contributors); embedded
+5. **Licence.** Reports are **CC BY 4.0** (attribution: AthenaX contributors); embedded
    third-party data keeps its own licence — reproduce attributions from
    [`docs/data-governance/README.md`](../../docs/data-governance/README.md).
    Datasets remain subject to "public ≠ free".

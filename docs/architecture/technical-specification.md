@@ -1,4 +1,4 @@
-# POLICYLAB — Technical Architecture Specification
+# AthenaX — Technical Architecture Specification
 
 | | |
 |---|---|
@@ -28,7 +28,7 @@ Layer 3  CONNECTORS        9 connectors (CKAN, Διαύγεια, Athens, ΚΗΜ�
 Layer 2  API GATEWAY       FastAPI /v1 · response envelope · pydantic validation
                            per-IP rate limiting · OpenAPI · /health · audit middleware
 Layer 1  PRESENTATION      Next.js 16 (App Router) · MapLibre GL · CesiumJS (optional)
-                           Greek-first i18n · dark/light · WCAG AA · @policylab/ui
+                           Greek-first i18n · dark/light · WCAG AA · @athenax/ui
 ```
 
 **Dependency rule:** a layer may call only the layer(s) directly below it (or shared utilities),
@@ -56,14 +56,14 @@ apps/web ──HTTP──▶ apps/api (FastAPI) ──▶ services/* ──▶ P
 | Map rendering (2D) | **MapLibre GL JS** | free demotile style fallback | required |
 | 3D geospatial | **CesiumJS** | loaded from CDN (`cesium@1.146.0`); **optional** — graceful fallback to MapLibre fill-extrusion | optional |
 | Icon/UI utils | `lucide-react`, `clsx`, `tailwind-merge` | already installed | required |
-| Backend framework | **FastAPI** | async, pydantic v2 settings, `env_prefix="POLICYLAB_"` | required |
+| Backend framework | **FastAPI** | async, pydantic v2 settings, `env_prefix="ATHENAX_"` | required |
 | ASGI server | **uvicorn** | `--app-dir apps/api`, `--reload` in dev | required |
 | ORM / migrations | **SQLAlchemy 2 (async)** + **Alembic** | asyncpg driver; migrations in `infrastructure/database/alembic/` | required |
 | Database | **PostgreSQL 16 + PostGIS 3.4** | image `postgis/postgis:16-3.4`; `CREATE EXTENSION postgis` only | required |
 | Vector search | **pgvector — explicitly NOT enabled** | image lacks the extension; no `shared_preload_libraries`. RAG uses keyword retrieval baseline; embedding columns optional & skipped when unavailable | deferred |
-| Cache / queue | **Redis 7** | compose profile `full`; code falls back to in-memory rate limiting/queues when `POLICYLAB_REDIS_URL` unset | optional |
+| Cache / queue | **Redis 7** | compose profile `full`; code falls back to in-memory rate limiting/queues when `ATHENAX_REDIS_URL` unset | optional |
 | Object storage | **MinIO** (S3 API) | profile `full`, ports 9000/9001, `minioadmin/minioadmin` in dev; falls back to local `./storage` | optional |
-| LLM runtime | **Ollama** (default) or any **OpenAI-compatible** endpoint | `POLICYLAB_LLM_PROVIDER`, `POLICYLAB_LLM_BASE_URL` (host: `host.docker.internal:11434`) | required for AI module, degrades without |
+| LLM runtime | **Ollama** (default) or any **OpenAI-compatible** endpoint | `ATHENAX_LLM_PROVIDER`, `ATHENAX_LLM_BASE_URL` (host: `host.docker.internal:11434`) | required for AI module, degrades without |
 | Identity / SSO | **Keycloak — explicitly deferred** | MVP is **no-auth/open access** (see §9); no accounts, no API keys | deferred |
 | Containers | **Docker / Compose** | `docker-compose.yml` at root: `db`, `api`, `web` (+ `redis`, `minio` under `--profile full`) | required |
 | HTTP client (Py) | `httpx` + `tenacity` | 3 attempts, exponential backoff, in all connectors/providers | required |
@@ -74,7 +74,7 @@ apps/web ──HTTP──▶ apps/api (FastAPI) ──▶ services/* ──▶ P
 
 ## 3. Modular monolith (and the extraction path)
 
-POLICYLAB ships as a **modular monolith**: one deployable API process, one web app, one
+AthenaX ships as a **modular monolith**: one deployable API process, one web app, one
 database — but with hard internal module boundaries.
 
 **Why monolith first**
@@ -126,7 +126,7 @@ Raw snapshots make ingestion replayable without re-hitting the source.
 
 ## 5. Common standards
 
-| Standard | Used for | POLICYLAB usage |
+| Standard | Used for | AthenaX usage |
 |---|---|---|
 | **DCAT-AP** | Catalogue metadata | dataset/source metadata fields mirror DCAT (`title`, `description`, `license`, `theme`, `distribution`≈ `resources[]`, `identifier`≈ `id`) |
 | **GeoJSON** (RFC 7946) | Geospatial interchange | `GET /v1/city/features` returns a `FeatureCollection`; project geometries; WGS84 (EPSG:4326) only |
@@ -188,8 +188,8 @@ Conventions:
 ### 7.2 Rate limits & validation
 
 - Per-IP in-memory sliding window, **120 req/min** default
-  (`POLICYLAB_RATE_LIMIT_PER_MINUTE`), 429 inside the envelope; Redis upgrade path via
-  `POLICYLAB_REDIS_URL` (optional, degrades to memory).
+  (`ATHENAX_RATE_LIMIT_PER_MINUTE`), 429 inside the envelope; Redis upgrade path via
+  `ATHENAX_REDIS_URL` (optional, degrades to memory).
 - Strict pydantic validation on every request body/query; 422 → envelope with `details[]`.
 - `httpx` + `tenacity` (3 attempts, exp backoff) on all outbound calls.
 
@@ -227,7 +227,7 @@ POST /v1/ai/query
 ┌─────────────────── orchestrator (services/ai_engine/orchestrator) ───────────────────┐
 │  agent 1  PLANNER/ROUTER   parse question → city, intent, needed record types        │
 │  agent 2  RETRIEVER        hybrid RAG: keyword_score always; embed() if available    │
-│                            → top-k records (POLICYLAB_MAX_AI_RECORDS cap)            │
+│                            → top-k records (ATHENAX_MAX_AI_RECORDS cap)            │
 │  agent 3  SYNTHESIZER      draft answer (Greek) STRICTLY grounded in records         │
 │  agent 4  EVIDENCE         build_sources(records) → dedup urls; attach_limitations() │
 │  agent 5  GUARDRAIL        schema check: JSON-only output, required fields,          │
@@ -297,10 +297,10 @@ exports (md/csv/json) embed the passport's provenance section.
 
 ### 11.1 Decision: no authentication (MVP)
 
-POLICYLAB is **deliberately open**: no accounts, no API keys, no sessions, no personal data.
+AthenaX is **deliberately open**: no accounts, no API keys, no sessions, no personal data.
 Rationale: the product's value is public-sector transparency; an auth wall would contradict
 "open by design" and would require PII storage we explicitly avoid. **Keycloak/SSO is
-deferred**, not forgotten — a future `POLICYLAB_AUTH_MODE` can be introduced behind the
+deferred**, not forgotten — a future `ATHENAX_AUTH_MODE` can be introduced behind the
 gateway without changing the envelope.
 
 ### 11.2 Compensating controls (mandatory)
@@ -314,7 +314,7 @@ gateway without changing the envelope.
 | **No arbitrary SQL** | AI and HTTP input reach only whitelisted read-only query builders (`feature_query()` etc.); unknown layer → `ValueError` → 422 |
 | **Prompt-injection defenses** | untrusted records isolated in the prompt payload; JSON-only output; guardrail validation; no tool that executes model-written code/SQL |
 | **Secrets** | env-only (`.env*` git-ignored); never in code, logs, images (`.dockerignore` excludes `.env*`) |
-| **CORS** | explicit allow-list (`POLICYLAB_CORS_ORIGINS`, dev `http://localhost:3000`) |
+| **CORS** | explicit allow-list (`ATHENAX_CORS_ORIGINS`, dev `http://localhost:3000`) |
 | **Dependency hygiene** | zero new dependencies without approval; pinned major versions already installed |
 | **Output safety** | React auto-escaping; no `dangerouslySetInnerHTML` for record content; links to external sources use `rel="noopener noreferrer"` |
 
@@ -322,7 +322,7 @@ gateway without changing the envelope.
 
 - Read-only public data + no writes of PII ⇒ low impact of abuse beyond spam/DoS (mitigated
   by rate limits; Citizen Lab content is free-text proposals/comments without identity).
-- LLM prompt cost abuse ⇒ rate limits + `POLICYLAB_MAX_AI_RECORDS` cap + provider fallback.
+- LLM prompt cost abuse ⇒ rate limits + `ATHENAX_MAX_AI_RECORDS` cap + provider fallback.
 
 ---
 

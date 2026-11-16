@@ -1,4 +1,4 @@
-"""POLICYLAB settings (contract §1: env prefix POLICYLAB_, comma-separated CORS, no new deps)."""
+"""AthenaX settings (contract §1: env prefix ATHENAX_, comma-separated CORS, no new deps)."""
 from __future__ import annotations
 
 from functools import lru_cache
@@ -10,13 +10,13 @@ API_VERSION = "1.0.0"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="POLICYLAB_",
+        env_prefix="ATHENAX_",
         env_file=(".env", "../.env"),
         extra="ignore",
     )
 
     env: str = "development"
-    database_url: str = "sqlite+aiosqlite:///./storage/policylab.db"
+    database_url: str = "sqlite+aiosqlite:///./storage/athenax.db"
     api_base_url: str = "http://127.0.0.1:8000"
     rate_limit_per_minute: int = 120
     cors_origins: str = (

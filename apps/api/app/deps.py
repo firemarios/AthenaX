@@ -8,7 +8,7 @@ from app.config import get_settings  # noqa: F401 — re-exported per contract
 from app.database import AsyncSessionLocal
 from fastapi import Request
 
-logger = logging.getLogger("policylab.deps")
+logger = logging.getLogger("athenax.deps")
 
 __all__ = ["get_settings", "get_session", "get_request_id"]
 

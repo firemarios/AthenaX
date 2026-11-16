@@ -15,7 +15,7 @@ from typing import Any
 from services.simulation_engine.model_spec import ModelSpec
 from services.simulation_engine.registry import MODELS, get_model
 
-logger = logging.getLogger("policylab.simulation")
+logger = logging.getLogger("athenax.simulation")
 
 DEFAULT_SEED = 42
 

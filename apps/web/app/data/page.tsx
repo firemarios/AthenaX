@@ -11,8 +11,8 @@ import {
   FilterPanel,
   SearchBar,
   useI18n,
-} from "@policylab/ui";
-import type { Dataset, Source } from "@policylab/types";
+} from "@athenax/ui";
+import type { Dataset, Source } from "@athenax/types";
 import { useApi } from "@/_shared/hooks";
 import { downloadBlob, fmtDate, toCSV } from "@/_shared/format";
 import {

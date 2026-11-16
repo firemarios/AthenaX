@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://policylab.local/schemas/policy.schema.json",
+  "$id": "https://athenax.local/schemas/policy.schema.json",
   "title": "Policy",
-  "description": "POLICYLAB policy entity (matches the TS Policy type).",
+  "description": "AthenaX policy entity (matches the TS Policy type).",
   "type": "object",
   "required": [
     "id",

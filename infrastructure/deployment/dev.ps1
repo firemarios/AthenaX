@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  POLICYLAB local development launcher (Windows / PowerShell 5.1+).
+  AthenaX local development launcher (Windows / PowerShell 5.1+).
 
 .DESCRIPTION
   1. Starts the PostGIS database via docker compose (core profile: db only).
@@ -40,7 +40,7 @@ param(
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)   # infrastructure/deployment -> repo root
 Set-Location $RepoRoot
-Write-Host "POLICYLAB dev — repo root: $RepoRoot" -ForegroundColor Cyan
+Write-Host "AthenaX dev — repo root: $RepoRoot" -ForegroundColor Cyan
 
 # --- 1. Database -----------------------------------------------------------
 Write-Host "[1/4] Starting db (docker compose up -d db)..." -ForegroundColor Cyan
@@ -54,7 +54,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "[2/4] Waiting for db to become healthy..." -ForegroundColor Cyan
     $healthy = $false
     for ($i = 0; $i -lt 30; $i++) {
-        $state = docker inspect -f '{{.State.Health.Status}}' policylab-db-1 2>$null
+        $state = docker inspect -f '{{.State.Health.Status}}' athenax-db-1 2>$null
         if ($state -eq "healthy") { $healthy = $true; break }
         Start-Sleep -Seconds 2
     }

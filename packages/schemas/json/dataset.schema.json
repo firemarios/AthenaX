@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://policylab.local/schemas/dataset.schema.json",
+  "$id": "https://athenax.local/schemas/dataset.schema.json",
   "title": "Dataset",
-  "description": "POLICYLAB dataset entity (matches the TS Dataset type).",
+  "description": "AthenaX dataset entity (matches the TS Dataset type).",
   "type": "object",
   "required": [
     "id",

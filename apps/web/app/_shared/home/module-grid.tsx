@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { cn, useI18n } from "@policylab/ui";
+import { cn, useI18n } from "@athenax/ui";
 import { TiltCard } from "../tilt-card";
 import { MODULES, MODULE_SECTION } from "../home-content";
 

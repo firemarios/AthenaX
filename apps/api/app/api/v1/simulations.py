@@ -22,7 +22,7 @@ from services.reporting_engine.sensitivity import compute_sensitivity
 from services.simulation_engine.registry import get_model
 from services.simulation_engine.runner import build_passport, run_model
 
-logger = logging.getLogger("policylab.api.simulations")
+logger = logging.getLogger("athenax.api.simulations")
 
 router = APIRouter()
 

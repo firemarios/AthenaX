@@ -1,4 +1,4 @@
-# Business model — who pays, and how a municipality adopts POLICYLAB
+# Business model — who pays, and how a municipality adopts AthenaX
 
 > Purpose: answer the evaluator's question **"who pays for this and how does it get into a
 > city?"** with concrete numbers, a procurement path and a 12-month plan. No invented
@@ -9,7 +9,7 @@
 
 ## 1. Value proposition in one paragraph
 
-POLICYLAB turns open data and GovTech records into a **defensible policy workflow**: ask a
+AthenaX turns open data and GovTech records into a **defensible policy workflow**: ask a
 question and get an answer with sources or an explicit "insufficient data"; turn a proposal
 into a deterministic simulation with a full passport; compare baseline vs scenario; produce a
 6-dimension impact report; and export a research dossier. The buyer is not paying for a
@@ -70,7 +70,7 @@ No dedicated data engineer is required for the pilot.
    the municipality's internal regulation). Deliverables: hosted pilot, training, evidence
    report. This is the realistic entry point.
 2. **Controlled tender (3-9 months).** For €30,000-€60,000, a negotiated procedure with
-   published technical specifications. POLICYLAB's open code and public docs make the
+   published technical specifications. AthenaX's open code and public docs make the
    specification easy to write and hard to lock in.
 3. **Open tender (9-12+ months).** Above national/EU thresholds, published in ΕΣΗΔΗΣ. The
    Apache-2.0 licence and reproducible exports are scored as transparency/innovation.

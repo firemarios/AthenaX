@@ -10,9 +10,9 @@ import {
   StatCard,
   cn,
   useI18n,
-} from "@policylab/ui";
-import { get, patch, post } from "@policylab/api-client";
-import type { AuditLog, FeatureFlag, Lang, Meta, Source } from "@policylab/types";
+} from "@athenax/ui";
+import { get, patch, post } from "@athenax/api-client";
+import type { AuditLog, FeatureFlag, Lang, Meta, Source } from "@athenax/types";
 
 const GENERIC_ERROR =
   "Δεν ήταν δυνατή η ανάκτηση των δεδομένων από τον διακομιστή. Δοκιμάστε ξανά.";

@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, Skeleton, useI18n } from "@policylab/ui";
-import type { Policy, PolicyVariant, SimulationRun } from "@policylab/types";
+import { Badge, Skeleton, useI18n } from "@athenax/ui";
+import type { Policy, PolicyVariant, SimulationRun } from "@athenax/types";
 import { doDelete, doPost, useApi } from "@/_shared/hooks";
 import { fmtDate, fmtEUR } from "@/_shared/format";
 import { areaName, type CityArea } from "@/_shared/geo";

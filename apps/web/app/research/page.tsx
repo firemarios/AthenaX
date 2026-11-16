@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@policylab/ui";
-import type { ResearchProject } from "@policylab/types";
+import { Badge, DataCard, EmptyState, Skeleton, useI18n } from "@athenax/ui";
+import type { ResearchProject } from "@athenax/types";
 import { GENERIC_ERROR, doDelete, doGet, doPost } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
 import {

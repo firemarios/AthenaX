@@ -13,7 +13,7 @@ from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponen
 
 from services.connector_kit.helpers import make_client
 
-logger = logging.getLogger("policylab.ai.providers")
+logger = logging.getLogger("athenax.ai.providers")
 
 DEFAULT_TIMEOUT = 90.0
 KILO_TIMEOUT = 600.0
@@ -248,7 +248,7 @@ class OpenAICompatibleProvider(LLMProvider):
         headers = {
             "Content-Type": "application/json",
             "Accept": "*/*",
-            "User-Agent": "POLICYLAB/1.0 (+https://github.com/policylab)",
+            "User-Agent": "AthenaX/1.0 (+https://github.com/athenax)",
         }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"

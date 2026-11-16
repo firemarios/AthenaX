@@ -16,14 +16,14 @@ from app.database import session_scope
 from app.models import DataSource
 from app.repositories.common import iso, repo_root
 
-logger = logging.getLogger("policylab.repositories.sources")
+logger = logging.getLogger("athenax.repositories.sources")
 
 _CATALOG_CACHE: dict[str, Any] | None = None
 _HEALTH: dict[str, dict[str, Any]] = {}
 
 
 def catalog_path() -> Path:
-    override = os.getenv("POLICYLAB_CATALOG_FILE")
+    override = os.getenv("ATHENAX_CATALOG_FILE")
     if override:
         return Path(override).expanduser()
     return repo_root() / "data" / "source-registry" / "catalog.yaml"

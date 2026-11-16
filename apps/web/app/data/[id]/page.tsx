@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Badge, EmptyState, useI18n } from "@policylab/ui";
-import type { Dataset } from "@policylab/types";
+import { Badge, EmptyState, useI18n } from "@athenax/ui";
+import type { Dataset } from "@athenax/types";
 import { doGet, useApi } from "@/_shared/hooks";
 import { fmtBytes, fmtDate, fmtDateTime } from "@/_shared/format";
 import {

@@ -7,7 +7,7 @@ import type {
   LayerSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { CityLayer, GeoJSON } from "@policylab/types";
+import type { CityLayer, GeoJSON } from "@athenax/types";
 import { useI18n } from "./providers";
 import { cn } from "./cn";
 
@@ -15,10 +15,10 @@ const STYLE_LIGHT = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.js
 const STYLE_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const ATHENS_CENTER: [number, number] = [23.7275, 37.9838];
 const DEFAULT_ZOOM = 11;
-const SOURCE_ID = "policylab-source";
-const FILL_LAYER = "policylab-fill";
-const LINE_LAYER = "policylab-line";
-const CIRCLE_LAYER = "policylab-circle";
+const SOURCE_ID = "athenax-source";
+const FILL_LAYER = "athenax-fill";
+const LINE_LAYER = "athenax-line";
+const CIRCLE_LAYER = "athenax-circle";
 const PALETTE = [
   "#007aff",
   "#34c759",
@@ -246,10 +246,10 @@ export function MapPanel({
               .slice(0, 5)
               .map(
                 ([key, value]) =>
-                  `<div class="policylab-popup-row"><span>${escapeHtml(key)}</span><b>${escapeHtml(String(value))}</b></div>`,
+                  `<div class="athenax-popup-row"><span>${escapeHtml(key)}</span><b>${escapeHtml(String(value))}</b></div>`,
               )
               .join("");
-            const html = `<div class="policylab-popup"><strong>${escapeHtml(
+            const html = `<div class="athenax-popup"><strong>${escapeHtml(
               title || tRef.current({ el: "Στοιχείο", en: "Feature" }),
             )}</strong>${rows}</div>`;
             try {

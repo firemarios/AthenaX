@@ -28,7 +28,7 @@ Have `docs/evidence/model-sensitivity.md` open as a backup.
 
 | Time | Screen | Say | Do |
 |---|---|---|---|
-| 0:00 | `/` | "POLICYLAB answers city questions with sources or says it cannot — then tests policies reproducibly." | Point at the three modules in the hero. |
+| 0:00 | `/` | "AthenaX answers city questions with sources or says it cannot — then tests policies reproducibly." | Point at the three modules in the hero. |
 | 0:30 | `/ask` | "Ask a real question. Watch the evidence panel." | Ask: **«Ποια ανοικτά δεδομένα υπάρχουν για τα πάρκα στην Αθήνα;»** Expand sources, point at `retrieved_at`, licence, limitations. |
 | 1:15 | `/ask` | "Now a question the data cannot answer." | Ask: **«Πόσοι τουρίστες επισκέφτηκαν την Ακρόπολη χθες;»** Show the explicit insufficiency limitation. **This is the honesty moment.** |
 | 1:45 | `/data` | "Every layer is real data or explicitly flagged synthetic." | Open a layer, show provenance/quality badges. |
@@ -52,7 +52,7 @@ After 4:50:
 | 7:15 | `docs/evidence/ai-eval.md` | "20 Greek questions: source-hit rate, correct refusals, zero unsourced claims." | Show the pass/fail table (run `python scripts/ai_eval.py` beforehand). |
 | 8:00 | `docs/business-model.md` | "Who pays: a €9-18k/year municipality licence; pilot runs on free tiers." | Show the cost table and procurement path. |
 | 8:45 | `docs/pilot/README.md` | "Internal usability pilot, n=6-8, honest sample; results pending." | Show the protocol and `research/reports/pilot-2026-11.md` status. |
-| 9:30 | `data/source-registry/catalog.berlin.yaml` | "Same stack, second city: swap the catalog, restart." | Show `POLICYLAB_CATALOG_FILE`. |
+| 9:30 | `data/source-registry/catalog.berlin.yaml` | "Same stack, second city: swap the catalog, restart." | Show `ATHENAX_CATALOG_FILE`. |
 
 ## Fallbacks (when the demo environment fights back)
 
@@ -60,8 +60,8 @@ After 4:50:
 |---|---|---|
 | LLM key missing / slow | Use a question with cached answer, or switch to `/data` → policy → simulation (no AI needed) | "The AI layer degrades explicitly; the deterministic simulation and evidence path still work." |
 | LLM unreachable (offline check) | Run the local API; `/ask` returns a valid envelope with `limitations: ["llm unavailable"]` | "No 500, no invented answer; the limitation is the product." |
-| Overpass/live data down | Set `POLICYLAB_SNAPSHOT_LIVE=0`, restart API, re-run | "The snapshot shows `synthetic`; we never present synthetic as measured." |
-| Neon/Postgres down | Run the local SQLite demo (`POLICYLAB_DATABASE_URL=sqlite+aiosqlite:///./policylab.db`) | "The API serves the YAML catalog and in-memory demo; `/health` reports the DB as down." |
+| Overpass/live data down | Set `ATHENAX_SNAPSHOT_LIVE=0`, restart API, re-run | "The snapshot shows `synthetic`; we never present synthetic as measured." |
+| Neon/Postgres down | Run the local SQLite demo (`ATHENAX_DATABASE_URL=sqlite+aiosqlite:///./athenax.db`) | "The API serves the YAML catalog and in-memory demo; `/health` reports the DB as down." |
 | Web build not ready | Demo the API + OpenAPI (`/docs`) + `smoke.ps1` output | "The contract-first API is the product; the UI is one client." |
 | `Failed to proxy ... ECONNRESET` | Restart with `dev.ps1 -Web -NoReload -Prod`. `--reload` resets in-flight requests when any `.py` changes; `next dev` can reset one while compiling. | "A dev-server reload, not a product failure; the production path is unaffected." |
 | Reproduce differs | Open the two passports and compare checksums | "We show the difference and its inputs instead of hiding it." |

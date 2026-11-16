@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger("policylab.errors")
+logger = logging.getLogger("athenax.errors")
 
 GREEK_MESSAGES: dict[int, str] = {
     400: "Μη έγκυρο αίτημα",

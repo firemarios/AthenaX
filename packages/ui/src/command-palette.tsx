@@ -11,7 +11,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import type { Lang } from "@policylab/types";
+import type { Lang } from "@athenax/types";
 import { cn } from "./cn";
 import {
   ALL_LINKS,
@@ -20,7 +20,7 @@ import {
 } from "./nav-config";
 import { useI18n } from "./providers";
 
-const RECENT_KEY = "policylab_recent_links";
+const RECENT_KEY = "athenax_recent_links";
 const MAX_RECENT = 4;
 const PALETTE_LINKS: NavLink[] = [...ALL_LINKS, NEW_POLICY_LINK];
 

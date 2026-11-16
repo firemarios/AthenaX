@@ -5,7 +5,7 @@ title ATHENAX dev - web :3000 ^| api :8000
 cd /d "%~dp0"
 
 echo ============================================================
-echo   ATHENAX / POLICYLAB - development
+echo   ATHENAX - development
 echo ============================================================
 echo   Mode         next dev (Turbopack) + uvicorn --reload
 echo   Web          http://localhost:3000

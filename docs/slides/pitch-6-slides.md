@@ -1,11 +1,11 @@
-# POLICYLAB — 6-slide pitch deck
+# AthenaX — 6-slide pitch deck
 
 > One slide per sub-criterion. Every claim below has a path or command the judge can open.
 > Companion material: [`docs/DEMO.md`](../DEMO.md) (5- and 10-minute scripts).
 
 ---
 
-## Slide 1 — POLICYLAB: evidence-first GovTech, testable policies
+## Slide 1 — AthenaX: evidence-first GovTech, testable policies
 
 **Connect public data. Understand the city. Test better policies.**
 
@@ -95,7 +95,7 @@ not wait for a national tender."
   a remediation plan (retrieval, prompt, partial-evidence UI).
 - **Provenance chain:** source registry → ingest → snapshot → run → passport → impact.
 - **Reproduce:** same seed → identical `inputs_checksum` and metrics.
-- **BYO city:** `data/source-registry/catalog.berlin.yaml` via `POLICYLAB_CATALOG_FILE`.
+- **BYO city:** `data/source-registry/catalog.berlin.yaml` via `ATHENAX_CATALOG_FILE`.
 
 **Proof:** [`docs/evidence/ai-eval.md`](../evidence/ai-eval.md) ·
 [`docs/evidence/ai-eval-notes.md`](../evidence/ai-eval-notes.md) ·

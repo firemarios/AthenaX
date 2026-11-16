@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, Skeleton, useI18n } from "@policylab/ui";
-import type { Passport, SimulationRun } from "@policylab/types";
+import { Badge, Skeleton, useI18n } from "@athenax/ui";
+import type { Passport, SimulationRun } from "@athenax/types";
 import { doDelete, doPost, useApi } from "@/_shared/hooks";
 import { EconomicsPanel, MetricComparisonChart, metricLabel } from "@/_shared/charts";
 import { AIReportView } from "@/_shared/ai-report";

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-logger = logging.getLogger("policylab.repositories")
+logger = logging.getLogger("athenax.repositories")
 
 # table -> id -> row (in-memory fallback when the DB is unavailable)
 MEM: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)

@@ -1,4 +1,4 @@
-# Deploy POLICYLAB
+# Deploy AthenaX
 
 > Concrete deployment for a pilot: **Render (API) + Neon (Postgres/PostGIS) + Vercel (web)**,
 > plus a single-host Docker path. Every step below is copy-pasteable; secrets never go in git.
@@ -13,7 +13,7 @@
 
 ## 1. Database (Neon, free tier is enough for a pilot)
 
-1. Create a project, database `policylab`, region `eu-central` (Frankfurt).
+1. Create a project, database `athenax`, region `eu-central` (Frankfurt).
 2. Enable PostGIS: in the SQL editor run
    ```sql
    CREATE EXTENSION IF NOT EXISTS postgis;
@@ -39,15 +39,15 @@
 4. Environment (minimum):
    | Key | Value |
    |---|---|
-   | `POLICYLAB_ENV` | `production` |
-   | `POLICYLAB_DATABASE_URL` | the async Neon URL |
-   | `POLICYLAB_CORS_ORIGINS` | `https://<your-vercel-app>` |
-   | `POLICYLAB_LLM_PROVIDER` | `openai_compatible` (or `ollama`) |
-   | `POLICYLAB_LLM_BASE_URL` | provider base URL |
-   | `POLICYLAB_LLM_API_KEY` | secret |
-   | `POLICYLAB_LLM_MODEL` | e.g. `gpt-4o-mini` |
-   | `POLICYLAB_SNAPSHOT_LIVE` | `1` (live Overpass; `0` forces DB/synthetic) |
-   | `POLICYLAB_DEFAULT_CITY` | `Athens` |
+   | `ATHENAX_ENV` | `production` |
+   | `ATHENAX_DATABASE_URL` | the async Neon URL |
+   | `ATHENAX_CORS_ORIGINS` | `https://<your-vercel-app>` |
+   | `ATHENAX_LLM_PROVIDER` | `openai_compatible` (or `ollama`) |
+   | `ATHENAX_LLM_BASE_URL` | provider base URL |
+   | `ATHENAX_LLM_API_KEY` | secret |
+   | `ATHENAX_LLM_MODEL` | e.g. `gpt-4o-mini` |
+   | `ATHENAX_SNAPSHOT_LIVE` | `1` (live Overpass; `0` forces DB/synthetic) |
+   | `ATHENAX_DEFAULT_CITY` | `Athens` |
 5. Run migrations once from the Render shell (or locally against Neon):
    ```bash
    PYTHONPATH=.:apps/api alembic upgrade head
@@ -66,7 +66,7 @@
    ```
    Build command:
    ```bash
-   cd ../.. && npm run build --workspace=@policylab/web
+   cd ../.. && npm run build --workspace=@athenax/web
    ```
    (Or set Root Directory to the repo root with output `apps/web/.next`; keep it consistent.)
 3. Environment (set at **build** time — `NEXT_PUBLIC_*` is inlined):
@@ -113,7 +113,7 @@ A failure exits non-zero and prints the failing step.
 ## 7. BYO city (second deployment)
 
 ```bash
-POLICYLAB_CATALOG_FILE=data/source-registry/catalog.berlin.yaml
+ATHENAX_CATALOG_FILE=data/source-registry/catalog.berlin.yaml
 ```
 
 Restart the API. The source registry, city centre and intervention areas come from the pack;
@@ -127,5 +127,5 @@ record both in `docs/evidence/`.
   request timeout (default 120 s on the smoke script).
 - No background queue is required for the pilot; add Redis/Celery only when concurrent load
   demands it.
-- `POLICYLAB_SNAPSHOT_LIVE=0` is the hermetic mode for CI and for air-gapped demos.
+- `ATHENAX_SNAPSHOT_LIVE=0` is the hermetic mode for CI and for air-gapped demos.
 - Free tiers sleep; the first request after idle is slow. Pre-warm before a demo.

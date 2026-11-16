@@ -11,7 +11,7 @@ import {
   ScrollProgress,
   ScrollReveal,
   ThemeProvider,
-} from "@policylab/ui";
+} from "@athenax/ui";
 import { SiteLoader } from "./_shared/site-loader";
 
 const geistSans = Geist({
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   },
 };
 
-const themeInitScript = `(function(){try{var k="policylab_theme";var t=null;try{t=window.localStorage.getItem(k)}catch(e){}if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}document.documentElement.classList.add("js");setTimeout(function(){document.documentElement.classList.add("reveal-fallback")},3000);var l=null;try{l=window.localStorage.getItem("policylab_lang")}catch(e){}if(l==="el"||l==="en"){document.documentElement.lang=l}}catch(e){}})();`;
+const themeInitScript = `(function(){try{var k="athenax_theme";var t=null;try{t=window.localStorage.getItem(k)}catch(e){}if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}document.documentElement.classList.add("js");setTimeout(function(){document.documentElement.classList.add("reveal-fallback")},3000);var l=null;try{l=window.localStorage.getItem("athenax_lang")}catch(e){}if(l==="el"||l==="en"){document.documentElement.lang=l}}catch(e){}})();`;
 
 export default function RootLayout({
   children,

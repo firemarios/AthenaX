@@ -1,6 +1,6 @@
 # infrastructure/monitoring — observability (opt-in)
 
-POLICYLAB ships a **minimal OpenTelemetry Collector config** and documents how tracing *would* be
+AthenaX ships a **minimal OpenTelemetry Collector config** and documents how tracing *would* be
 enabled. Observability is deliberately **off by default**: the MVP must run with zero extra
 dependencies (contracts §0: no new deps).
 
@@ -39,11 +39,11 @@ dependencies (contracts §0: no new deps).
      otel/opentelemetry-collector:latest
    ```
 
-3. Set env on the API process (all `POLICYLAB_` settings live in `.env.example`; OTEL uses the
+3. Set env on the API process (all `ATHENAX_` settings live in `.env.example`; OTEL uses the
    standard unprefixed names because they belong to the OTel SDK, not to our settings class):
 
    ```powershell
-   $env:OTEL_SERVICE_NAME = "policylab-api"
+   $env:OTEL_SERVICE_NAME = "athenax-api"
    $env:OTEL_TRACES_EXPORTER = "otlp"
    $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318"
    $env:OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"

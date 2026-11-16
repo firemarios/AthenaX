@@ -5,10 +5,10 @@ import os
 import tempfile
 
 os.environ.setdefault(
-    "POLICYLAB_STORAGE_DIR", tempfile.mkdtemp(prefix="policylab-test-storage-")
+    "ATHENAX_STORAGE_DIR", tempfile.mkdtemp(prefix="athenax-test-storage-")
 )
 # Tests must stay hermetic: never call the live Overpass API.
-os.environ.setdefault("POLICYLAB_SNAPSHOT_LIVE", "0")
+os.environ.setdefault("ATHENAX_SNAPSHOT_LIVE", "0")
 
 import pytest
 from fastapi.testclient import TestClient

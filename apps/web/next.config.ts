@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const apiOrigin = (
-  process.env.POLICYLAB_API_INTERNAL_URL ??
-  process.env.POLICYLAB_API_BASE_URL ??
+  process.env.ATHENAX_API_INTERNAL_URL ??
+  process.env.ATHENAX_API_BASE_URL ??
   "http://127.0.0.1:8000"
 ).replace(/\/+$/, "");
 
@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     proxyTimeout: 600_000,
   },
   allowedDevOrigins: ["athenax.akcore.dev", "*.akcore.dev"],
-  transpilePackages: ["@policylab/ui", "@policylab/types", "@policylab/api-client", "@policylab/schemas"],
+  transpilePackages: ["@athenax/ui", "@athenax/types", "@athenax/api-client", "@athenax/schemas"],
   turbopack: {
     rules: {
       "*.css": {

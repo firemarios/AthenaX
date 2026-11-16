@@ -89,7 +89,7 @@ body {
 }
 
 /* MapLibre popup styling (content injected by MapPanel) */
-.policylab-popup {
+.athenax-popup {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -98,17 +98,17 @@ body {
   color: #18181b;
 }
 
-.policylab-popup-row {
+.athenax-popup-row {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
-.policylab-popup-row span {
+.athenax-popup-row span {
   color: #52525b;
 }
 
-.policylab-popup-row b {
+.athenax-popup-row b {
   font-weight: 600;
   text-align: right;
   overflow-wrap: anywhere;

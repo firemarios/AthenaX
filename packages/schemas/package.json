@@ -1,5 +1,5 @@
 {
-  "name": "@policylab/schemas",
+  "name": "@athenax/schemas",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@policylab/types": "*"
+    "@athenax/types": "*"
   },
   "devDependencies": {
     "typescript": "^5"

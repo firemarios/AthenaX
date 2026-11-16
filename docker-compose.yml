@@ -1,6 +1,6 @@
-name: policylab
+name: athenax
 
-# POLICYLAB — root compose file (owned by agent C / infra-docs).
+# AthenaX — root compose file (owned by agent C / infra-docs).
 # Normative contracts: docs/architecture/contracts.md (esp. §1 env prefix, §9.3 infra notes).
 # Core path: db + api + web.  Optional path: `docker compose --profile full up -d` (adds redis + minio).
 # Code degrades gracefully when redis/minio are absent (in-memory rate limit, ./storage).
@@ -11,15 +11,15 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: policylab
+      POSTGRES_DB: athenax
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - policylab_postgres_data:/var/lib/postgresql/data
+      - athenax_postgres_data:/var/lib/postgresql/data
       # Agent B owns infrastructure/database/; we only mount its init scripts read-only.
       - ./infrastructure/database/init-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d policylab"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d athenax"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -35,14 +35,14 @@ services:
     ports:
       - "8000:8000"
     environment:
-      POLICYLAB_ENV: development
-      POLICYLAB_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/policylab
-      POLICYLAB_CORS_ORIGINS: http://localhost:3000
-      POLICYLAB_LLM_BASE_URL: http://host.docker.internal:11434
-      POLICYLAB_LLM_PROVIDER: ollama
-      POLICYLAB_REDIS_URL: ""
-      POLICYLAB_S3_ENDPOINT_URL: ""
-      POLICYLAB_STORAGE_DIR: ./storage
+      ATHENAX_ENV: development
+      ATHENAX_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/athenax
+      ATHENAX_CORS_ORIGINS: http://localhost:3000
+      ATHENAX_LLM_BASE_URL: http://host.docker.internal:11434
+      ATHENAX_LLM_PROVIDER: ollama
+      ATHENAX_REDIS_URL: ""
+      ATHENAX_S3_ENDPOINT_URL: ""
+      ATHENAX_STORAGE_DIR: ./storage
     extra_hosts:
       # Lets the api container reach an Ollama running on the host (Linux included).
       - "host.docker.internal:host-gateway"
@@ -70,7 +70,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - policylab_redis_data:/data
+      - athenax_redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -89,7 +89,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
-      - policylab_minio_data:/data
+      - athenax_minio_data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 10s
@@ -98,6 +98,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  policylab_postgres_data:
-  policylab_redis_data:
-  policylab_minio_data:
+  athenax_postgres_data:
+  athenax_redis_data:
+  athenax_minio_data:
