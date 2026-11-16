@@ -150,7 +150,7 @@ in [technical-specification](architecture/technical-specification.md).
   - `GET/POST /v1/consultations`, `/v1/proposals`, `/v1/proposals/{id}/comments` per contract.
   - Every citizen-facing surface shows the disclaimer (el+en): online participation is not a
     representative/institutional decision.
-  - No accounts, no personal data collected beyond free-text content (see data governance).
+  - No accounts, no personal data collected beyond free-text content.
   - Rate limiting applies (120 req/min/IP default) — spam is throttled, not blocked by auth.
 
 ### Module 08 — Impact Assessment
@@ -244,7 +244,7 @@ in [technical-specification](architecture/technical-specification.md).
 | NFR-4 | **Graceful degradation** | Every dependency optional: DB down → YAML fallback for sources + clear health states; LLM down → fallback answer with `llm unavailable`; Redis/MinIO absent → in-memory rate limit + `./storage`; Cesium fails → MapLibre 3D fallback; connectors down → empty list + `status: down`. Never a raw stack trace to the user. |
 | NFR-5 | **Observability** | `GET /health` reports `db, llm, storage, rate_limiter` as `ok\|degraded\|down\|disabled`; audit log of every request (method, path, status, ip); connector health timestamps. |
 | NFR-6 | **No-auth open access** | No accounts, no API keys, no personal data collection. Protection = per-IP in-memory rate limiting (120 req/min default), strict input validation (pydantic), audit logging, sandboxed simulation workers, prompt-injection defenses. See technical spec §Security. |
-| NFR-7 | **Security & privacy** | Secrets only via env (never committed); CORS restricted to configured origins; only whitelisted read-only SQL; output escaping (React default); no PII stored (see data governance). |
+| NFR-7 | **Security & privacy** | Secrets only via env (never committed); CORS restricted to configured origins; only whitelisted read-only SQL; output escaping (React default); no PII stored. |
 | NFR-8 | **Reproducibility** | Simulation deterministic given seed; full Simulation Passport on every run; exports carry provenance; models versioned in `model_registry`. |
 | NFR-9 | **Reliability of ingestion** | Connectors never raise to HTTP: `search()` returns `[]`, health reports `down`; retries via tenacity (3 attempts, exp backoff); raw snapshots retained for audit. |
 | NFR-10 | **Standards compliance** | DCAT-AP metadata, GeoJSON, GTFS where relevant, OGC API Features-compatible query semantics, STAC-style asset descriptors, JSON Schema for payloads (see technical spec). |

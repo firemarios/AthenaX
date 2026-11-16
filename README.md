@@ -112,7 +112,7 @@ athenax/
 │   ├── monitoring/          OTel collector config (opt-in)
 │   └── deployment/          env templates, dev.ps1, runbooks
 ├── research/                model validation reports
-├── docs/                    PRD, technical spec, data governance, demo, deploy
+├── docs/                    PRD, technical spec, demo, deploy
 ├── docker-compose.yml       db + api + web (+ redis/minio via --profile full)
 └── LICENSE · README.md
 ```
@@ -193,7 +193,6 @@ All of the above must pass before merging.
 |---|---|
 | [`docs/PRD.md`](docs/PRD.md) | Master product requirements: personas, 10 modules, journeys, MVP scope, KPIs |
 | [`docs/architecture/technical-specification.md`](docs/architecture/technical-specification.md) | **Normative** 7-layer architecture, API design, stack, standards, security posture |
-| [`docs/data-governance/README.md`](docs/data-governance/README.md) | Data licensing, provenance, retention, personal-data stance |
 | [`docs/DEMO.md`](docs/DEMO.md) | 5- and 10-minute demo script |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Deployment runbook (Render + Neon + Vercel, Docker) |
 | [`research/validation/greenspace-v1.0.0.md`](research/validation/greenspace-v1.0.0.md) | Validation report for the `greenspace` model |
@@ -204,7 +203,6 @@ All of the above must pass before merging.
 
 - Code: **Apache License 2.0** — see [`LICENSE`](LICENSE).
 - Documentation: CC BY 4.0 (attribution to AthenaX contributors); third-party datasets keep
-  **their own** licenses — see [`docs/data-governance/README.md`](docs/data-governance/README.md).
-  *Public does not mean free to reuse.*
+  **their own** licenses. *Public does not mean free to reuse.*
 - **Bilingual:** the product UI is **Greek-first** with English available everywhere
   (`el` default, `en` one click away); error messages are Greek; code and identifiers are English.

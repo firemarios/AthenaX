@@ -109,7 +109,7 @@ raw ──▶ clean ──▶ unified ──▶ analytics
 
 | Tier | Content | Written by | Retained |
 |---|---|---|---|
-| **raw** | Byte-exact response snapshot + fetch metadata (`fetched_at`, endpoint, http status) | `services/data_ingestion.ingest` → `ObjectStore.put` | kept (audit & reprocessing) — see data governance retention |
+| **raw** | Byte-exact response snapshot + fetch metadata (`fetched_at`, endpoint, http status) | `services/data_ingestion.ingest` → `ObjectStore.put` | kept (audit & reprocessing) |
 | **clean** | `clean_record()` output: trimmed, deduped, empties dropped | `services/data_ingestion` | transient (rebuildable from raw) |
 | **unified** | `NormalizedRecord` rows persisted to `datasets` / domain tables with provenance columns (`source_id`, `license`, `last_updated`, `fetched_at`, `checksum`, `metadata JSONB`) | backend persist callback | kept, versioned in `dataset_versions` |
 | **analytics** | Quality scores (`data_quality_reports`), counts, freshness, feature counts for map layers | `score_quality()`, admin recompute endpoints | kept |
@@ -345,5 +345,4 @@ Runbooks: [`infrastructure/deployment/README.md`](../../infrastructure/deploymen
 | Document | Role |
 |---|---|
 | [`../PRD.md`](../PRD.md) | Normative product scope, journeys, KPIs |
-| [`../data-governance/README.md`](../data-governance/README.md) | Licensing, provenance, retention |
 | [`../../infrastructure/`](../../infrastructure/) | Compose, images, monitoring, deployment |
