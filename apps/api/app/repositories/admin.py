@@ -284,6 +284,7 @@ async def persist_ingest_records(source_name: str, records: list[Any]) -> int:
                 "title": title,
                 "description": payload.get("description"),
                 "provider": payload.get("provider") or source_name,
+                "source_id": payload.get("source_id") or source_name,
                 "source_name": payload.get("source_name") or source_name,
                 "source_url": payload.get("source_url"),
                 "license": payload.get("license"),
@@ -380,18 +381,20 @@ async def _persist_city_feature(payload: dict[str, Any], source_name: str) -> No
         "tags": extra.get("tags") if isinstance(extra.get("tags"), dict) else {},
     }
     wkt = f"POINT({float(lon)} {float(lat)})"
+    geojson = f'{{"type": "Point", "coordinates": [{float(lon)}, {float(lat)}]}}'
     try:
-        from app.database import session_scope
+        from app.database import engine, session_scope
         from app.models import CityFeature
         from sqlalchemy import select
 
-        geometry: Any = wkt
+        geometry: Any = geojson
         try:
-            from geoalchemy2.elements import WKTElement
+            if engine is not None and engine.url.get_backend_name() != "sqlite":
+                from geoalchemy2.elements import WKTElement
 
-            geometry = WKTElement(wkt, srid=4326)
-        except Exception:  # noqa: BLE001 — SQLite stores WKT text
-            geometry = wkt
+                geometry = WKTElement(wkt, srid=4326)
+        except Exception:  # noqa: BLE001 — SQLite stores GeoJSON text
+            geometry = geojson
 
         async with session_scope() as session:
             row = (

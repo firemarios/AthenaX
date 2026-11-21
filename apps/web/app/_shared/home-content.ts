@@ -64,12 +64,12 @@ export const HERO = {
     en: "Open GovTech · Policy experimentation",
   },
   lead: {
-    el: "Συνδέεις δημόσια δεδομένα. Κατανοείς την πόλη.",
-    en: "Connect public data. Understand the city.",
+    el: "Η Αθήνα που φανταζόμαστε.",
+    en: "The city we envision.",
   },
   accent: {
-    el: "Δοκιμάζεις καλύτερες πολιτικές.",
-    en: "Test better policies.",
+    el: "Η Αθήνα που δημηουργούμε.",
+    en: "The future we create.",
   },
   body: {
     el: "Ανοιχτά δεδομένα, προσομοιώσεις και αποδείξεις — σε μία πλατφόρμα.",
