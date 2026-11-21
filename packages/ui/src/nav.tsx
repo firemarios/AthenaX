@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
   Sun,
+  User,
   X,
 } from "lucide-react";
 import { request } from "@athenax/api-client";
@@ -590,6 +591,22 @@ export function Nav() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/profile"
+              aria-label={t({ el: "Προφίλ", en: "Profile" })}
+              aria-current={isActive(pathname, "/profile") ? "page" : undefined}
+              title={t({ el: "Προφίλ", en: "Profile" })}
+              className={cn(
+                GLASS_CONTROL,
+                "h-9 w-9 overflow-hidden p-0 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                isActive(pathname, "/profile") && "ring-2 ring-primary",
+              )}
+            >
+              <User
+                aria-hidden="true"
+                className="h-4 w-4 text-zinc-700 dark:text-zinc-300"
+              />
+            </Link>
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
