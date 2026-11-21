@@ -127,16 +127,16 @@ export const HERO = {
 
 export const WHO = {
   eyebrow: {
-    el: "S.01 · Ποιοι είμαστε",
-    en: "S.01 · Who we are",
+    el: "S.01 · Το όραμα",
+    en: "S.01 · Our vision",
   },
   title: {
-    el: "Μια ανοιχτή υποδομή για αποφάσεις με στοιχεία.",
-    en: "An open infrastructure for evidence-based decisions.",
+    el: "Μια πλατφόρμα που προβλέπει τις συνέπειες των αποφάσεων του δήμου και προτείνει βελτιώσεις.",
+    en: "A platform that simulates the impact of municipal decisions and suggests ways to improve them.",
   },
   body: {
-    el: "Το ATHENAX ενώνει δημόσια δεδομένα, μοντέλα προσομοίωσης και τη φωνή των πολιτών σε ένα ενιαίο περιβάλλον. Σχεδιάζουμε για δήμους που θέλουν να δοκιμάζουν ιδέες πριν δεσμεύσουν πόρους — με διαφάνεια, προέλευση και μετρήσιμο αντίκτυπο.",
-    en: "ATHENAX brings public data, simulation models and citizen voices into one environment. We build for cities that want to test ideas before committing resources — with transparency, provenance and measurable impact.",
+    el: "Το ATHENAX ενώνει δημόσια δεδομένα, μοντέλα προσομοίωσης και τη φωνή των πολιτών σε ένα ενιαίο περιβάλλον. Σχεδιάζουμε για δήμους που θέλουν να δοκιμάζουν ιδέες πριν δεσμεύσουν πόρους — με διαφάνεια, προέλευση και μετρήσιμο αντίκτυπο, ενώ παράλληλα προείνουμε λύσεις για αύξηση της αποτελεσματικότητας και μείωση των επιπτώσεων.",
+    en: "ATHENAX brings together public data, simulation models, and the voice of citizens in one unified platform. We empower municipalities to test ideas before committing resources — with transparency, traceability, and measurable impact. At the same time, we propose solutions that improve efficiency and minimize negative outcomes.",
   },
   pillars: [
     {
@@ -170,11 +170,11 @@ export const CHAPTERS: HomeChapter[] = [
   {
     id: "S.02.01",
     number: "01",
-    tag: { el: "Επίπεδο δεδομένων", en: "Data layer" },
-    title: { el: "Συνδέουμε", en: "Connect" },
+    tag: { el: "Προσομοίωση", en: "Simulation" },
+    title: { el: "Προσομοιώνουμε σενάρια", en: "Scenario simulation" },
     body: {
-      el: "Δημόσια δεδομένα και αστικά σήματα σε έναν κατάλογο. Τα σημεία φωτίζονται και οι πηγές ενώνονται.",
-      en: "Public data and city signals in one catalogue. Points illuminate and sources link together.",
+      el: "Προσομοίνουμε σενάρια πολιτικών νομοθεσιών και πολεοδομικών έργων.",
+      en: "We simulate policy, legislative, and urban development scenarios.",
     },
     href: "/data",
     linkLabel: { el: "Εξερεύνησε τον κατάλογο", en: "Explore the catalogue" },
@@ -182,11 +182,11 @@ export const CHAPTERS: HomeChapter[] = [
   {
     id: "S.02.02",
     number: "02",
-    tag: { el: "Αποδείξεις", en: "Evidence" },
-    title: { el: "Κατανοούμε", en: "Understand" },
+    tag: { el: "Αναλύουμε", en: "Analysation" },
+    title: { el: "Αναλύουμε το σενάριο", en: "Scenario analysation" },
     body: {
-      el: "Ερωτήσεις σε φυσική γλώσσα με τεκμηριωμένες απαντήσεις. Η κάμερα πλησιάζει μια γειτονιά και οι πηγές γίνονται ετικέτες.",
-      en: "Natural-language questions with grounded answers. The camera dives into a district and sources become tags.",
+      el: "Εντοπίζουμε θετικά και αρνητικά και αναγνωρίζουμε το πρόβλημα.",
+      en: "We assess benefits and drawbacks to identify the underlying problem.",
     },
     href: "/ask",
     linkLabel: { el: "Ρώτησε την πόλη", en: "Ask the city" },
@@ -194,11 +194,11 @@ export const CHAPTERS: HomeChapter[] = [
   {
     id: "S.02.03",
     number: "03",
-    tag: { el: "Σενάρια", en: "Scenarios" },
-    title: { el: "Προσομοιώνουμε", en: "Simulate" },
+    tag: { el: "Βελτιστοποίηση", en: "Optimisation" },
+    title: { el: "Βελτιστοποιούμε το σενάριο", en: "Scenario optimisation" },
     body: {
-      el: "Σενάρια με παραμέτρους και αβεβαιότητα. Εναλλακτικές μάζες και επίπεδα επιπτώσεων εμφανίζονται πάνω στην πόλη.",
-      en: "Scenarios with parameters and uncertainty. Alternate massing and impact layers appear over the city.",
+      el: "Προτείνουμε λύσεις, αυξάνοντας την αποτελεσματικότητα και αντιμετωπίζοντας τα προβλήματα.",
+      en: "We propose solutions that improve efficiency and address existing challenges.",
     },
     href: "/simulations",
     linkLabel: { el: "Τρέξε προσομοίωση", en: "Run a simulation" },
@@ -206,11 +206,11 @@ export const CHAPTERS: HomeChapter[] = [
   {
     id: "S.02.04",
     number: "04",
-    tag: { el: "Αντίκτυπος", en: "Impact" },
-    title: { el: "Αποφασίζουμε", en: "Decide" },
+    tag: { el: "Συμπέρασμα", en: "Conclusion" },
+    title: { el: "Αποφασίζουμε", en: "Decision" },
     body: {
-      el: "Συγκρίνετε αντίκτυπο, κόστος και ρίσκο πριν την απόφαση. Οι δείκτες κλείνουν και η πόλη απομακρύνεται.",
-      en: "Compare impact, cost and risk before deciding. Markers resolve and the city pulls away.",
+      el: "Με την βοήθεια της Τεχνητής Νοημοσύνης καταλήγουμε σε μια απόφαση.",
+      en: "AI-powered insights help us make informed decisions.",
     },
     href: "/impact",
     linkLabel: { el: "Δες τον αντίκτυπο", en: "Review impact" },
@@ -219,10 +219,10 @@ export const CHAPTERS: HomeChapter[] = [
 
 export const STOPS: HomeStop[] = [
   { id: "S.00", label: { el: "Είσοδος", en: "Enter" } },
-  { id: "S.01", label: { el: "Η πόλη", en: "The city" } },
-  { id: "S.02.01", label: { el: "Σύνδεση", en: "Connect" } },
-  { id: "S.02.02", label: { el: "Κατανόηση", en: "Understand" } },
-  { id: "S.02.03", label: { el: "Προσομοίωση", en: "Simulate" } },
+  { id: "S.01", label: { el: "Όραμα", en: "Vision" } },
+  { id: "S.02.01", label: { el: "Προσομοίωση", en: "Simulation" } },
+  { id: "S.02.02", label: { el: "Αναλύουμε", en: "Analysation" } },
+  { id: "S.02.03", label: { el: "Βελτιστοποίηση", en: "Optimisation" } },
   { id: "S.02.04", label: { el: "Απόφαση", en: "Decide" } },
 ];
 
