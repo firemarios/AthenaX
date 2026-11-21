@@ -70,12 +70,12 @@ export const MORE_LINKS: NavLink[] = [
   {
     href: "/citizen",
     icon: Users,
-    label: { el: "Πολίτες", en: "Citizens" },
+    label: { el: "Προτάσεις", en: "Proposals" },
     description: {
-      el: "Προτάσεις και δημόσια διαβούλευση",
-      en: "Proposals and public consultation",
+      el: "Προτάσεις πολιτών με αξιολόγηση AI",
+      en: "Citizen proposals evaluated with AI",
     },
-    keywords: ["citizens", "proposals", "πολιτες", "προτασεις"],
+    keywords: ["citizens", "proposals", "πολιτες", "προτασεις", "αξιολογηση", "ai"],
   },
   {
     href: "/research",

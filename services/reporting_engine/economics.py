@@ -328,6 +328,260 @@ def _verdict(bcr: float | None, within_budget: bool | None, has_benefit: bool) -
     return "no"
 
 
+_FINANCIAL_SUMMARY = {
+    "yes": {
+        "el": "Το όφελος καλύπτει το κόστος με περιθώριο.",
+        "en": "Benefits cover the cost with a margin.",
+    },
+    "marginal": {
+        "el": "Οριακό ισοζύγιο· μικρές αλλαγές παραμέτρων αλλάζουν την εικόνα.",
+        "en": "Borderline balance; small parameter changes flip the picture.",
+    },
+    "no": {
+        "el": "Το κόστος υπερβαίνει το όφελος.",
+        "en": "Costs outweigh the benefits.",
+    },
+    "unknown": {
+        "el": "Λείπουν στοιχεία για ασφαλή οικονομική κρίση.",
+        "en": "Not enough data for a confident financial call.",
+    },
+}
+
+_PRACTICAL_SUMMARY = {
+    "practical": {
+        "el": "Εφαρμόσιμο με τα σημερινά δεδομένα και τους διαθέσιμους πόρους.",
+        "en": "Deliverable with current data and available resources.",
+    },
+    "cautious": {
+        "el": "Εφαρμόσιμο, αλλά με σημαντικές επιφυλάξεις.",
+        "en": "Deliverable, but with important caveats.",
+    },
+    "difficult": {
+        "el": "Δύσκολο στην πράξη με τα σημερινά δεδομένα.",
+        "en": "Hard to deliver with current data.",
+    },
+    "unknown": {
+        "el": "Δεν υπάρχουν αρκετά στοιχεία για εκτίμηση πρακτικότητας.",
+        "en": "Not enough data to judge practicality.",
+    },
+}
+
+
+def _factor(
+    key: str, label: dict[str, str], status: str, note: dict[str, str]
+) -> dict:
+    return {"key": key, "label": label, "status": status, "note": note}
+
+
+def _practicality(
+    model_name: str,
+    parameters: dict,
+    capex: float,
+    benefit_source: str,
+    has_baseline: bool,
+    budget: float | None,
+    within_budget: bool | None,
+) -> dict[str, Any]:
+    """Subjective delivery read: budget fit, scale, disruption and evidence."""
+    factors: list[dict] = []
+    score = 0.0
+
+    if within_budget is None:
+        status, value = "unknown", 55.0
+        note = {
+            "el": "Δεν έχει οριστεί προϋπολογισμός για σύγκριση.",
+            "en": "No budget was set for comparison.",
+        }
+    elif within_budget:
+        status, value = "ok", 90.0
+        note = {
+            "el": "Εντός του διαθέσιμου προϋπολογισμού.",
+            "en": "Within the available budget.",
+        }
+    else:
+        over = (capex / budget - 1.0) * 100.0 if budget and budget > 0 else None
+        status, value = "bad", 25.0
+        note = (
+            {
+                "el": f"Υπέρβαση προϋπολογισμού κατά {over:.0f}%.",
+                "en": f"Over budget by {over:.0f}%.",
+            }
+            if over is not None
+            else {
+                "el": "Υπέρβαση του διαθέσιμου προϋπολογισμού.",
+                "en": "Exceeds the available budget.",
+            }
+        )
+    factors.append(_factor("budget", {"el": "Προϋπολογισμός", "en": "Budget"}, status, note))
+    score += value * 0.30
+
+    if capex <= 0:
+        status, value = "ok", 85.0
+        note = {"el": "Χωρίς κεφαλαιουχικό κόστος.", "en": "No capital cost."}
+    elif capex <= 150_000:
+        status, value = "ok", 85.0
+        note = {"el": "Μικρής κλίμακας παρέμβαση.", "en": "Small-scale intervention."}
+    elif capex <= 600_000:
+        status, value = "warn", 60.0
+        note = {"el": "Μεσαίας κλίμακας έργο.", "en": "Medium-scale project."}
+    elif capex <= 1_500_000:
+        status, value = "bad", 40.0
+        note = {"el": "Μεγάλης κλίμακας έργο.", "en": "Large-scale project."}
+    else:
+        status, value = "bad", 25.0
+        note = {"el": "Πολύ μεγάλης κλίμακας έργο.", "en": "Very large-scale project."}
+    factors.append(_factor("scale", {"el": "Κλίμακα έργου", "en": "Project scale"}, status, note))
+    score += value * 0.25
+
+    disruption = {
+        "open": (
+            "ok",
+            90.0,
+            {
+                "el": "Καμία φυσική αλλαγή· χαμηλή όχληση.",
+                "en": "No physical change; low disruption.",
+            },
+        ),
+        "sidewalk": (
+            "warn",
+            65.0,
+            {
+                "el": "Μέτρια όχληση· απαιτούνται άδειες και συντονισμός.",
+                "en": "Moderate disruption; permits and coordination needed.",
+            },
+        ),
+        "congestion_charge": (
+            "warn",
+            60.0,
+            {
+                "el": "Απαιτεί συστήματα, έλεγχο και δημόσια αποδοχή.",
+                "en": "Needs systems, enforcement and public acceptance.",
+            },
+        ),
+        "pedestrianize": (
+            "bad",
+            45.0,
+            {
+                "el": "Υψηλή όχληση· μεγάλη διάρκεια έργων και αντιδράσεις.",
+                "en": "High disruption; long works and local pushback.",
+            },
+        ),
+        "closed": (
+            "bad",
+            40.0,
+            {
+                "el": "Κλείσιμο δρόμου· σύνθετες άδειες και αντιδράσεις.",
+                "en": "Road closure; complex permits and pushback.",
+            },
+        ),
+        "new_road": (
+            "bad",
+            30.0,
+            {
+                "el": "Νέα οδοποιία· μεγάλες άδειες και χρονοβόρες εγκρίσεις.",
+                "en": "New road build; major permits and slow approvals.",
+            },
+        ),
+    }
+    intervention = str(parameters.get("intervention") or "").lower()
+    if intervention in disruption:
+        status, value, note = disruption[intervention]
+    else:
+        status, value, note = {
+            "greenspace": (
+                "warn",
+                65.0,
+                {
+                    "el": "Έργο διαμόρφωσης χώρου· συνήθεις άδειες.",
+                    "en": "Site works; standard permits.",
+                },
+            ),
+            "accessibility": (
+                "warn",
+                70.0,
+                {
+                    "el": "Κατασκευή υποδομών· μέτριος συντονισμός.",
+                    "en": "Infrastructure works; moderate coordination.",
+                },
+            ),
+            "cost": (
+                "warn",
+                60.0,
+                {
+                    "el": "Γενική εκτίμηση κόστους· η υλοποίηση εξαρτάται από το έργο.",
+                    "en": "Generic cost estimate; delivery depends on the works.",
+                },
+            ),
+        }.get(
+            model_name,
+            (
+                "warn",
+                60.0,
+                {
+                    "el": "Απαιτείται συντονισμός φορέων.",
+                    "en": "Requires inter-agency coordination.",
+                },
+            ),
+        )
+    factors.append(
+        _factor(
+            "disruption",
+            {"el": "Αναστάτωση & άδειες", "en": "Disruption & permits"},
+            status,
+            note,
+        )
+    )
+    score += value * 0.25
+
+    if has_baseline and benefit_source == "model":
+        status, value = "ok", 85.0
+        note = {
+            "el": "Βασίζεται σε σύγκριση με τη βάση και μετρημένα οφέλη.",
+            "en": "Grounded in a baseline comparison and measured benefits.",
+        }
+    elif has_baseline:
+        status, value = "warn", 65.0
+        note = {
+            "el": "Υπάρχει σύγκριση με τη βάση, αλλά το όφελος είναι εκτίμηση.",
+            "en": "Baseline exists, but the benefit is an estimate.",
+        }
+    elif benefit_source == "ai":
+        status, value = "warn", 50.0
+        note = {
+            "el": "Εκτίμηση AI χωρίς σύγκριση με τη βάση.",
+            "en": "AI estimate without a baseline comparison.",
+        }
+    else:
+        status, value = "bad", 40.0
+        note = {
+            "el": "Περιορισμένα δεδομένα· υψηλή αβεβαιότητα.",
+            "en": "Limited data; high uncertainty.",
+        }
+    factors.append(
+        _factor(
+            "evidence",
+            {"el": "Στοιχεία & αβεβαιότητα", "en": "Evidence & uncertainty"},
+            status,
+            note,
+        )
+    )
+    score += value * 0.20
+
+    normalized = score
+    if normalized >= 70.0:
+        verdict = "practical"
+    elif normalized >= 45.0:
+        verdict = "cautious"
+    else:
+        verdict = "difficult"
+    return {
+        "verdict": verdict,
+        "score": round(normalized, 1),
+        "summary": _PRACTICAL_SUMMARY[verdict],
+        "factors": factors,
+    }
+
+
 def _summary(
     bcr: float | None,
     payback: float | None,
@@ -408,6 +662,15 @@ def compute_economics(
     budget = _num(budget_eur)
     within_budget = (expected <= budget) if budget is not None and budget > 0 else None
     verdict = _verdict(bcr, within_budget, bool(benefit_lines))
+    practicality = _practicality(
+        model_name,
+        parameters,
+        expected,
+        benefit_source,
+        baseline is not None,
+        budget,
+        within_budget,
+    )
     confidence = 0.75 if baseline else 0.35
     assumptions = [
         {
@@ -451,6 +714,13 @@ def compute_economics(
         "budget_eur": round(budget, 2) if budget is not None else None,
         "within_budget": within_budget,
         "verdict": verdict,
+        "financial": {
+            "verdict": verdict,
+            "benefit_cost_ratio": round(bcr, 3) if bcr is not None else None,
+            "payback_years": round(payback, 2) if payback is not None else None,
+            "summary": _FINANCIAL_SUMMARY[verdict],
+        },
+        "practicality": practicality,
         "confidence": confidence,
         "cost_breakdown": cost_lines,
         "benefit_breakdown": benefit_lines,

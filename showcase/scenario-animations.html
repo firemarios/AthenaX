@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATHENAX · Animated snippets (10s loops)</title>
+<style>
+  :root {
+    --bg: #050a1e;
+    --bg-deep: #070d24;
+    --ink: #eef2ff;
+    --muted: #9aa8c7;
+    --line: rgba(255, 255, 255, 0.12);
+    --glass: rgba(11, 18, 40, 0.55);
+    --glass-strong: rgba(8, 14, 32, 0.86);
+    --card: rgba(13, 21, 45, 0.72);
+    --accent: #7db1ff;
+    --accent-solid: #1d4ed8;
+    --cyan: #22d3ee;
+    --amber: #f5b942;
+    --green: #34d399;
+    --red: #f87171;
+    --radius: 18px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: clamp(20px, 4vw, 56px) clamp(14px, 4vw, 56px) 64px;
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(900px 520px at 12% -8%, rgba(125, 177, 255, 0.18), transparent 62%),
+      radial-gradient(760px 480px at 92% 8%, rgba(34, 211, 238, 0.12), transparent 60%),
+      radial-gradient(900px 700px at 50% 110%, rgba(29, 78, 216, 0.16), transparent 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background-attachment: fixed;
+  }
+
+  .page-head {
+    max-width: 1120px;
+    margin: 0 auto 40px;
+  }
+
+  .eyebrow {
+    margin: 0 0 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .page-head h1 {
+    margin: 0;
+    font-size: clamp(26px, 3.6vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+    max-width: 24ch;
+  }
+
+  .lead {
+    margin: 14px 0 0;
+    max-width: 62ch;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  main {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    gap: 30px;
+  }
+
+  .snippet {
+    display: grid;
+    gap: 14px;
+  }
+
+  .snippet-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .snippet-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .snippet-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .snippet-head p {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .loop-chip {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .loop-chip .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--cyan);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5);
+    animation: livePulse 2.2s ease-out infinite;
+  }
+
+  @keyframes livePulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5); }
+    70%, 100% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
+  }
+
+  /* ---------- Window chrome ---------- */
+
+  .window {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(700px 340px at 18% -10%, rgba(125, 177, 255, 0.14), transparent 62%),
+      linear-gradient(180deg, rgba(13, 21, 45, 0.92) 0%, rgba(7, 13, 36, 0.96) 100%);
+    box-shadow:
+      0 30px 70px -40px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: opacity 260ms ease;
+  }
+
+  .window.reset { opacity: 0.32; }
+
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.55);
+  }
+
+  .dots { display: inline-flex; gap: 6px; }
+
+  .dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .dots i:first-child { background: rgba(248, 113, 113, 0.55); }
+  .dots i:nth-child(2) { background: rgba(245, 185, 66, 0.55); }
+  .dots i:nth-child(3) { background: rgba(52, 211, 153, 0.55); }
+
+  .url {
+    flex: 1;
+    max-width: 340px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chrome-right {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .screen {
+    position: relative;
+    min-height: 430px;
+    padding: 24px;
+  }
+
+  .kicker {
+    margin: 0;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .screen h3 {
+    margin: 6px 0 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .sub {
+    margin: 5px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .muted { color: var(--muted); }
+
+  /* ---------- Shared controls ---------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 15px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: transform 120ms ease, box-shadow 200ms ease, background 200ms ease;
+  }
+
+  .btn.primary {
+    border-color: transparent;
+    background: linear-gradient(180deg, #2f66f5, var(--accent-solid));
+    box-shadow: 0 12px 28px -14px rgba(29, 78, 216, 0.9);
+  }
+
+  .btn.ghost { color: var(--muted); }
+
+  .btn[disabled] { opacity: 0.4; }
+
+  .btn.pressed {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 4px rgba(125, 177, 255, 0.22);
+  }
+
+  .caret {
+    display: inline-block;
+    width: 2px;
+    height: 15px;
+    margin-left: 2px;
+    vertical-align: -3px;
+    background: var(--accent);
+    animation: blink 1.05s steps(1) infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Height-aware reveal: 0fr → 1fr keeps the frame tight before content arrives. */
+  .reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 420ms var(--ease);
+  }
+
+  .reveal > div {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .reveal.show { grid-template-rows: 1fr; }
+
+  /* ---------- 01 · Ask the City ---------- */
+
+  .ask-head { max-width: 54ch; }
+
+  .ask-box {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    margin-top: 18px;
+  }
+
+  .ask-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(125, 177, 255, 0.35);
+    background: rgba(5, 10, 30, 0.55);
+    font-size: 13px;
+    line-height: 1.45;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .ask-input .typed { min-height: 18px; }
+
+  .ask-idle {
+    margin-top: 16px;
+    padding: 20px;
+    min-height: 180px;
+    border-radius: 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .ask-idle.hide { display: none; }
+
+  .idle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 177, 255, 0.3);
+    background: rgba(125, 177, 255, 0.1);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .idle-title {
+    margin: 12px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .idle-sub {
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .idle-lines {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .idle-lines i {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  }
+
+  .idle-lines i:nth-child(2) { width: 82%; }
+  .idle-lines i:nth-child(3) { width: 64%; }
+
+  .think {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(125, 177, 255, 0.22);
+    background: linear-gradient(135deg, rgba(125, 177, 255, 0.08), rgba(13, 21, 45, 0.5));
+  }
+
+  .think-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .spark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 999px;
+    background: rgba(125, 177, 255, 0.14);
+    color: var(--accent);
+    font-size: 15px;
+    animation: sparkPulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes sparkPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(125, 177, 255, 0.28); }
+    50% { box-shadow: 0 0 0 9px rgba(125, 177, 255, 0); }
+  }
+
+  .think-title {
+    margin: 1px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .think-sub {
+    margin: 3px 0 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .elapsed {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mini-bar {
+    position: relative;
+    height: 4px;
+    margin: 13px 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .mini-bar i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    transition: width 180ms linear;
+  }
+
+  .stepper {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .stepper li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 11px;
+    color: var(--muted);
+    transition: color 220ms ease;
+  }
+
+  .s-dot {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 9px;
+    color: transparent;
+    transition: all 220ms ease;
+  }
+
+  .stepper li.active { color: var(--ink); }
+  .stepper li.active .s-dot {
+    border-color: var(--accent);
+    background: rgba(125, 177, 255, 0.16);
+    box-shadow: 0 0 0 4px rgba(125, 177, 255, 0.08);
+    color: var(--accent);
+  }
+
+  .stepper li.done { color: var(--muted); }
+  .stepper li.done .s-dot {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.14);
+    color: var(--green);
+  }
+
+  .stepper li.done .s-dot::after { content: "✓"; }
+  .stepper li.active .s-dot::after { content: "•"; }
+
+  .answer {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--card);
+  }
+
+  .answer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 9px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .pill.live {
+    border-color: rgba(34, 211, 238, 0.4);
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--cyan);
+  }
+
+  .answer-text {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #dbe4ff;
+    min-height: 42px;
+  }
+
+  .sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 12px;
+  }
+
+  .source {
+    padding: 4px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+
+  .source.show { opacity: 1; transform: none; }
+
+  /* ---------- 02 · Simulation progress ---------- */
+
+  .sim-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 185, 66, 0.35);
+    background: rgba(245, 185, 66, 0.1);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--amber);
+    white-space: nowrap;
+    transition: all 260ms ease;
+  }
+
+  .status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    animation: livePulse 1.6s ease-out infinite;
+  }
+
+  .status.done {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--green);
+  }
+
+  .status.done::before { animation: none; }
+
+  .sim-progress {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 18px;
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.42);
+  }
+
+  .pct {
+    display: flex;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+  }
+
+  .pct-sign {
+    margin-left: 2px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .big-bar {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .big-bar i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent-solid), var(--accent), var(--cyan));
+    transition: width 160ms linear;
+  }
+
+  .sim-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .run-steps {
+    display: grid;
+    gap: 2px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .run-steps li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 9px;
+    font-size: 11.5px;
+    color: var(--muted);
+    transition: color 220ms ease, background 220ms ease;
+  }
+
+  .run-steps li .s-dot { width: 18px; height: 18px; font-size: 10px; }
+
+  .run-steps li.active {
+    color: var(--ink);
+    background: rgba(125, 177, 255, 0.07);
+  }
+
+  .run-steps li.active .s-dot {
+    border-color: var(--accent);
+    background: rgba(125, 177, 255, 0.16);
+    color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(125, 177, 255, 0.08);
+  }
+
+  .run-steps li.done { color: rgba(219, 228, 255, 0.78); }
+
+  .run-steps li.done .s-dot {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.14);
+    color: var(--green);
+  }
+
+  .run-steps li.done .s-dot::after { content: "✓"; }
+  .run-steps li.active .s-dot::after { content: "•"; }
+
+  .result {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 13px 15px;
+    border-radius: 13px;
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.09), rgba(13, 21, 45, 0.45));
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  .badge {
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .badge.success {
+    background: rgba(52, 211, 153, 0.14);
+    color: var(--green);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+  }
+
+  .badge.warn {
+    background: rgba(245, 185, 66, 0.12);
+    color: var(--amber);
+    border: 1px solid rgba(245, 185, 66, 0.32);
+  }
+
+  /* ---------- 03 · Scenario form ---------- */
+
+  .wizard {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    min-height: 380px;
+    margin: -24px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+  }
+
+  .rail {
+    padding: 18px 14px;
+    border-right: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.4);
+  }
+
+  .rail-title {
+    margin: 0 0 14px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .rail ol {
+    position: relative;
+    display: grid;
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rail ol::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    bottom: 12px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .rail li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 6px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    color: var(--muted);
+    opacity: 0.55;
+  }
+
+  .rail li.current {
+    opacity: 1;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .rail .r-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: var(--bg-deep);
+    font-size: 8px;
+    color: transparent;
+  }
+
+  .rail li.current .r-dot {
+    border-color: var(--accent);
+    background: rgba(125, 177, 255, 0.16);
+    color: var(--accent);
+  }
+
+  .rail li.current .r-dot::after { content: "•"; }
+
+  .wizard-main {
+    display: flex;
+    flex-direction: column;
+    padding: 22px 26px 18px;
+  }
+
+  .wizard-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .wizard-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: 14px;
+    background: rgba(125, 177, 255, 0.12);
+    color: var(--accent);
+    font-size: 17px;
+  }
+
+  .wizard-title h3 {
+    margin: 1px 0 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .wizard-title p {
+    margin: 5px 0 0;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 48ch;
+  }
+
+  .req {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 16px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .req-badge {
+    flex: none;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(125, 177, 255, 0.12);
+    color: var(--accent);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .req p {
+    margin: 0;
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .req b { color: var(--ink); font-weight: 600; }
+
+  .field-label {
+    display: block;
+    margin: 16px 0 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    border: 1px solid rgba(125, 177, 255, 0.4);
+    background: rgba(5, 10, 30, 0.55);
+    font-size: 13px;
+    box-shadow: 0 0 0 3px rgba(125, 177, 255, 0.06);
+  }
+
+  .wizard-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  .foot-right { display: flex; gap: 8px; }
+
+  /* ---------- Cursor ---------- */
+
+  .cursor {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    opacity: 0;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+    z-index: 5;
+  }
+
+  @keyframes cursorAsk {
+    0%, 4% { left: 72%; top: 74%; opacity: 0; }
+    6% { opacity: 1; }
+    13% { left: 36%; top: 34%; opacity: 1; }
+    15% { transform: scale(0.86); }
+    17% { transform: scale(1); }
+    19%, 100% { opacity: 0; }
+  }
+
+  @keyframes cursorForm {
+    0%, 4% { left: 70%; top: 70%; opacity: 0; }
+    6% { opacity: 1; }
+    14% { left: 56%; top: 56%; opacity: 1; }
+    16% { transform: scale(0.86); }
+    20%, 82% { left: 56%; top: 56%; opacity: 1; transform: scale(1); }
+    90% { left: 92%; top: 91%; opacity: 1; }
+    92% { transform: scale(0.86); }
+    96%, 100% { opacity: 0; }
+  }
+
+  #ask-cursor { animation: cursorAsk 10s linear infinite; }
+  #wiz-cursor { animation: cursorForm 10s linear infinite; }
+
+  /* ---------- Footer ---------- */
+
+  .page-foot {
+    max-width: 1120px;
+    margin: 36px auto 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .page-foot code {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+  }
+
+  /* ---------- Responsive ---------- */
+
+  @media (max-width: 760px) {
+    .wizard { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .screen { padding: 18px; }
+    .wizard { margin: -18px; }
+    .wizard-main { padding: 20px 18px 16px; }
+    .ask-box { flex-direction: column; }
+    .ask-box .btn { height: 40px; }
+    .sim-progress { grid-template-columns: 1fr; }
+    .pct { font-size: 30px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <p class="eyebrow">ATHENAX · UI motion kit</p>
+  <h1>Three states, one 10-second loop each.</h1>
+  <p class="lead">
+    Self-contained HTML snippets: Ask the City, AI simulation progress, and the opening step of the
+    scenario form. No dependencies, no network requests — open the file and the loop runs.
+  </p>
+</header>
+
+<main>
+
+  <!-- ================= 01 · ASK THE CITY ================= -->
+  <section class="snippet" aria-labelledby="s1-title">
+    <div class="snippet-head">
+      <span class="snippet-num">01</span>
+      <div>
+        <h2 id="s1-title">Ask the City</h2>
+        <p>Question → retrieval → answer, always with sources.</p>
+      </div>
+      <span class="loop-chip"><span class="pulse-dot"></span> 10s loop</span>
+    </div>
+
+    <div class="window" id="w-ask">
+      <div class="chrome">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">athenax.app/ask</span>
+        <span class="chrome-right">EL</span>
+      </div>
+      <div class="screen">
+        <div class="ask-head">
+          <p class="kicker">Ρώτησε την πόλη</p>
+          <h3>Ask the City</h3>
+          <p class="sub">Απαντήσεις από δημόσια δεδομένα, πάντα με πηγές.</p>
+        </div>
+
+        <div class="ask-box">
+          <div class="ask-input">
+            <span id="ask-q" class="typed"></span><span class="caret" aria-hidden="true"></span>
+          </div>
+          <button id="ask-send" class="btn primary" type="button">Αποστολή</button>
+        </div>
+
+        <div class="ask-idle" id="ask-idle">
+          <span class="idle-icon" aria-hidden="true">?</span>
+          <p class="idle-title">Ρώτησε οτιδήποτε για την πόλη</p>
+          <p class="idle-sub">Δημόσια δεδομένα, πάντα με αναφορές σε πηγές.</p>
+          <div class="idle-lines" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+
+        <div class="reveal" id="ask-think-wrap">
+          <div>
+            <div class="think">
+              <div class="think-head">
+            <span class="spark" aria-hidden="true">✦</span>
+            <div>
+              <p class="think-title">Αναζητώ και συνθέτω την απάντηση</p>
+              <p class="think-sub" id="ask-status">Αναζήτηση πηγών…</p>
+            </div>
+            <span class="elapsed"><span id="ask-sec">0</span>s</span>
+          </div>
+          <div class="mini-bar" aria-hidden="true"><i id="ask-bar"></i></div>
+          <ol class="stepper" id="ask-steps">
+            <li><span class="s-dot" aria-hidden="true"></span>Αναζήτηση πηγών</li>
+            <li><span class="s-dot" aria-hidden="true"></span>Ανάλυση δεδομένων</li>
+            <li><span class="s-dot" aria-hidden="true"></span>Σύνθεση απάντησης</li>
+          </ol>
+            </div>
+          </div>
+        </div>
+
+        <div class="reveal" id="ask-answer-wrap">
+          <div>
+            <div class="answer">
+              <div class="answer-head">
+            <span class="pill live">● Απάντηση</span>
+            <span class="muted" style="font-size:10px">3 πηγές</span>
+          </div>
+          <p class="answer-text" id="ask-text"></p>
+          <div class="sources" id="ask-sources">
+            <span class="source">Δήμος Αθηναίων · Ανοιχτά δεδομένα</span>
+            <span class="source">ΕΛΣΤΑΤ</span>
+            <span class="source">OpenStreetMap            </span>
+          </div>
+            </div>
+          </div>
+        </div>
+
+        <svg class="cursor" id="ask-cursor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 2l14 9-6 1.6L9.5 19 4 2z" fill="#eef2ff" stroke="#050a1e" stroke-width="1.2"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 02 · SIMULATION PROGRESS ================= -->
+  <section class="snippet" aria-labelledby="s2-title">
+    <div class="snippet-head">
+      <span class="snippet-num">02</span>
+      <div>
+        <h2 id="s2-title">AI simulation progress</h2>
+        <p>Six model steps, live percentage, then the worth-it read.</p>
+      </div>
+      <span class="loop-chip"><span class="pulse-dot"></span> 10s loop</span>
+    </div>
+
+    <div class="window" id="w-sim">
+      <div class="chrome">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">athenax.app/simulations/sim_8f21</span>
+        <span class="chrome-right">EL</span>
+      </div>
+      <div class="screen">
+        <div class="sim-head">
+          <div>
+            <p class="kicker">Προσομοίωση</p>
+            <h3>Πράσινο δίκτυο Κυψέλης</h3>
+            <p class="sub">Πράσινο &amp; πάρκα · Κυψέλη · 1 έτος</p>
+          </div>
+          <span class="status" id="sim-status">Σε εξέλιξη</span>
+        </div>
+
+        <div class="sim-progress">
+          <div class="pct"><span id="sim-pct">0</span><span class="pct-sign">%</span></div>
+          <div class="big-bar" aria-hidden="true"><i id="sim-bar"></i></div>
+          <div class="sim-meta">
+            <span><span id="sim-sec">0</span>s</span>
+            <span>6 βήματα</span>
+          </div>
+        </div>
+
+        <ol class="run-steps" id="sim-steps">
+          <li><span class="s-dot" aria-hidden="true"></span>Διαβάζω το σενάριο και το ελεύθερο κείμενο</li>
+          <li><span class="s-dot" aria-hidden="true"></span>Επιλέγω το κατάλληλο μοντέλο</li>
+          <li><span class="s-dot" aria-hidden="true"></span>Υπολογίζω τις παραμέτρους και τους παράγοντες</li>
+          <li><span class="s-dot" aria-hidden="true"></span>Εκτελώ την προσομοίωση</li>
+          <li><span class="s-dot" aria-hidden="true"></span>Υπολογίζω κόστος, οφέλη και φορολογικά έσοδα</li>
+          <li><span class="s-dot" aria-hidden="true"></span>Συντάσσω την αναφορά AI</li>
+        </ol>
+
+        <div class="reveal" id="sim-result-wrap">
+          <div>
+            <div class="result">
+              <div class="result-row">
+                <span>Οικονομικά</span>
+                <span class="badge success">Συμφέρει</span>
+              </div>
+              <div class="result-row">
+                <span>Στην πράξη</span>
+                <span class="badge warn">Με επιφυλάξεις</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 03 · NEW SCENARIO ================= -->
+  <section class="snippet" aria-labelledby="s3-title">
+    <div class="snippet-head">
+      <span class="snippet-num">03</span>
+      <div>
+        <h2 id="s3-title">New scenario · starting step</h2>
+        <p>One question at a time, with the step rail and requirement callout.</p>
+      </div>
+      <span class="loop-chip"><span class="pulse-dot"></span> 10s loop</span>
+    </div>
+
+    <div class="window" id="w-form">
+      <div class="chrome">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">athenax.app/policies/new</span>
+        <span class="chrome-right">EL</span>
+      </div>
+      <div class="screen">
+        <div class="wizard">
+          <aside class="rail">
+            <p class="rail-title">Νέο σενάριο</p>
+            <ol>
+              <li class="current"><span class="r-dot" aria-hidden="true"></span>Όνομα</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Τύπος</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Περιοχή</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Αλλαγές</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Ορίζοντας</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Προϋπολογισμός</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Παράγοντες</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Παραδοχές</li>
+              <li><span class="r-dot" aria-hidden="true"></span>KPIs</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Ανασκόπηση</li>
+            </ol>
+          </aside>
+
+          <div class="wizard-main">
+            <div class="wizard-top">
+              <span>Βήμα 1 / 10</span>
+              <span>Υποχρεωτικό</span>
+            </div>
+
+            <div class="wizard-title">
+              <span class="icon-badge" aria-hidden="true">◧</span>
+              <div>
+                <h3>Όνομα</h3>
+                <p>Δώσε ένα σύντομο, συγκεκριμένο όνομα. Θα το βλέπεις σε όλη τη ροή.</p>
+              </div>
+            </div>
+
+            <div class="req">
+              <span class="req-badge">Απαιτείται</span>
+              <p><b>Τι χρειάζεται:</b> Όνομα σεναρίου με τουλάχιστον 3 χαρακτήρες.</p>
+            </div>
+
+            <label class="field-label" for="wiz-field">Όνομα σεναρίου</label>
+            <div class="field" id="wiz-field">
+              <span id="wiz-name"></span><span class="caret" aria-hidden="true"></span>
+            </div>
+
+            <div class="wizard-foot">
+              <div class="foot-left">
+                <button class="btn ghost" type="button" disabled>← Πίσω</button>
+              </div>
+              <div class="foot-right">
+                <button class="btn ghost" type="button">Ακύρωση</button>
+                <button class="btn primary" id="wiz-next" type="button">Επόμενο →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <svg class="cursor" id="wiz-cursor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 2l14 9-6 1.6L9.5 19 4 2z" fill="#eef2ff" stroke="#050a1e" stroke-width="1.2"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="page-foot">
+  Timeline: <code>10 000 ms</code> per snippet, synced from one clock. Reduced-motion users see the
+  final state. Embed by copying any <code>&lt;section&gt;</code> with its markup, CSS and the render
+  functions.
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  const CYCLE = 10000;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const $ = (id) => document.getElementById(id);
+
+  const askQ = "Ποιες γειτονιές της Αθήνας έχουν λιγότερο πράσινο;";
+  const askA =
+    "Οι γειτονιές με τη μικρότερη αναλογία πρασίνου ανά κάτοικο είναι το Μεταξουργείο, τα Εξάρχεια και η Κυψέλη. Στο Μεταξουργείο το πράσινο ανά κάτοικο είναι περίπου 2,1 m², όταν ο μέσος όρος του δήμου ξεπερνά τα 5 m².";
+  const formName = "Πράσινο δίκτυο Κυψέλης";
+
+  const askThink = $("ask-think-wrap");
+  const askAnswer = $("ask-answer-wrap");
+  const askIdle = $("ask-idle");
+  const askQEl = $("ask-q");
+  const askStatus = $("ask-status");
+  const askSec = $("ask-sec");
+  const askBar = $("ask-bar");
+  const askSteps = [...$("ask-steps").children];
+  const askSources = [...$("ask-sources").children];
+  const askText = $("ask-text");
+  const askSend = $("ask-send");
+  const wAsk = $("w-ask");
+
+  const simStatus = $("sim-status");
+  const simPct = $("sim-pct");
+  const simSec = $("sim-sec");
+  const simBar = $("sim-bar");
+  const simSteps = [...$("sim-steps").children];
+  const simResult = $("sim-result-wrap");
+  const wSim = $("w-sim");
+
+  const wizName = $("wiz-name");
+  const wizNext = $("wiz-next");
+  const wForm = $("w-form");
+
+  const clamp01 = (value) => Math.max(0, Math.min(1, value));
+  const between = (t, start, end) => clamp01((t - start) / (end - start));
+  const typed = (text, t, start, end) =>
+    text.slice(0, Math.ceil(text.length * between(t, start, end)));
+
+  function setStepState(node, state) {
+    node.classList.toggle("active", state === "active");
+    node.classList.toggle("done", state === "done");
+  }
+
+  function renderAsk(t) {
+    askQEl.textContent = typed(askQ, t, 250, 1400);
+    askSend.classList.toggle("pressed", t > 1200 && t < 1520);
+    askIdle.classList.toggle("hide", t > 1350);
+    askThink.classList.toggle("show", t > 1350);
+
+    const stages = [
+      [1350, 4200, "Αναζήτηση πηγών…"],
+      [4200, 6900, "Ανάλυση δεδομένων…"],
+      [6900, 9000, "Σύνθεση απάντησης…"],
+    ];
+    let active = -1;
+    stages.forEach(([start, end], index) => {
+      if (t >= start && t < end) active = index;
+      setStepState(askSteps[index], t >= end ? "done" : index === active ? "active" : "");
+    });
+    askStatus.textContent = active >= 0 ? stages[active][2] : "Απάντηση έτοιμη.";
+    askSec.textContent = String(Math.max(0, Math.min(8, Math.floor((t - 1350) / 1000))));
+    askBar.style.width = `${Math.round(between(t, 1350, 9000) * 100)}%`;
+
+    askAnswer.classList.toggle("show", t > 6750);
+    const words = askA.split(" ");
+    const shown = Math.ceil(words.length * between(t, 7000, 8900));
+    askText.textContent = words.slice(0, shown).join(" ");
+    askSources.forEach((source, index) => {
+      source.classList.toggle("show", t > 8150 + index * 260);
+    });
+
+    wAsk.classList.toggle("reset", t > 9650);
+  }
+
+  function renderSim(t) {
+    const progress = between(t, 250, 8500);
+    const percent = Math.round(progress * 100);
+    simPct.textContent = String(percent);
+    simBar.style.width = `${percent}%`;
+    simSec.textContent = String(Math.min(9, Math.floor(t / 1000)));
+
+    const windows = [
+      [250, 1450],
+      [1450, 2800],
+      [2800, 4300],
+      [4300, 5800],
+      [5800, 7150],
+      [7150, 8500],
+    ];
+    let active = -1;
+    windows.forEach(([start, end], index) => {
+      if (t >= start && t < end) active = index;
+    });
+    simSteps.forEach((step, index) => {
+      const [start, end] = windows[index];
+      setStepState(step, t >= end ? "done" : index === active ? "active" : "");
+    });
+
+    const done = t > 8500;
+    simStatus.textContent = done ? "Ολοκληρώθηκε" : "Σε εξέλιξη";
+    simStatus.classList.toggle("done", done);
+    simResult.classList.toggle("show", done);
+
+    wSim.classList.toggle("reset", t > 9650);
+  }
+
+  function renderForm(t) {
+    wizName.textContent = typed(formName, t, 400, 2600);
+    wizNext.classList.toggle("pressed", t > 8750 && t < 9150);
+    wForm.classList.toggle("reset", t > 9650);
+  }
+
+  function render(t) {
+    renderAsk(t);
+    renderSim(t);
+    renderForm(t);
+  }
+
+  if (reduced) {
+    render(9200);
+    return;
+  }
+
+  const tParam = new URLSearchParams(window.location.search).get("t");
+  const frozen = tParam === null ? NaN : Number(tParam);
+  if (Number.isFinite(frozen) && frozen >= 0) {
+    render(frozen % CYCLE);
+    document.querySelectorAll(".cursor").forEach((cursor) => {
+      cursor.style.animationDelay = `-${frozen % CYCLE}ms`;
+      cursor.style.animationPlayState = "paused";
+    });
+    return;
+  }
+
+  const start = performance.now();
+  function frame(now) {
+    render((now - start) % CYCLE);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

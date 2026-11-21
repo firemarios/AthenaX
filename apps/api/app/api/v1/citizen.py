@@ -1,4 +1,4 @@
-"""Citizen Lab module (07): consultations, proposals, comments."""
+"""Proposals module (07): consultations, proposals, comments, AI evaluation."""
 from __future__ import annotations
 
 from app.deps import get_request_id
@@ -7,6 +7,8 @@ from app.repositories import citizen as citizen_repo
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+from services.ai_engine.proposal_evaluator import evaluate_proposal
 
 router = APIRouter()
 
@@ -86,6 +88,16 @@ async def get_proposal(id: str, request: Request):
     if item is None:
         raise HTTPException(status_code=404, detail="Η πρόταση δεν βρέθηκε.")
     return ok(item, build_meta(get_request_id(request)))
+
+
+@router.post("/proposals/{id}/evaluate")
+async def evaluate_proposal_endpoint(id: str, request: Request):
+    """AI evaluation of a citizen proposal (score, criteria, strengths, risks)."""
+    item = await citizen_repo.get_proposal(id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Η πρόταση δεν βρέθηκε.")
+    evaluation = await evaluate_proposal(item)
+    return ok(evaluation, build_meta(get_request_id(request)))
 
 
 @router.delete("/proposals/{id}")

@@ -1,7 +1,7 @@
 export type BiText = { el: string; en: string };
 
 export const CATEGORY_LABELS: Record<string, BiText> = {
-  mobility: { el: "Μετακινητικότητα", en: "Mobility" },
+  mobility: { el: "Μετακίνηση", en: "Mobility" },
   green: { el: "Πράσινο", en: "Green" },
   housing: { el: "Κατοικία", en: "Housing" },
   environment: { el: "Περιβάλλον", en: "Environment" },

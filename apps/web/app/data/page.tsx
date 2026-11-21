@@ -51,7 +51,7 @@ const STR = {
     el: "Δοκιμάστε διαφορετικό όρο αναζήτησης ή αφαιρέστε κάποιο φίλτρο.",
     en: "Try a different search term or remove a filter.",
   },
-  suggestions: ["μετακινητικότητα", "πράσινο", "πληθυσμός", "καιρός"],
+  suggestions: ["μετακίνηση", "πράσινο", "πληθυσμός", "καιρός"],
   details: { el: "Λεπτομέρειες →", en: "Details →" },
   quality: { el: "Ποιότητα", en: "Quality" },
 };

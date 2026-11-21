@@ -1,5 +1,10 @@
 export type Lang = "el" | "en";
 
+export interface BiText {
+  el: string;
+  en: string;
+}
+
 export interface ApiError {
   code: number;
   message: string;
@@ -284,6 +289,33 @@ export interface EconomicsLine {
   unit?: string;
 }
 
+export type EconomicsVerdict = "yes" | "marginal" | "no" | "unknown";
+
+export type PracticalityVerdict = "practical" | "cautious" | "difficult" | "unknown";
+
+export type PracticalityFactorStatus = "ok" | "warn" | "bad" | "unknown";
+
+export interface EconomicsFinancial {
+  verdict: EconomicsVerdict;
+  benefit_cost_ratio: number | null;
+  payback_years: number | null;
+  summary: { el: string; en: string };
+}
+
+export interface EconomicsPracticalityFactor {
+  key: string;
+  label: { el: string; en: string };
+  status: PracticalityFactorStatus;
+  note: { el: string; en: string };
+}
+
+export interface EconomicsPracticality {
+  verdict: PracticalityVerdict;
+  score: number;
+  summary: { el: string; en: string };
+  factors: EconomicsPracticalityFactor[];
+}
+
 export interface PolicyEconomics {
   currency: "EUR";
   capex_eur: number;
@@ -300,7 +332,9 @@ export interface PolicyEconomics {
   payback_years: number | null;
   budget_eur: number | null;
   within_budget: boolean | null;
-  verdict: "yes" | "marginal" | "no" | "unknown";
+  verdict: EconomicsVerdict;
+  financial?: EconomicsFinancial;
+  practicality?: EconomicsPracticality;
   confidence: number;
   cost_breakdown: EconomicsLine[];
   benefit_breakdown: EconomicsLine[];
@@ -444,6 +478,24 @@ export interface Proposal {
   status: string;
   created_at: string;
   comments_count: number;
+}
+
+export interface ProposalCriterion {
+  key: string;
+  label: BiText;
+  score: number;
+  note: BiText;
+}
+
+export interface ProposalEvaluation {
+  ai_used: boolean;
+  score: number;
+  verdict: "strong" | "promising" | "needs_work" | "unclear";
+  summary: BiText;
+  criteria: ProposalCriterion[];
+  strengths: BiText[];
+  risks: BiText[];
+  suggestions: BiText[];
 }
 
 export interface Comment {

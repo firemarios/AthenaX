@@ -16,7 +16,14 @@ import {
 } from "chart.js";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Badge, StatCard, useI18n } from "@athenax/ui";
-import type { AIReportChart, AISimulationPlan, PolicyEconomics } from "@athenax/types";
+import type {
+  AIReportChart,
+  AISimulationPlan,
+  EconomicsVerdict,
+  PolicyEconomics,
+  PracticalityFactorStatus,
+  PracticalityVerdict,
+} from "@athenax/types";
 import { fmtConfidence, fmtEUR, fmtNum } from "./format";
 import { mutedText } from "./ui";
 
@@ -117,18 +124,46 @@ const METRIC_LABELS: Record<string, { el: string; en: string }> = {
   cost_high_eur: { el: "Κόστος (υψηλό)", en: "Cost (high)" },
 };
 
-const VERDICT_TONE = {
+const FINANCIAL_TONE: Record<EconomicsVerdict, "success" | "warning" | "error" | "neutral"> = {
   yes: "success",
   marginal: "warning",
   no: "error",
   unknown: "neutral",
-} as const;
+};
 
-const VERDICT_LABEL = {
-  yes: { el: "Αξίζει", en: "Worth it" },
-  marginal: { el: "Οριακά", en: "Marginal" },
-  no: { el: "Δεν αξίζει", en: "Not worth it" },
-  unknown: { el: "Ανεπαρκή δεδομένα", en: "Insufficient data" },
+const FINANCIAL_LABEL: Record<EconomicsVerdict, { el: string; en: string }> = {
+  yes: { el: "Συμφέρει οικονομικά", en: "Financially sound" },
+  marginal: { el: "Οριακά", en: "Borderline" },
+  no: { el: "Δεν συμφέρει", en: "Not financially sound" },
+  unknown: { el: "Ανεπαρκή στοιχεία", en: "Not enough data" },
+};
+
+const PRACTICALITY_TONE: Record<PracticalityVerdict, "success" | "warning" | "error" | "neutral"> = {
+  practical: "success",
+  cautious: "warning",
+  difficult: "error",
+  unknown: "neutral",
+};
+
+const PRACTICALITY_LABEL: Record<PracticalityVerdict, { el: string; en: string }> = {
+  practical: { el: "Εφαρμόσιμο", en: "Practical" },
+  cautious: { el: "Με επιφυλάξεις", en: "With caveats" },
+  difficult: { el: "Δύσκολο στην πράξη", en: "Hard to deliver" },
+  unknown: { el: "Ανεπαρκή στοιχεία", en: "Not enough data" },
+};
+
+const FACTOR_TONE: Record<PracticalityFactorStatus, "success" | "warning" | "error" | "neutral"> = {
+  ok: "success",
+  warn: "warning",
+  bad: "error",
+  unknown: "neutral",
+};
+
+const FACTOR_STATUS_LABEL: Record<PracticalityFactorStatus, { el: string; en: string }> = {
+  ok: { el: "Εντάξει", en: "OK" },
+  warn: { el: "Επιφύλαξη", en: "Caveat" },
+  bad: { el: "Εμπόδιο", en: "Blocker" },
+  unknown: { el: "Άγνωστο", en: "Unknown" },
 };
 
 export function metricLabel(key: string): { el: string; en: string } {
@@ -564,7 +599,8 @@ export function AIPlanPanel({ ai }: { ai: AISimulationPlan }) {
 export function EconomicsPanel({ economics }: { economics: PolicyEconomics }) {
   const { t, lang } = useI18n();
   const reduced = useReducedMotion();
-  const verdictTone = VERDICT_TONE[economics.verdict];
+  const financialVerdict = economics.financial?.verdict ?? economics.verdict;
+  const practicality = economics.practicality;
 
   const comparisonData: ChartData<"bar"> = {
     labels: [
@@ -614,11 +650,60 @@ export function EconomicsPanel({ economics }: { economics: PolicyEconomics }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t({ el: "Αξίζει;", en: "Worth it?" })}
           </p>
-          <div className="mt-2">
-            <Badge tone={verdictTone}>{t(VERDICT_LABEL[economics.verdict])}</Badge>
+          <div className="mt-3 space-y-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {t({ el: "Οικονομικά", en: "Financially" })}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <Badge tone={FINANCIAL_TONE[financialVerdict]}>
+                  {t(FINANCIAL_LABEL[financialVerdict])}
+                </Badge>
+                {economics.financial?.payback_years !== null &&
+                economics.financial?.payback_years !== undefined ? (
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {t({ el: "Αποπληρωμή", en: "Payback" })}:{" "}
+                    {fmtNum(economics.financial.payback_years, lang)}{" "}
+                    {t({ el: "έτη", en: "years" })}
+                  </span>
+                ) : null}
+              </div>
+              {economics.financial ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t(economics.financial.summary)}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {t({ el: "Στην πράξη", en: "In practice" })}
+              </p>
+              {practicality ? (
+                <>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Badge tone={PRACTICALITY_TONE[practicality.verdict]}>
+                      {t(PRACTICALITY_LABEL[practicality.verdict])}
+                    </Badge>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {fmtNum(practicality.score, lang)}/100
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t(practicality.summary)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t({
+                    el: "Δεν υπάρχει ακόμη εκτίμηση πρακτικότητας.",
+                    en: "No practicality estimate yet.",
+                  })}
+                </p>
+              )}
+            </div>
           </div>
           {economics.within_budget !== null ? (
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs text-muted-foreground">
               {economics.within_budget
                 ? t({ el: "Εντός προϋπολογισμού", en: "Within budget" })
                 : t({ el: "Υπέρβαση προϋπολογισμού", en: "Over budget" })}
@@ -626,6 +711,32 @@ export function EconomicsPanel({ economics }: { economics: PolicyEconomics }) {
           ) : null}
         </div>
       </div>
+
+      {practicality && practicality.factors.length > 0 ? (
+        <div className="pl-reveal rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {t({ el: "Τι καθορίζει την πρακτικότητα", en: "What drives practicality" })}
+          </h3>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {practicality.factors.map((factor) => (
+              <li
+                key={factor.key}
+                className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                    {t(factor.label)}
+                  </span>
+                  <Badge tone={FACTOR_TONE[factor.status]}>
+                    {t(FACTOR_STATUS_LABEL[factor.status])}
+                  </Badge>
+                </div>
+                <p className={`mt-1 text-xs ${mutedText}`}>{t(factor.note)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="pl-reveal rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">

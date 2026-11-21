@@ -172,6 +172,15 @@ All spacing derives from **4px**.
 - **Usage**: reduced-motion fallback and pre-hydration placeholder.
 - **Accessibility**: decorative SVG is `aria-hidden`; status text is real DOM.
 
+### Proposal AI evaluation
+
+- **Structure**: bordered panel inside the expanded proposal: header with `Sparkles` icon + "Evaluate with AI" secondary button, score, verdict badge, summary, five criteria bars, then Strengths / Risks / Suggestions lists.
+- **Variants**: AI result (`ai_used: true`) vs. deterministic heuristic result (labelled "Indicative evaluation without AI"); verdicts map to badge tones — strong `success`, promising `info`, needs work `warning`, unclear `neutral`.
+- **States**: idle, evaluating (button disabled with progress copy), error (`ErrorPanel` with retry), result (button becomes "Re-evaluate").
+- **Accessibility**: scores are real text with `tabular-nums`; bars are decorative and mirrored by the numeric value; lists use real `ul`/`li`; the button is a real `button`.
+- **Motion**: score bars transition width over the standard 300–420ms; the result appears inline with no layout animation. Reduced motion collapses transitions.
+- **Data**: `POST /v1/proposals/{id}/evaluate` → `ProposalEvaluation`; the server caches by proposal text and falls back to heuristics when the LLM is unavailable.
+
 ## 6. Motion & Interaction
 
 ### Timing

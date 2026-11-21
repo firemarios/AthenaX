@@ -2,11 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { Badge, EmptyState, Skeleton, StatCard, useI18n } from "@athenax/ui";
-import type { Comment, Consultation, Proposal } from "@athenax/types";
+import type {
+  Comment,
+  Consultation,
+  Proposal,
+  ProposalEvaluation,
+} from "@athenax/types";
 import { GENERIC_ERROR, doDelete, doGet, doPost, useApi } from "@/_shared/hooks";
 import { fmtDate } from "@/_shared/format";
-import { areaName, type CityArea } from "@/_shared/geo";
 import { CATEGORY_OPTIONS } from "@/_shared/terms";
 import {
   DeleteButton,
@@ -17,16 +22,17 @@ import {
   PageHeader,
   SectionCard,
   btnPrimary,
+  btnSecondary,
   inputCls,
   labelCls,
   mutedText,
 } from "@/_shared/ui";
 
 const STR = {
-  title: { el: "Λαϊκό Εργαστήριο", en: "Citizen Lab" },
+  title: { el: "Προτάσεις", en: "Proposals" },
   desc: {
-    el: "Διαβουλεύσεις, προτάσεις και σχόλια πολιτών — με διαφάνεια και σεβασμό στην αντιπροσωπευτική διαδικασία.",
-    en: "Consultations, proposals and comments from residents — with transparency and respect for representative process.",
+    el: "Υποβολή προτάσεων πολιτών και αξιολόγησή τους με AI — με διαφάνεια και σεβασμό στην αντιπροσωπευτική διαδικασία.",
+    en: "Submit citizen proposals and evaluate them with AI — with transparency and respect for representative process.",
   },
   disclaimer: {
     el: "Οι διαδικτυακές ψήφοι και προτάσεις δεν ταυτίζονται με αντιπροσωπευτική κοινωνική γνώμη ή θεσμική απόφαση.",
@@ -50,7 +56,8 @@ const STR = {
   fDesc: { el: "Περιγραφή", en: "Description" },
   fDescPh: { el: "Περιγράψτε την πρότασή σας…", en: "Describe your proposal…" },
   fDescRequired: { el: "Η περιγραφή είναι υποχρεωτική.", en: "Description is required." },
-  fArea: { el: "Περιοχή", en: "Area" },
+  fArea: { el: "Πόλη ή περιοχή", en: "City or area" },
+  areaPlaceholder: { el: "π.χ. Εξάρχεια, Αθήνα", en: "e.g. Exarchia, Athens" },
   areaAll: { el: "Ολόκληρη η πόλη", en: "City-wide" },
   fCategory: { el: "Κατηγορία", en: "Category" },
   submit: { el: "Υποβολή πρότασης", en: "Submit proposal" },
@@ -82,6 +89,24 @@ const STR = {
   areaLabel: { el: "Περιοχή", en: "Area" },
   loading: { el: "Φόρτωση…", en: "Loading…" },
   participation: { el: "Συμμετοχή", en: "Participation" },
+  evalTitle: { el: "Αξιολόγηση με AI", en: "AI evaluation" },
+  evalRun: { el: "Αξιολόγηση με AI", en: "Evaluate with AI" },
+  evalAgain: { el: "Επανάληψη αξιολόγησης", en: "Re-evaluate" },
+  evaluating: { el: "Αξιολόγηση…", en: "Evaluating…" },
+  evalFailed: { el: "Η αξιολόγηση απέτυχε.", en: "Evaluation failed." },
+  evalScore: { el: "Βαθμολογία", en: "Score" },
+  evalStrengths: { el: "Δυνατά σημεία", en: "Strengths" },
+  evalRisks: { el: "Κίνδυνοι", en: "Risks" },
+  evalSuggestions: { el: "Προτάσεις βελτίωσης", en: "Suggestions" },
+  evalHeuristic: {
+    el: "Ενδεικτική αξιολόγηση χωρίς AI",
+    en: "Indicative evaluation without AI",
+  },
+  evalAi: { el: "Αξιολόγηση AI", en: "AI evaluation" },
+  verdictStrong: { el: "Ισχυρή", en: "Strong" },
+  verdictPromising: { el: "Υποσχόμενη", en: "Promising" },
+  verdictNeedsWork: { el: "Χρειάζεται βελτίωση", en: "Needs work" },
+  verdictUnclear: { el: "Ασαφής", en: "Unclear" },
 };
 
 function consultationStatus(status: string): { tone: "neutral" | "success" | "warning" | "error" | "info"; label: { el: string; en: string } } {
@@ -89,6 +114,16 @@ function consultationStatus(status: string): { tone: "neutral" | "success" | "wa
   if (status === "closed") return { tone: "neutral", label: { el: STR.closed.el, en: STR.closed.en } };
   return { tone: "neutral", label: { el: status, en: status } };
 }
+
+const VERDICT_STYLES: Record<
+  ProposalEvaluation["verdict"],
+  { tone: "neutral" | "success" | "warning" | "info"; label: { el: string; en: string } }
+> = {
+  strong: { tone: "success", label: STR.verdictStrong },
+  promising: { tone: "info", label: STR.verdictPromising },
+  needs_work: { tone: "warning", label: STR.verdictNeedsWork },
+  unclear: { tone: "neutral", label: STR.verdictUnclear },
+};
 
 function ProposalItem({
   proposal,
@@ -109,6 +144,9 @@ function ProposalItem({
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
+  const [evaluation, setEvaluation] = useState<ProposalEvaluation | null>(null);
+  const [evaluating, setEvaluating] = useState(false);
+  const [evalError, setEvalError] = useState<string | null>(null);
 
   const expand = async () => {
     if (open) {
@@ -166,6 +204,20 @@ function ProposalItem({
     return null;
   };
 
+  const evaluate = async () => {
+    setEvaluating(true);
+    setEvalError(null);
+    const res = await doPost<ProposalEvaluation>(
+      `/v1/proposals/${encodeURIComponent(proposal.id)}/evaluate`
+    );
+    setEvaluating(false);
+    if (res.error || !res.data) {
+      setEvalError(res.error ?? t(STR.evalFailed));
+      return;
+    }
+    setEvaluation(res.data);
+  };
+
   return (
     <li className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -214,6 +266,103 @@ function ProposalItem({
                 <p className="whitespace-pre-line text-sm text-zinc-800 dark:text-zinc-200">
                   {detail.description}
                 </p>
+              </div>
+
+              <div className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    {t(STR.evalTitle)}
+                  </h4>
+                  <button
+                    type="button"
+                    className={btnSecondary}
+                    onClick={evaluate}
+                    disabled={evaluating}
+                  >
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    {evaluating
+                      ? t(STR.evaluating)
+                      : evaluation
+                        ? t(STR.evalAgain)
+                        : t(STR.evalRun)}
+                  </button>
+                </div>
+
+                {evalError ? (
+                  <div className="mt-3">
+                    <ErrorPanel message={evalError} onRetry={evaluate} />
+                  </div>
+                ) : null}
+
+                {evaluation ? (
+                  <div className="mt-3 space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-3xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                        {evaluation.score}
+                      </span>
+                      <Badge
+                        tone={
+                          (VERDICT_STYLES[evaluation.verdict] ?? VERDICT_STYLES.unclear).tone
+                        }
+                      >
+                        {t(
+                          (VERDICT_STYLES[evaluation.verdict] ?? VERDICT_STYLES.unclear)
+                            .label
+                        )}
+                      </Badge>
+                      <span className={`text-xs ${mutedText}`}>
+                        {evaluation.ai_used ? t(STR.evalAi) : t(STR.evalHeuristic)}
+                      </span>
+                    </div>
+
+                    <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+                      {t(evaluation.summary)}
+                    </p>
+
+                    <ul className="space-y-2">
+                      {evaluation.criteria.map((criterion) => (
+                        <li key={criterion.key}>
+                          <div className="flex items-center justify-between gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                            <span>{t(criterion.label)}</span>
+                            <span className="tabular-nums">{criterion.score}</span>
+                          </div>
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                            <div
+                              className="h-full rounded-full bg-primary"
+                              style={{
+                                width: `${Math.max(0, Math.min(100, criterion.score))}%`,
+                              }}
+                            />
+                          </div>
+                          {criterion.note.en ? (
+                            <p className={`mt-1 text-xs ${mutedText}`}>
+                              {t(criterion.note)}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {[
+                      { title: STR.evalStrengths, items: evaluation.strengths },
+                      { title: STR.evalRisks, items: evaluation.risks },
+                      { title: STR.evalSuggestions, items: evaluation.suggestions },
+                    ].map((group) =>
+                      group.items.length ? (
+                        <div key={group.title.en}>
+                          <h5 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                            {t(group.title)}
+                          </h5>
+                          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-zinc-800 dark:text-zinc-200">
+                            {group.items.map((item) => (
+                              <li key={item.en}>{t(item)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                ) : null}
               </div>
 
               <div>
@@ -289,7 +438,6 @@ export default function CitizenPage() {
   const [proposalsLoading, setProposalsLoading] = useState(true);
 
   const consultations = useApi<Consultation[]>("/v1/consultations");
-  const areas = useApi<CityArea[]>("/v1/city/areas");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -338,8 +486,6 @@ export default function CitizenPage() {
   const openCount = consultationList.filter((c) => c.status === "open").length;
   const closedCount = consultationList.filter((c) => c.status === "closed").length;
 
-  const areaList = areas.data ?? [];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let ok = true;
@@ -360,9 +506,8 @@ export default function CitizenPage() {
       description: description.trim(),
       category,
     };
-    if (areaChoice) {
-      const found = areaList.find((a) => a.id === areaChoice);
-      payload.area = found ? areaName(found, lang) : areaChoice;
+    if (areaChoice.trim()) {
+      payload.area = areaChoice.trim();
     }
     setBusy(true);
     const res = await doPost<Proposal>("/v1/proposals", payload);
@@ -562,19 +707,15 @@ export default function CitizenPage() {
                   <label htmlFor="proposal-area" className={labelCls}>
                     {t(STR.fArea)}
                   </label>
-                  <select
+                  <input
                     id="proposal-area"
+                    type="text"
                     className={inputCls}
                     value={areaChoice}
+                    placeholder={t(STR.areaPlaceholder)}
+                    maxLength={120}
                     onChange={(e) => setAreaChoice(e.target.value)}
-                  >
-                    <option value="">{t(STR.areaAll)}</option>
-                    {areaList.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {areaName(a, lang)}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
                 <div>
                   <label htmlFor="proposal-category" className={labelCls}>

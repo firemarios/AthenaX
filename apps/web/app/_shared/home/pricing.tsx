@@ -84,18 +84,20 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <Link
-                href={plan.href}
-                className={cn(
-                  "mt-6 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--home-accent)]",
-                  plan.featured
-                    ? "bg-[var(--home-accent-solid)] text-white hover:brightness-110"
-                    : "border border-[var(--home-line)] text-[var(--home-ink)] hover:border-[var(--home-accent)]",
-                )}
-              >
-                {t(plan.cta)}
-                <ArrowRight aria-hidden="true" className="h-4 w-4" />
-              </Link>
+              <div className="mt-auto pt-6">
+                <Link
+                  href={plan.href}
+                  className={cn(
+                    "inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--home-accent)]",
+                    plan.featured
+                      ? "bg-[var(--home-accent-solid)] text-white hover:brightness-110"
+                      : "border border-[var(--home-line)] text-[var(--home-ink)] hover:border-[var(--home-accent)]",
+                  )}
+                >
+                  {t(plan.cta)}
+                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                </Link>
+              </div>
             </article>
           ))}
         </div>

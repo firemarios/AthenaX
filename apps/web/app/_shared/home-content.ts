@@ -275,10 +275,10 @@ export const MODULES: HomeModule[] = [
   {
     href: "/citizen",
     icon: Users,
-    title: { el: "Εργαστήρι Πολιτών", en: "Citizen Lab" },
+    title: { el: "Προτάσεις", en: "Proposals" },
     description: {
-      el: "Διαβούλευση και προτάσεις πολιτών",
-      en: "Consultations and citizen proposals",
+      el: "Προτάσεις πολιτών με αξιολόγηση AI",
+      en: "Citizen proposals evaluated with AI",
     },
   },
   {
@@ -376,7 +376,7 @@ export const PRICING_SECTION = {
     en: "A plan for every scale.",
   },
   body: {
-    el: "Ξεκινήστε δωρεάν και κλιμακώστε όταν η πόλη γίνει μέρος της καθημερινής σας εργασίας.",
+    el: "Ξεκινήστε δωρεάν και αναβαθμήστε όταν η πόλη γίνει μέρος της καθημερινής σας εργασίας.",
     en: "Start free and scale when the city becomes part of your daily work.",
   },
   badge: { el: "Δημοφιλές", en: "Most popular" },

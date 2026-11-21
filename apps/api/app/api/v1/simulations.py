@@ -220,7 +220,7 @@ def _grounding_summary(grounding: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _ensure_economics(item: dict[str, Any]) -> None:
-    """Recompute a missing/unknown verdict so old runs also show "worth it"."""
+    """Recompute missing verdict or financial/practicality blocks for old runs."""
     if str(item.get("status") or "") != "succeeded":
         return
     results = item.get("results")
@@ -228,7 +228,12 @@ async def _ensure_economics(item: dict[str, Any]) -> None:
         return
     economics = results.get("economics")
     verdict = str((economics or {}).get("verdict") or "").lower() if isinstance(economics, dict) else ""
-    if verdict not in ("", "unknown"):
+    has_breakdown = (
+        isinstance(economics, dict)
+        and isinstance(economics.get("financial"), dict)
+        and isinstance(economics.get("practicality"), dict)
+    )
+    if verdict not in ("", "unknown") and has_breakdown:
         return
 
     ai = results.get("ai") if isinstance(results.get("ai"), dict) else {}

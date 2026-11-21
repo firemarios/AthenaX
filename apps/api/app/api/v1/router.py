@@ -86,6 +86,7 @@ ROUTE_CATALOG: list[dict[str, Any]] = [
     {"group": "Citizen (07)", "method": "GET", "path": "/v1/proposals", "summary": "Λίστα προτάσεων"},
     {"group": "Citizen (07)", "method": "POST", "path": "/v1/proposals", "summary": "Νέα πρόταση"},
     {"group": "Citizen (07)", "method": "GET", "path": "/v1/proposals/{id}", "summary": "Λεπτομέρεια πρότασης"},
+    {"group": "Citizen (07)", "method": "POST", "path": "/v1/proposals/{id}/evaluate", "summary": "Αξιολόγηση πρότασης με AI"},
     {"group": "Citizen (07)", "method": "DELETE", "path": "/v1/proposals/{id}", "summary": "Διαγραφή πρότασης"},
     {"group": "Citizen (07)", "method": "GET", "path": "/v1/proposals/{id}/comments", "summary": "Σχόλια πρότασης"},
     {"group": "Citizen (07)", "method": "POST", "path": "/v1/proposals/{id}/comments", "summary": "Νέο σχόλιο"},

@@ -8,6 +8,7 @@ import pytest
 
 from services.ai_engine.policy_planner import (
     _fallback_model,
+    _fallback_plan,
     _guard_traffic_parameters,
     _normalise_optimization,
     _normalise_sections,
@@ -723,6 +724,44 @@ def test_economics_congestion_charge_has_cost_and_positive_value():
     assert "worth it" in economics["summary"]["en"]
 
 
+def test_economics_exposes_financial_and_practicality_breakdowns():
+    economics = compute_economics(
+        "traffic_sumo",
+        {"intervention": "sidewalk", "length_m": 500, "demand": 1200, "capacity": 900},
+        {"avg_travel_min": 11.0, "emissions_kg": 800.0},
+        {"avg_travel_min": 12.0, "emissions_kg": 900.0},
+        budget_eur=200000,
+    )
+    financial = economics["financial"]
+    practicality = economics["practicality"]
+    assert financial["verdict"] == economics["verdict"]
+    assert financial["benefit_cost_ratio"] == economics["benefit_cost_ratio"]
+    assert financial["summary"]["en"]
+    assert practicality["verdict"] in {"practical", "cautious", "difficult", "unknown"}
+    assert 0 <= practicality["score"] <= 100
+    assert practicality["summary"]["en"]
+    assert {factor["key"] for factor in practicality["factors"]} == {
+        "budget",
+        "scale",
+        "disruption",
+        "evidence",
+    }
+    assert all(factor["note"]["en"] for factor in practicality["factors"])
+
+
+def test_economics_practicality_penalises_heavier_interventions():
+    common = {"length_m": 500, "demand": 1200, "capacity": 900}
+    baseline = {"avg_travel_min": 12.0, "emissions_kg": 900.0}
+    metrics = {"avg_travel_min": 11.0, "emissions_kg": 800.0}
+    sidewalk = compute_economics(
+        "traffic_sumo", {"intervention": "sidewalk", **common}, metrics, baseline
+    )
+    new_road = compute_economics(
+        "traffic_sumo", {"intervention": "new_road", **common}, metrics, baseline
+    )
+    assert sidewalk["practicality"]["score"] > new_road["practicality"]["score"]
+
+
 def test_economics_includes_new_building_tax_revenue():
     economics = compute_economics(
         "cost",
@@ -737,3 +776,77 @@ def test_economics_includes_new_building_tax_revenue():
     assert economics["new_buildings"] == 40
     assert economics["annual_benefit_eur"] >= 64000
     assert any(line["label"]["en"] == "Property tax from new buildings" for line in economics["benefit_breakdown"])
+
+
+def test_guard_traffic_parameters_turns_sidewalk_text_into_a_physical_change():
+    guarded = _guard_traffic_parameters(
+        {"intervention": "open", "demand": 600, "capacity": 900},
+        topic="Κατασκευή νέου πεζοδρομίου στην Κυψέλη",
+    )
+    assert guarded["intervention"] == "sidewalk"
+    assert guarded["length_m"] == 500
+    assert guarded["demand"] == 600
+    assert guarded["capacity"] == 900
+
+
+def test_guard_traffic_parameters_prefers_sidewalk_over_pedestrianisation():
+    guarded = _guard_traffic_parameters(
+        {"intervention": "pedestrianize", "length_m": 320},
+        topic="New sidewalk along the main street",
+    )
+    assert guarded["intervention"] == "sidewalk"
+    assert guarded["length_m"] == 320
+
+
+def test_guard_traffic_parameters_keeps_explicit_new_road_and_length():
+    guarded = _guard_traffic_parameters(
+        {"intervention": "new_road", "length_m": 1200},
+        topic="Νέα λωρίδα κυκλοφορίας",
+    )
+    assert guarded["intervention"] == "new_road"
+    assert guarded["length_m"] == 1200
+
+
+def test_fallback_plan_for_sidewalks_is_a_physical_traffic_change():
+    plan = _fallback_plan(
+        category="mobility",
+        topic="Νέα πεζοδρόμια στην Κυψέλη",
+        area="kypseli",
+        factors=None,
+        parameters={},
+        limitation="offline",
+    )
+    assert plan["ai_used"] is False
+    assert plan["model"] == "traffic_sumo"
+    assert plan["parameters"]["intervention"] == "sidewalk"
+    assert plan["parameters"]["length_m"] == 500
+
+
+def test_run_model_sidewalk_changes_metrics_against_the_same_street():
+    result = run_model(
+        "traffic_sumo",
+        {"intervention": "sidewalk", "demand": 900, "capacity": 1100, "length_m": 800},
+        compare_baseline=True,
+    )
+    assert result["status"] == "succeeded"
+    assert result["baseline"] is not None
+    assert result["metrics"] != result["baseline"]
+
+
+def test_economics_scales_sidewalk_capex_with_length():
+    metrics = {"avg_travel_min": 12.4, "emissions_kg": 1.3, "noise_db": 56.0}
+    short = compute_economics(
+        "traffic_sumo",
+        {"intervention": "sidewalk", "length_m": 500},
+        metrics,
+        dict(metrics),
+    )
+    long = compute_economics(
+        "traffic_sumo",
+        {"intervention": "sidewalk", "length_m": 1500},
+        metrics,
+        dict(metrics),
+    )
+    assert short["capex_eur"] == 110000.0
+    assert long["capex_eur"] == 330000.0
+    assert short["cost_breakdown"][0]["label"]["en"] == "Sidewalk construction / upgrade"

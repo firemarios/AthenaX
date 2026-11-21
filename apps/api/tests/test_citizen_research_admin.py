@@ -1,6 +1,11 @@
 """Citizen Lab (07) + Research (09) + Admin modules."""
 from __future__ import annotations
 
+import asyncio
+import json
+
+from services.ai_engine import proposal_evaluator
+
 
 def test_consultation_flow(client):
     created = client.post(
@@ -176,3 +181,82 @@ def test_admin_ingest(client, monkeypatch):
 
     unknown = client.post("/v1/admin/ingest", json={"source": "nope"})
     assert unknown.status_code == 404
+
+
+def test_proposal_evaluator_uses_ai_json():
+    class _Provider:
+        async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
+            return json.dumps(
+                {
+                    "score": 82,
+                    "verdict": "strong",
+                    "summary": {"el": "Καλή πρόταση", "en": "Good proposal"},
+                    "criteria": [
+                        {"key": "clarity", "score": 90, "note": {"el": "Σαφής", "en": "Clear"}},
+                        {"key": "feasibility", "score": 80, "note": {"el": "Εφικτή", "en": "Feasible"}},
+                        {"key": "impact", "score": 75, "note": {"el": "Θετικός", "en": "Positive"}},
+                        {"key": "equity", "score": 85, "note": {"el": "Δίκαιη", "en": "Fair"}},
+                        {"key": "cost", "score": 70, "note": {"el": "Λογικό", "en": "Reasonable"}},
+                    ],
+                    "strengths": [{"el": "Σαφής στόχος", "en": "Clear goal"}],
+                    "risks": [{"el": "Κόστος", "en": "Cost"}],
+                    "suggestions": [{"el": "Χρονοδιάγραμμα", "en": "Timeline"}],
+                }
+            )
+
+    evaluation = asyncio.run(
+        proposal_evaluator.evaluate_proposal(
+            {
+                "title": "Νέα πεζοδρόμια στην Κυψέλη",
+                "description": "Κατασκευή νέων πεζοδρομίων μήκους 800 μέτρων με φωτισμό.",
+                "area": "Κυψέλη",
+                "category": "mobility",
+            },
+            provider=_Provider(),
+        )
+    )
+    assert evaluation["ai_used"] is True
+    assert evaluation["score"] == 82
+    assert evaluation["verdict"] == "strong"
+    assert evaluation["summary"]["en"] == "Good proposal"
+    assert [entry["key"] for entry in evaluation["criteria"]] == [
+        "clarity",
+        "feasibility",
+        "impact",
+        "equity",
+        "cost",
+    ]
+    assert evaluation["strengths"][0]["en"] == "Clear goal"
+    assert evaluation["risks"][0]["en"] == "Cost"
+    assert evaluation["suggestions"][0]["en"] == "Timeline"
+
+
+def test_proposal_ai_evaluation_endpoint_falls_back_without_llm(client, monkeypatch):
+    class _BrokenProvider:
+        async def chat(self, *args, **kwargs):
+            raise RuntimeError("llm down")
+
+    monkeypatch.setattr(
+        proposal_evaluator, "get_provider", lambda settings=None: _BrokenProvider()
+    )
+
+    proposal = client.post(
+        "/v1/proposals",
+        json={
+            "title": "Περισσότερα δέντρα στο Κολωνάκι",
+            "description": "Φύτευση 50 δέντρων στα πεζοδρόμια της γειτονιάς.",
+            "area": "Κολωνάκι",
+            "category": "green",
+        },
+    ).json()["data"]
+
+    resp = client.post(f"/v1/proposals/{proposal['id']}/evaluate")
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["ai_used"] is False
+    assert 0 <= data["score"] <= 100
+    assert data["verdict"] in {"strong", "promising", "needs_work", "unclear"}
+    assert len(data["criteria"]) == 5
+    assert data["summary"]["en"]
+
+    assert client.post("/v1/proposals/missing/evaluate").status_code == 404
