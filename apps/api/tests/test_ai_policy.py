@@ -8,6 +8,7 @@ import pytest
 
 from services.ai_engine.policy_planner import (
     _fallback_model,
+    _guard_traffic_parameters,
     _normalise_optimization,
     _normalise_sections,
     plan_policy_simulation,
@@ -15,6 +16,7 @@ from services.ai_engine.policy_planner import (
 from services.ai_engine.report_composer import compose_simulation_report
 from services.reporting_engine.economics import compute_economics
 from services.reporting_engine.impact import compute_impact
+from services.simulation_engine.runner import run_model
 
 
 @pytest.fixture(autouse=True)

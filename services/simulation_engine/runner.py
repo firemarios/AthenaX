@@ -121,8 +121,14 @@ def run_model(
 
         baseline: dict | None = None
         if compare_baseline:
-            defaults = merge_parameters(spec, {})
-            base_result = model.run(defaults, snapshot=snapshot, seed=seed_val)
+            baseline_input = merge_parameters(spec, {})
+            baseline_hook = getattr(model, "baseline_parameters", None)
+            if callable(baseline_hook):
+                try:
+                    baseline_input = merge_parameters(spec, baseline_hook(dict(merged)))
+                except Exception as exc:  # noqa: BLE001 — fall back to defaults
+                    logger.debug("baseline_parameters(%s) failed: %s", name, exc)
+            base_result = model.run(baseline_input, snapshot=snapshot, seed=seed_val)
             baseline = dict(base_result.get("metrics") or {})
 
         logs = [

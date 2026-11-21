@@ -352,8 +352,8 @@ function SimulationDetailView() {
     : 0;
   useEffect(() => {
     if (runStatus !== "running" && runStatus !== "queued") return;
-    const timer = window.setTimeout(reloadRun, 3000);
-    return () => window.clearTimeout(timer);
+    const timer = window.setInterval(reloadRun, 3000);
+    return () => window.clearInterval(timer);
   }, [runStatus, reloadRun]);
 
   useEffect(() => {
@@ -433,7 +433,7 @@ function SimulationDetailView() {
     router.push(`/simulations/${res.data.id}`);
   };
 
-  if (run.loading) {
+  if (run.loading && !data) {
     return (
       <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6" aria-busy="true" aria-live="polite">
         <span className="sr-only">{t(STR.loading)}</span>
@@ -544,7 +544,7 @@ function SimulationDetailView() {
                   {t(STR.inProgress)}
                 </p>
                 <span className="text-xs tabular-nums text-blue-700/70 dark:text-blue-300/70">
-                  {runStep + 1}/{RUN_STEPS.length}
+                  {runStep}/{RUN_STEPS.length}
                 </span>
               </div>
               <p className="mt-1 text-xs text-blue-700/80 dark:text-blue-300/80">
@@ -553,7 +553,7 @@ function SimulationDetailView() {
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/60">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 transition-[width] duration-700 ease-out"
-                  style={{ width: `${((runStep + 1) / RUN_STEPS.length) * 100}%` }}
+                  style={{ width: `${(runStep / RUN_STEPS.length) * 100}%` }}
                 />
               </div>
               <p className="sr-only">{t(RUN_STEPS[runStep])}</p>

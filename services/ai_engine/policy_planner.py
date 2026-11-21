@@ -26,7 +26,7 @@ BASE_TAX_EUR_PER_BUILDING = 1_600.0
 MAX_NEW_BUILDINGS = 20_000
 PLANNER_TIMEOUT_SECONDS = 150.0
 
-_PLAN_CACHE_VERSION = "v2"
+_PLAN_CACHE_VERSION = "v3"
 
 _CHART_TYPES = {"bar", "line", "donut"}
 _CHART_FORMATS = {"number", "currency", "percent"}
@@ -101,16 +101,35 @@ Rules:
   * cost for digital platforms, software, data integration, procurement, administrative
     services, or policies with no physical footprint. Prefer cost when a budget is given
     and no domain model measures the policy.
-  * traffic_sumo for roads, traffic, pedestrianisation, parking or street mobility.
+  * traffic_sumo for roads, new sidewalks, new road capacity, traffic,
+    pedestrianisation, parking or street mobility.
   * greenspace for parks, trees, gardens or green area.
 - Findings and risks must only claim effects the selected model measures. Do not mention
   accessibility, walkability, health or environmental benefits unless that is the selected
   model's actual output.
 - Respect each parameter's label, unit and choices in the catalog.
-- For traffic_sumo, demand and capacity are vehicles per hour. Keep them on the
-  same scale as the defaults (around 1,200 demand and 1,600 capacity); never put
-  a daily vehicle total directly into demand.
-- Supported traffic interventions are open, congestion_charge, pedestrianize and
+- For traffic_sumo, demand and capacity are vehicles per hour. Estimate them from the
+  affected street and the scale of the change: use lower values for local/side streets
+  (for example 200–700 demand, 400–1,200 capacity) and higher values for arterials
+  (for example 1,500–4,000 demand, 2,000–5,000 capacity). Do not reuse the model
+  defaults unless the scenario truly matches them. Never put a daily vehicle total
+  directly into demand (except congestion_charge, which may accept daily entries).
+- Supported traffic interventions and their meaning:
+  * sidewalk: build or widen a sidewalk / pedestrian upgrade without closing the road.
+  * new_road: add road capacity (new road, new lane, junction capacity).
+  * pedestrianize: close a street to through traffic and make it pedestrian-only.
+  * closed: full closure of the street.
+  * congestion_charge: road pricing.
+  * open: no physical change (use only for studies, parking management or pricing
+    analysis where the road itself is unchanged).
+- Never choose open for a physical construction change: open produces identical
+  before/after traffic metrics.
+- For linear traffic works (sidewalk, new_road, pedestrianize, closed), always set
+  length_m to the affected street length in metres, based on the location and the
+  described intervention (typically 150–2,000 m). Capex scales with length_m, so do
+  not default to a flat 350,000 EUR.
+- For a new sidewalk choose sidewalk, not pedestrianize or open. For a new road or
+  extra lane choose new_road. For closing a street to cars choose pedestrianize or
   closed.
 - "title" must be a specific scenario name (for example "Πεζοδρόμηση πλατείας
   Εξαρχείων"), never just the technical model id.
@@ -672,6 +691,67 @@ _ACCESSIBILITY_TERMS = (
     "accessib", "walk", "facilit", "proximity", "foot",
 )
 
+_SIDEWALK_TERMS = (
+    "πεζοδρομι", "πεζοδρομιο", "πεζοδρομια", "πεζοδρομιων",
+    "sidewalk", "footway", "footpath", "pavement",
+)
+_PEDESTRIANIZE_TERMS = (
+    "πεζοδρομη", "πεζοδρομησ", "πεζοδρομος",
+    "pedestrianiz", "pedestrianis", "car-free", "car free",
+)
+_NEW_ROAD_TERMS = (
+    "νεο δρομο", "νεος δρομος", "νεα οδο", "νεα οδος", "νεα λωριδα",
+    "new road", "new street", "road expansion", "new lane", "widening",
+)
+_CLOSED_TERMS = (
+    "κλεισιμο", "κλειστ", "αποκλεισμ", "closed", "closure", "close the street",
+)
+_CHARGE_TERMS = (
+    "χρεωση", "χρεωσ", "congestion charge", "road pricing", "toll",
+)
+
+
+def _fallback_intervention(topic: str) -> str:
+    text = _fold(topic)
+    if any(_has_term(text, term) for term in _CHARGE_TERMS):
+        return "congestion_charge"
+    if any(_has_term(text, term) for term in _CLOSED_TERMS):
+        return "closed"
+    if any(_has_term(text, term) for term in _PEDESTRIANIZE_TERMS):
+        return "pedestrianize"
+    if any(_has_term(text, term) for term in _NEW_ROAD_TERMS):
+        return "new_road"
+    if any(_has_term(text, term) for term in _SIDEWALK_TERMS):
+        return "sidewalk"
+    return "open"
+
+
+def _guard_traffic_parameters(
+    parameters: dict[str, Any], *, topic: str
+) -> dict[str, Any]:
+    """Keep a physical street change from silently becoming a no-op."""
+    result = dict(parameters)
+    intervention = str(result.get("intervention") or "open").strip().lower()
+    text = _fold(topic)
+    has_sidewalk = any(_has_term(text, term) for term in _SIDEWALK_TERMS)
+    has_pedestrianize = any(
+        _has_term(text, term) for term in _PEDESTRIANIZE_TERMS
+    )
+    suggested = _fallback_intervention(topic)
+
+    if intervention in ("", "open") and suggested != "open":
+        result["intervention"] = suggested
+    elif intervention == "pedestrianize" and has_sidewalk and not has_pedestrianize:
+        result["intervention"] = "sidewalk"
+
+    intervention = str(result.get("intervention") or "open").strip().lower()
+    length = _num(result.get("length_m"))
+    if intervention in ("sidewalk", "new_road", "pedestrianize", "closed") and (
+        length is None or length <= 0
+    ):
+        result["length_m"] = 500
+    return result
+
 
 def _fallback_model(category: str | None, topic: str, factors: Any) -> str:
     text = _fold(f"{category or ''} {topic or ''}")
@@ -864,6 +944,10 @@ def _fallback_plan(
 ) -> dict[str, Any]:
     model_name = _fallback_model(category, topic, factors)
     normalised_parameters = _normalise_parameters(model_name, {}, parameters, area)
+    if model_name == "traffic_sumo":
+        normalised_parameters = _guard_traffic_parameters(
+            normalised_parameters, topic=topic
+        )
     tax = _normalise_tax({}, factors)
     return {
         "ai_used": False,
@@ -976,6 +1060,10 @@ async def plan_policy_simulation(
         normalised_parameters = _normalise_parameters(
             model_name, payload.get("parameters"), fallback_parameters, area
         )
+        if model_name == "traffic_sumo":
+            normalised_parameters = _guard_traffic_parameters(
+                normalised_parameters, topic=topic
+            )
         tax = _normalise_tax(payload.get("tax"), factors)
         confidence = _num(payload.get("confidence"))
         confidence = max(0.0, min(1.0, confidence if confidence is not None else 0.6))

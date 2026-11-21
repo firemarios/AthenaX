@@ -205,6 +205,63 @@ body {
   animation: pl-reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes pl-wizard-forward {
+  from {
+    opacity: 0;
+    transform: translate3d(28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pl-wizard-backward {
+  from {
+    opacity: 0;
+    transform: translate3d(-28px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pl-wizard-forward {
+  animation: pl-wizard-forward 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pl-wizard-backward {
+  animation: pl-wizard-backward 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pl-wizard-progress {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  appearance: none;
+  border: 0;
+  border-radius: 9999px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.pl-wizard-progress::-webkit-progress-bar {
+  border-radius: 9999px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.pl-wizard-progress::-webkit-progress-value {
+  border-radius: 9999px;
+  background: var(--primary);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pl-wizard-progress::-moz-progress-bar {
+  border-radius: 9999px;
+  background: var(--primary);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @keyframes pl-ai-dot {
   0%,
   100% {

@@ -25,10 +25,19 @@ BENCHMARKS: dict[str, Any] = {
     "facility_capex_eur": 45_000.0,
     "traffic_capex_eur": {
         "open": 0.0,
+        "sidewalk": 220_000.0,
+        "new_road": 900_000.0,
         "congestion_charge": 550_000.0,
         "pedestrianize": 350_000.0,
         "closed": 500_000.0,
     },
+    "traffic_capex_eur_per_m": {
+        "sidewalk": 220.0,
+        "new_road": 900.0,
+        "pedestrianize": 300.0,
+        "closed": 400.0,
+    },
+    "traffic_default_length_m": 500.0,
     "annual_green_benefit_eur_per_m2": 12.0,
     "annual_green_benefit_eur_per_resident_covered": 18.0,
     "annual_access_benefit_eur_per_person": 30.0,
@@ -48,6 +57,8 @@ _LABELS = {
     "green_area": {"el": "Δημιουργία / αναβάθμιση πρασίνου", "en": "Green space creation / upgrade"},
     "facilities": {"el": "Κατασκευή κοινωνικών υποδομών", "en": "Community facility construction"},
     "traffic": {"el": "Ρύθμιση κυκλοφορίας / ανάπλαση", "en": "Traffic intervention / street redesign"},
+    "sidewalk": {"el": "Κατασκευή / αναβάθμιση πεζοδρομίων", "en": "Sidewalk construction / upgrade"},
+    "new_road": {"el": "Κατασκευή νέου δρόμου", "en": "New road construction"},
     "congestion_charge": {"el": "Σύστημα χρέωσης κυκλοφορίας", "en": "Congestion charging system"},
     "cost_model": {"el": "Εκτίμηση κόστους έργου", "en": "Works cost estimate"},
     "green_benefit": {"el": "Όφελος από πράσινο", "en": "Green-space benefit"},
@@ -149,15 +160,36 @@ def _cost_estimate(
         intervention = str(parameters.get("intervention") or "open").lower()
         table = {
             "open": (0.0, 0.0, 0.0),
+            "sidewalk": (180_000.0, 220_000.0, 280_000.0),
+            "new_road": (700_000.0, 900_000.0, 1_200_000.0),
             "congestion_charge": (450_000.0, 550_000.0, 700_000.0),
             "pedestrianize": (280_000.0, 350_000.0, 450_000.0),
             "closed": (400_000.0, 500_000.0, 650_000.0),
         }
+        length = _num(parameters.get("length_m"))
+        per_m = BENCHMARKS["traffic_capex_eur_per_m"].get(intervention)
+        if length is not None and length > 0 and per_m is not None:
+            expected = length * float(per_m)
+            low, high = expected * 0.8, expected * 1.2
+            label = (
+                _LABELS["congestion_charge"]
+                if intervention == "congestion_charge"
+                else _LABELS.get(intervention, _LABELS["traffic"])
+            )
+            lines = [
+                _line(
+                    label,
+                    expected,
+                    quantity=length,
+                    unit="m",
+                )
+            ]
+            return low, expected, high, lines
         low, expected, high = table.get(intervention, table["open"])
         label = (
             _LABELS["congestion_charge"]
             if intervention == "congestion_charge"
-            else _LABELS["traffic"]
+            else _LABELS.get(intervention, _LABELS["traffic"])
         )
         lines = [_line(label, expected)] if expected > 0 else []
         return low, expected, high, lines

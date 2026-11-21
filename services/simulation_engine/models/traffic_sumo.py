@@ -12,14 +12,23 @@ FREE_FLOW_MIN = 12.0
 TRIP_KM = 8.0
 DEFAULT_CHARGING_HOURS = 13.0
 
-_INTERVENTIONS = ("open", "pedestrianize", "closed", "congestion_charge")
+_INTERVENTIONS = (
+    "open",
+    "sidewalk",
+    "new_road",
+    "pedestrianize",
+    "closed",
+    "congestion_charge",
+)
 
-# (capacity factor, demand factor after rerouting)
+# (capacity factor, demand factor after rerouting/mode shift)
 _INTERVENTION_FACTORS = {
     "open": (1.0, 1.0),
+    "sidewalk": (0.92, 0.95),
+    "new_road": (1.35, 1.08),
     "congestion_charge": (1.15, 0.85),
-    "pedestrianize": (0.15, 0.35),
-    "closed": (0.05, 0.20),
+    "pedestrianize": (0.35, 0.40),
+    "closed": (0.08, 0.15),
 }
 
 
@@ -41,8 +50,8 @@ class TrafficSumoModel:
         version="1.0.0",
         category="mobility",
         description={
-            "el": "Κυκλοφορία: επίπτωση παρέμβασης (αποκλεισμός/πεζόδρομος) σε χρόνο, ουρές, εκπομπές και θόρυβο.",
-            "en": "Traffic: effect of interventions (closure/pedestrianisation) on travel time, queues, emissions and noise.",
+            "el": "Κυκλοφορία: επίπτωση παρέμβασης (πεζοδρόμιο/νέος δρόμος/πεζοδρόμηση/αποκλεισμός) σε χρόνο, ουρές, εκπομπές και θόρυβο.",
+            "en": "Traffic: effect of interventions (sidewalk/new road/pedestrianisation/closure) on travel time, queues, emissions and noise.",
         },
         label={"el": "Κυκλοφορία", "en": "Traffic"},
         parameters=[
@@ -50,10 +59,17 @@ class TrafficSumoModel:
                 "name": "intervention",
                 "type": "str",
                 "default": "open",
-                "choices": ["open", "congestion_charge", "pedestrianize", "closed"],
+                "choices": [
+                    "open",
+                    "sidewalk",
+                    "new_road",
+                    "pedestrianize",
+                    "closed",
+                    "congestion_charge",
+                ],
                 "label": {
-                    "el": "Παρέμβαση (open/congestion_charge/pedestrianize/closed)",
-                    "en": "Intervention (open/congestion_charge/pedestrianize/closed)",
+                    "el": "Παρέμβαση (open/sidewalk/new_road/pedestrianize/closed/congestion_charge)",
+                    "en": "Intervention (open/sidewalk/new_road/pedestrianize/closed/congestion_charge)",
                 },
             },
             {
@@ -72,14 +88,39 @@ class TrafficSumoModel:
                 "max": 10_000,
                 "label": {"el": "Χωρητικότητα (οχήματα/ώρα)", "en": "Capacity (vehicles/hour)"},
             },
+            {
+                "name": "length_m",
+                "type": "int",
+                "default": 500,
+                "min": 0,
+                "max": 20_000,
+                "label": {
+                    "el": "Μήκος παρέμβασης (μέτρα)",
+                    "en": "Intervention length (metres)",
+                },
+            },
         ],
     )
+
+    @staticmethod
+    def baseline_parameters(parameters: dict) -> dict:
+        """Pre-intervention state: same street demand/capacity, no intervention."""
+        baseline = dict(parameters)
+        intervention = str(baseline.get("intervention") or "open").lower()
+        if intervention == "congestion_charge":
+            demand = float(baseline.get("demand") or 0)
+            capacity = float(baseline.get("capacity") or 1)
+            if demand > capacity:
+                baseline["demand"] = demand / DEFAULT_CHARGING_HOURS
+        baseline["intervention"] = "open"
+        return baseline
 
     def _assumptions(self, synthetic: bool) -> list[str]:
         base = [
             "Μοντέλο ουράς BPR: χρόνος = ελεύθερος χρόνος × (1 + 0,15 × (ζήτηση/χωρητικότητα)^4).",
             "Εκπομπές ανά διαδρομή 8 km, θερμότητα/θόρυβος συναρτήσει της χρησιμότητας.",
             "Η ζήτηση τροφοδοτείται με μικρή διακύμανση ±5% από το seed (δετερμιστική).",
+            "Το μήκος της παρέμβασης χρησιμοποιείται στην εκτίμηση κόστους, όχι στις μετρήσεις κυκλοφορίας.",
         ]
         if synthetic:
             base.insert(

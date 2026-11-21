@@ -155,6 +155,17 @@ All spacing derives from **4px**.
 - **States**: inherited from the UI package; the home shell only supplies surface context.
 - **Layout**: max width `36rem`; chips wrap.
 
+### Scenario wizard
+
+- **Structure**: `form` → two-pane grid; left step rail (`ol` of buttons with completed check, current state, locked future steps), right panel with icon + `h2` heading + instruction, one primary control per step, and a footer with Back / Skip / Cancel / Next.
+- **Variants**: text step, choice-card step (category, area, horizon, factor mode), factor editor (suggested summary vs. custom `FactorEditor`), and a review summary with per-item edit jumps.
+- **Requirement callout**: directly under the step instruction, a compact status badge (Required / Recommended / Optional) plus a "What's needed" line states the exact data the step expects.
+- **Optional steps**: budget, assumptions, KPIs; each shows a visible Skip action beside Cancel. Skip advances without validation and keeps any typed value.
+- **States**: current step (`aria-current="step"`, primary ring), completed (check), locked future steps (disabled, 55% opacity); validation errors use `role="alert"` + `aria-invalid`; saving disables Back/Skip/Next and swaps the primary label to the saving copy.
+- **Accessibility**: the step heading is `tabIndex={-1}` and receives focus on every step change; a polite `role="status"` announces the step; mobile uses a native `<progress>`; choice cards wrap real radio inputs in labels; Enter advances single-line inputs via `type="submit"`; targets stay ≥40px.
+- **Motion**: directional slide + fade — `pl-wizard-forward` / `pl-wizard-backward` animate `translate3d(±28px, 0, 0)` → `0` with opacity over `450ms cubic-bezier(0.22, 1, 0.36, 1)`; the rail's progress line scales with `scaleY` over `500ms`; progress fill transitions width over `450ms`. Reduced motion collapses all of it to `0.01ms`.
+- **Layout**: `lg:grid-cols-[15.5rem_1fr]`; the rail is hidden below `lg` and replaced by the progress header; the footer wraps and keeps the primary action last.
+
 ### Static poster
 
 - **Structure**: SVG skyline + marble Acropolis + brand mark + status chips.
@@ -179,6 +190,7 @@ All spacing derives from **4px**.
 - Animate only `transform`, `opacity`, and `filter`. Never animate layout properties.
 - Longer is the house style: default UI motion is not under 160ms, and the home page's narrative motion is deliberately slow (900–1600ms). Slow must still feel responsive because the first 200ms carries visible movement.
 - The 3D camera lags the scroll slightly (`damping 1.6`) so the city glides rather than snaps.
+- Directional transitions (scenario wizard) move on the X axis only: `±28px` `translate3d` + opacity over `450ms`; direction is derived from step order, never from click position.
 - Every interactive element has hover, active, and `focus-visible` states.
 - Scroll reveals use `IntersectionObserver`; the pinned progress uses a passive scroll listener plus `requestAnimationFrame`.
 - Reduced motion: the pinned journey is replaced by the stacked page, the canvas is not mounted, and all transitions collapse to 0.01ms.
