@@ -17,6 +17,7 @@ import {
   Landmark,
   Leaf,
   ListChecks,
+  Loader2,
   MapPin,
   PenLine,
   SlidersHorizontal,
@@ -63,7 +64,21 @@ const STR = {
   skip: { el: "Παράλειψη", en: "Skip" },
   cancel: { el: "Ακύρωση", en: "Cancel" },
   submit: { el: "Δημιουργία σεναρίου", en: "Create scenario" },
-  saving: { el: "Αποθήκευση…", en: "Saving…" },
+  creating: { el: "Δημιουργία σεναρίου…", en: "Creating scenario…" },
+  creatingHint: {
+    el: "Η δημιουργία μπορεί να διαρκέσει έως ~30 δευτερόλεπτα. Μην κλείσετε τη σελίδα.",
+    en: "Creation can take up to ~30 seconds. Please keep this page open.",
+  },
+  creatingSlow: {
+    el: "Χρειάζεται λίγο περισσότερο από το αναμενόμενο…",
+    en: "Taking a little longer than expected…",
+  },
+  creatingPhase1: { el: "Αποθηκεύω το σενάριο…", en: "Saving the scenario…" },
+  creatingPhase2: {
+    el: "Προετοιμάζω παραμέτρους και παράγοντες…",
+    en: "Preparing parameters and factors…",
+  },
+  creatingPhase3: { el: "Ολοκληρώνω το σενάριο…", en: "Finishing the scenario…" },
   edit: { el: "Επεξεργασία", en: "Edit" },
   titleLabel: { el: "Όνομα σεναρίου", en: "Scenario name" },
   titlePh: { el: "π.χ. Ζώνη προτεραιότητας για ποδήλατα", en: "e.g. Priority zone for cycling" },
@@ -473,6 +488,7 @@ export default function NewPolicyPage() {
   const [factorError, setFactorError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   const resetWizard = useCallback(() => {
     setStepIndex(0);
@@ -492,6 +508,7 @@ export default function NewPolicyPage() {
     setFactorError(null);
     setError(null);
     setSaving(false);
+    setElapsed(0);
   }, []);
 
   useEffect(() => {
@@ -501,6 +518,12 @@ export default function NewPolicyPage() {
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
   }, [resetWizard]);
+
+  useEffect(() => {
+    if (!saving) return;
+    const timer = window.setInterval(() => setElapsed((seconds) => seconds + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [saving]);
 
   const areaList = areas.data ?? [];
   const freeSelected = areaChoice === "__free__";
@@ -516,6 +539,8 @@ export default function NewPolicyPage() {
         ? STR.recommended
         : STR.optional;
   const progress = stepIndex / (STEPS.length - 1);
+  const creatingPhase =
+    elapsed < 10 ? STR.creatingPhase1 : elapsed < 20 ? STR.creatingPhase2 : STR.creatingPhase3;
 
   useEffect(() => {
     if (!mountedRef.current) {
@@ -634,6 +659,7 @@ export default function NewPolicyPage() {
     if (budget.trim() && Number.isFinite(budgetNum)) payload.budget_eur = budgetNum;
 
     setSaving(true);
+    setElapsed(0);
     const res = await doPost<Policy>("/v1/policies", payload);
     setSaving(false);
     if (res.error || !res.data) {
@@ -1106,6 +1132,7 @@ export default function NewPolicyPage() {
       <form
         onSubmit={handleFormSubmit}
         noValidate
+        aria-busy={saving || undefined}
         aria-label={t(STR.title)}
         className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
@@ -1254,7 +1281,43 @@ export default function NewPolicyPage() {
                 </p>
               </div>
 
-              <div className="min-h-[220px]">{renderStep()}</div>
+              <div className="min-h-[220px]">
+                {saving ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="flex h-full flex-col gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-6"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                          {t(STR.creating)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+                          {t(creatingPhase)}
+                        </p>
+                      </div>
+                      <span className="ml-auto shrink-0 font-mono text-sm tabular-nums text-zinc-500 dark:text-zinc-400">
+                        {elapsed}s
+                      </span>
+                    </div>
+                    <progress
+                      className="pl-wizard-progress"
+                      value={Math.min(30, elapsed)}
+                      max={30}
+                      aria-label={t(STR.creating)}
+                    />
+                    <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                      {elapsed >= 35 ? t(STR.creatingSlow) : t(STR.creatingHint)}
+                    </p>
+                  </div>
+                ) : (
+                  renderStep()
+                )}
+              </div>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200/80 pt-5 dark:border-zinc-800">
@@ -1282,12 +1345,20 @@ export default function NewPolicyPage() {
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </button>
                 ) : null}
-                <Link href="/policies" className={btnSecondary}>
+                <Link
+                  href="/policies"
+                  className={`${btnSecondary} ${saving ? "pointer-events-none opacity-50" : ""}`}
+                  aria-disabled={saving || undefined}
+                  tabIndex={saving ? -1 : undefined}
+                >
                   {t(STR.cancel)}
                 </Link>
                 <button type="submit" className={btnPrimary} disabled={saving}>
                   {saving ? (
-                    t(STR.saving)
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      {t(STR.creating)}
+                    </>
                   ) : isLast ? (
                     t(STR.submit)
                   ) : (

@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATHENAX · AI simulation progress (30s loop)</title>
+<style>
+  :root {
+    --bg: #050a1e;
+    --bg-deep: #070d24;
+    --ink: #eef2ff;
+    --muted: #9aa8c7;
+    --line: rgba(255, 255, 255, 0.12);
+    --glass: rgba(11, 18, 40, 0.55);
+    --card: rgba(13, 21, 45, 0.72);
+    --accent: #7db1ff;
+    --accent-solid: #1d4ed8;
+    --cyan: #22d3ee;
+    --amber: #f5b942;
+    --green: #34d399;
+    --radius: 18px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: clamp(20px, 4vw, 56px) clamp(14px, 4vw, 56px) 64px;
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(900px 520px at 12% -8%, rgba(125, 177, 255, 0.18), transparent 62%),
+      radial-gradient(760px 480px at 92% 8%, rgba(34, 211, 238, 0.12), transparent 60%),
+      radial-gradient(900px 700px at 50% 110%, rgba(29, 78, 216, 0.16), transparent 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background-attachment: fixed;
+  }
+
+  .page-head { max-width: 1120px; margin: 0 auto 30px; }
+
+  .eyebrow {
+    margin: 0 0 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .page-head h1 {
+    margin: 0;
+    font-size: clamp(26px, 3.6vw, 40px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+  }
+
+  .lead {
+    margin: 12px 0 0;
+    max-width: 62ch;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  main { max-width: 1120px; margin: 0 auto; }
+
+  .snippet-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .snippet-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .snippet-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .snippet-head p {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .loop-chip {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .loop-chip .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--cyan);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5);
+    animation: livePulse 2.2s ease-out infinite;
+  }
+
+  @keyframes livePulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5); }
+    70%, 100% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
+  }
+
+  /* ---------- Window chrome ---------- */
+
+  .window {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(700px 340px at 18% -10%, rgba(125, 177, 255, 0.14), transparent 62%),
+      linear-gradient(180deg, rgba(13, 21, 45, 0.92) 0%, rgba(7, 13, 36, 0.96) 100%);
+    box-shadow:
+      0 30px 70px -40px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: opacity 260ms ease;
+  }
+
+  .window.reset { opacity: 0.32; }
+
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.55);
+  }
+
+  .dots { display: inline-flex; gap: 6px; }
+
+  .dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .dots i:first-child { background: rgba(248, 113, 113, 0.55); }
+  .dots i:nth-child(2) { background: rgba(245, 185, 66, 0.55); }
+  .dots i:nth-child(3) { background: rgba(52, 211, 153, 0.55); }
+
+  .url {
+    flex: 1;
+    max-width: 340px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chrome-right {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .screen {
+    position: relative;
+    min-height: 430px;
+    padding: 24px;
+  }
+
+  .kicker {
+    margin: 0;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .screen h3 {
+    margin: 6px 0 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .sub {
+    margin: 5px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .muted { color: var(--muted); }
+
+  .reveal {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 420ms var(--ease);
+  }
+
+  .reveal > div {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .reveal.show { grid-template-rows: 1fr; }
+
+  /* ---------- Simulation progress ---------- */
+
+  .sim-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 185, 66, 0.35);
+    background: rgba(245, 185, 66, 0.1);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--amber);
+    white-space: nowrap;
+    transition: all 260ms ease;
+  }
+
+  .status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    animation: livePulse 1.6s ease-out infinite;
+  }
+
+  .status.done {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--green);
+  }
+
+  .status.done::before { animation: none; }
+
+  .sim-progress {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 18px;
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.42);
+  }
+
+  .pct {
+    display: flex;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+  }
+
+  .pct-sign {
+    margin-left: 2px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .big-bar {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .big-bar i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent-solid), var(--accent), var(--cyan));
+    transition: width 160ms linear;
+  }
+
+  .sim-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .run-steps {
+    display: grid;
+    gap: 2px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .run-steps li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 9px;
+    font-size: 11.5px;
+    color: var(--muted);
+    transition: color 220ms ease, background 220ms ease;
+  }
+
+  .s-dot {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    color: transparent;
+    transition: all 220ms ease;
+  }
+
+  .run-steps li .s-dot { width: 18px; height: 18px; font-size: 10px; }
+
+  .run-steps li.active {
+    color: var(--ink);
+    background: rgba(125, 177, 255, 0.07);
+  }
+
+  .run-steps li.active .s-dot {
+    border-color: var(--accent);
+    background: rgba(125, 177, 255, 0.16);
+    color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(125, 177, 255, 0.08);
+  }
+
+  .run-steps li.done { color: rgba(219, 228, 255, 0.78); }
+
+  .run-steps li.done .s-dot {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.14);
+    color: var(--green);
+  }
+
+  .run-steps li.done .s-dot::after { content: "✓"; }
+  .run-steps li.active .s-dot::after { content: "•"; }
+
+  .result {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 13px 15px;
+    border-radius: 13px;
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.09), rgba(13, 21, 45, 0.45));
+  }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  .badge {
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .badge.success {
+    background: rgba(52, 211, 153, 0.14);
+    color: var(--green);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+  }
+
+  .badge.warn {
+    background: rgba(245, 185, 66, 0.12);
+    color: var(--amber);
+    border: 1px solid rgba(245, 185, 66, 0.32);
+  }
+
+  /* ---------- Footer ---------- */
+
+  .page-foot {
+    max-width: 1120px;
+    margin: 30px auto 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .page-foot code {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+  }
+
+  @media (max-width: 760px) {
+    .screen { padding: 18px; }
+    .sim-progress { grid-template-columns: 1fr; }
+    .pct { font-size: 30px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <p class="eyebrow">ATHENAX · UI motion kit</p>
+  <h1>AI simulation progress</h1>
+  <p class="lead">
+    Six model steps, a live percentage, then the financial and practical worth-it read. One
+    30-second loop, no dependencies and no network requests.
+  </p>
+</header>
+
+<main>
+  <div class="snippet-head">
+    <span class="snippet-num">02</span>
+    <div>
+      <h2>AI simulation progress</h2>
+      <p>Six model steps, live percentage, then the worth-it read.</p>
+    </div>
+    <span class="loop-chip"><span class="pulse-dot"></span> 30s loop</span>
+  </div>
+
+  <div class="window" id="w-sim">
+    <div class="chrome">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">athenax.app/simulations/sim_8f21</span>
+      <span class="chrome-right">EL</span>
+    </div>
+    <div class="screen">
+      <div class="sim-head">
+        <div>
+          <p class="kicker">Προσομοίωση</p>
+          <h3>Πράσινο δίκτυο Κυψέλης</h3>
+          <p class="sub">Πράσινο &amp; πάρκα · Κυψέλη · 1 έτος</p>
+        </div>
+        <span class="status" id="sim-status">Σε εξέλιξη</span>
+      </div>
+
+      <div class="sim-progress">
+        <div class="pct"><span id="sim-pct">0</span><span class="pct-sign">%</span></div>
+        <div class="big-bar" aria-hidden="true"><i id="sim-bar"></i></div>
+        <div class="sim-meta">
+          <span><span id="sim-sec">0</span>s</span>
+          <span>6 βήματα</span>
+        </div>
+      </div>
+
+      <ol class="run-steps" id="sim-steps">
+        <li><span class="s-dot" aria-hidden="true"></span>Διαβάζω το σενάριο και το ελεύθερο κείμενο</li>
+        <li><span class="s-dot" aria-hidden="true"></span>Επιλέγω το κατάλληλο μοντέλο</li>
+        <li><span class="s-dot" aria-hidden="true"></span>Υπολογίζω τις παραμέτρους και τους παράγοντες</li>
+        <li><span class="s-dot" aria-hidden="true"></span>Εκτελώ την προσομοίωση</li>
+        <li><span class="s-dot" aria-hidden="true"></span>Υπολογίζω κόστος, οφέλη και φορολογικά έσοδα</li>
+        <li><span class="s-dot" aria-hidden="true"></span>Συντάσσω την αναφορά AI</li>
+      </ol>
+
+      <div class="reveal" id="sim-result-wrap">
+        <div>
+          <div class="result">
+            <div class="result-row">
+              <span>Οικονομικά</span>
+              <span class="badge success">Συμφέρει</span>
+            </div>
+            <div class="result-row">
+              <span>Στην πράξη</span>
+              <span class="badge warn">Με επιφυλάξεις</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="page-foot">
+  30 000 ms loop · <code>?t=15000</code> freezes a frame · reduced-motion users see the final state.
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  const CYCLE = 30000;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+
+  const simStatus = $("sim-status");
+  const simPct = $("sim-pct");
+  const simSec = $("sim-sec");
+  const simBar = $("sim-bar");
+  const simSteps = [...$("sim-steps").children];
+  const simResult = $("sim-result-wrap");
+  const wSim = $("w-sim");
+
+  const clamp01 = (value) => Math.max(0, Math.min(1, value));
+  const between = (t, start, end) => clamp01((t - start) / (end - start));
+
+  function setStepState(node, state) {
+    node.classList.toggle("active", state === "active");
+    node.classList.toggle("done", state === "done");
+  }
+
+  function render(t) {
+    const progress = between(t, 250, 28500);
+    const percent = Math.round(progress * 100);
+    simPct.textContent = String(percent);
+    simBar.style.width = `${percent}%`;
+    simSec.textContent = String(Math.min(30, Math.floor(t / 1000)));
+
+    const windows = [
+      [250, 4950],
+      [4950, 9650],
+      [9650, 14350],
+      [14350, 19050],
+      [19050, 23750],
+      [23750, 28500],
+    ];
+    let active = -1;
+    windows.forEach(([start, end], index) => {
+      if (t >= start && t < end) active = index;
+    });
+    simSteps.forEach((step, index) => {
+      const [start, end] = windows[index];
+      setStepState(step, t >= end ? "done" : index === active ? "active" : "");
+    });
+
+    const done = t > 28500;
+    simStatus.textContent = done ? "Ολοκληρώθηκε" : "Σε εξέλιξη";
+    simStatus.classList.toggle("done", done);
+    simResult.classList.toggle("show", done);
+
+    wSim.classList.toggle("reset", t > 29300);
+  }
+
+  if (reduced) {
+    render(28800);
+    return;
+  }
+
+  const tParam = new URLSearchParams(window.location.search).get("t");
+  const frozen = tParam === null ? NaN : Number(tParam);
+  if (Number.isFinite(frozen) && frozen >= 0) {
+    render(frozen % CYCLE);
+    return;
+  }
+
+  const start = performance.now();
+  function frame(now) {
+    render((now - start) % CYCLE);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATHENAX · New scenario, all 10 steps (30s loop)</title>
+<style>
+  :root {
+    --bg: #050a1e;
+    --bg-deep: #070d24;
+    --ink: #eef2ff;
+    --muted: #9aa8c7;
+    --line: rgba(255, 255, 255, 0.12);
+    --glass: rgba(11, 18, 40, 0.55);
+    --card: rgba(13, 21, 45, 0.72);
+    --accent: #7db1ff;
+    --accent-solid: #1d4ed8;
+    --cyan: #22d3ee;
+    --amber: #f5b942;
+    --green: #34d399;
+    --radius: 18px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    padding: clamp(20px, 4vw, 56px) clamp(14px, 4vw, 56px) 64px;
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(900px 520px at 12% -8%, rgba(125, 177, 255, 0.18), transparent 62%),
+      radial-gradient(760px 480px at 92% 8%, rgba(34, 211, 238, 0.12), transparent 60%),
+      radial-gradient(900px 700px at 50% 110%, rgba(29, 78, 216, 0.16), transparent 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    background-attachment: fixed;
+  }
+
+  .page-head { max-width: 1120px; margin: 0 auto 30px; }
+
+  .eyebrow {
+    margin: 0 0 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .page-head h1 {
+    margin: 0;
+    font-size: clamp(26px, 3.6vw, 40px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+  }
+
+  .lead {
+    margin: 12px 0 0;
+    max-width: 66ch;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  main { max-width: 1120px; margin: 0 auto; }
+
+  .snippet-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .snippet-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .snippet-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .snippet-head p {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .loop-chip {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .loop-chip .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--cyan);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5);
+    animation: livePulse 2.2s ease-out infinite;
+  }
+
+  @keyframes livePulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5); }
+    70%, 100% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
+  }
+
+  /* ---------- Window chrome ---------- */
+
+  .window {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(700px 340px at 18% -10%, rgba(125, 177, 255, 0.14), transparent 62%),
+      linear-gradient(180deg, rgba(13, 21, 45, 0.92) 0%, rgba(7, 13, 36, 0.96) 100%);
+    box-shadow:
+      0 30px 70px -40px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: opacity 260ms ease;
+  }
+
+  .window.reset { opacity: 0.32; }
+
+  .chrome {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.55);
+  }
+
+  .dots { display: inline-flex; gap: 6px; }
+
+  .dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .dots i:first-child { background: rgba(248, 113, 113, 0.55); }
+  .dots i:nth-child(2) { background: rgba(245, 185, 66, 0.55); }
+  .dots i:nth-child(3) { background: rgba(52, 211, 153, 0.55); }
+
+  .url {
+    flex: 1;
+    max-width: 340px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chrome-right {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .screen {
+    position: relative;
+    min-height: 430px;
+    padding: 24px;
+  }
+
+  /* ---------- Shared controls ---------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 15px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: transform 120ms ease, box-shadow 200ms ease, background 200ms ease;
+  }
+
+  .btn.primary {
+    border-color: transparent;
+    background: linear-gradient(180deg, #2f66f5, var(--accent-solid));
+    box-shadow: 0 12px 28px -14px rgba(29, 78, 216, 0.9);
+  }
+
+  .btn.ghost { color: var(--muted); }
+
+  .btn[disabled] { opacity: 0.4; }
+
+  .btn.pressed {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 4px rgba(125, 177, 255, 0.22);
+  }
+
+  .caret {
+    display: inline-block;
+    width: 2px;
+    height: 15px;
+    margin-left: 2px;
+    vertical-align: -3px;
+    background: var(--accent);
+    animation: blink 1.05s steps(1) infinite;
+    flex: none;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- Scenario form ---------- */
+
+  .wizard {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    min-height: 380px;
+    margin: -24px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+  }
+
+  .rail {
+    padding: 18px 14px;
+    border-right: 1px solid var(--line);
+    background: rgba(5, 10, 30, 0.4);
+  }
+
+  .rail-title {
+    margin: 0 0 14px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .rail-body { position: relative; }
+
+  .rail-line {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    bottom: 12px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .rail-line-active {
+    background: var(--accent);
+    opacity: 0.85;
+    transform-origin: top;
+    transform: scaleY(0);
+    transition: transform 500ms var(--ease);
+  }
+
+  .rail ol {
+    position: relative;
+    display: grid;
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rail li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 6px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    color: var(--muted);
+    opacity: 0.5;
+    transition: opacity 220ms ease, background 220ms ease;
+  }
+
+  .rail li.done { opacity: 0.85; }
+
+  .rail li.current {
+    opacity: 1;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .rail .r-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex: none;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: var(--bg-deep);
+    font-size: 8px;
+    color: transparent;
+  }
+
+  .rail li.done .r-dot {
+    border-color: rgba(125, 177, 255, 0.45);
+    background: rgba(125, 177, 255, 0.1);
+    color: var(--accent);
+  }
+
+  .rail li.done .r-dot::after { content: "✓"; }
+
+  .rail li.current .r-dot {
+    border-color: var(--accent);
+    background: rgba(125, 177, 255, 0.16);
+    color: var(--accent);
+  }
+
+  .rail li.current .r-dot::after { content: "•"; }
+
+  .wizard-main {
+    display: flex;
+    flex-direction: column;
+    padding: 22px 26px 18px;
+  }
+
+  .wizard-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .wizard-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: none;
+    border-radius: 14px;
+    background: rgba(125, 177, 255, 0.12);
+    color: var(--accent);
+  }
+
+  .wizard-title h3 {
+    margin: 1px 0 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .wizard-title p {
+    margin: 5px 0 0;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 52ch;
+  }
+
+  .req {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 14px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .req-badge {
+    flex: none;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(125, 177, 255, 0.12);
+    color: var(--accent);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .req-badge.optional {
+    background: rgba(154, 168, 199, 0.14);
+    color: var(--muted);
+  }
+
+  .req-badge.recommended {
+    background: rgba(245, 185, 66, 0.14);
+    color: var(--amber);
+  }
+
+  .req p {
+    margin: 0;
+    font-size: 10.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .req b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Step panels ---------- */
+
+  .panel-stack {
+    margin-top: 14px;
+    min-height: 226px;
+  }
+
+  .panel { display: none; }
+
+  .panel.active {
+    display: block;
+    animation: panelIn 360ms var(--ease) both;
+  }
+
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .field-label {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 9px 12px;
+    border-radius: 11px;
+    border: 1px solid rgba(125, 177, 255, 0.4);
+    background: rgba(5, 10, 30, 0.55);
+    font-size: 13px;
+    box-shadow: 0 0 0 3px rgba(125, 177, 255, 0.06);
+  }
+
+  .field.area {
+    align-items: flex-start;
+    min-height: 104px;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .field .typed {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: pre-line;
+  }
+
+  .field.budget { gap: 6px; }
+
+  .field .prefix {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .hint {
+    margin: 8px 0 0;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .choice {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 10px 11px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.025);
+    transition: border-color 250ms ease, background 250ms ease, box-shadow 250ms ease;
+  }
+
+  .choice.selected {
+    border-color: rgba(125, 177, 255, 0.65);
+    background: rgba(125, 177, 255, 0.09);
+    box-shadow: 0 0 0 3px rgba(125, 177, 255, 0.08);
+  }
+
+  .c-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 8px;
+    background: rgba(125, 177, 255, 0.1);
+    color: var(--accent);
+  }
+
+  .c-body { min-width: 0; }
+
+  .c-title {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .c-desc {
+    display: block;
+    margin-top: 2px;
+    font-size: 9.5px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  .c-tick {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #071026;
+    font-size: 8px;
+    font-weight: 700;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 200ms ease, transform 250ms var(--ease);
+  }
+
+  .choice.selected .c-tick { opacity: 1; transform: none; }
+
+  .chips {
+    margin-top: 12px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 300ms ease, transform 300ms var(--ease);
+  }
+
+  .chips.show { opacity: 1; transform: none; }
+
+  .chips-label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .chip {
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 10px;
+    color: var(--ink);
+  }
+
+  .chip i { color: var(--muted); font-style: normal; }
+
+  .review-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .review-item {
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .r-label {
+    margin: 0;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .r-value {
+    margin: 3px 0 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 10.5px;
+    line-height: 1.35;
+    color: var(--ink);
+  }
+
+  .wizard-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  .foot-right { display: flex; gap: 8px; }
+
+  /* ---------- Creating overlay ---------- */
+
+  .creating {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+    background: rgba(5, 10, 30, 0.86);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 300ms ease, visibility 300ms ease;
+  }
+
+  .creating.show { opacity: 1; visibility: visible; }
+
+  .spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 3px solid rgba(125, 177, 255, 0.22);
+    border-top-color: var(--accent);
+    animation: spin 850ms linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .creating p {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .create-track {
+    width: min(240px, 70%);
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .create-track i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    transition: width 120ms linear;
+  }
+
+  .create-sub {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ---------- Cursor ---------- */
+
+  .cursor {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    opacity: 0;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+    z-index: 5;
+    transition:
+      left 700ms var(--ease),
+      top 700ms var(--ease),
+      opacity 300ms ease,
+      transform 120ms ease;
+  }
+
+  .cursor.click { transform: scale(0.82); }
+
+  .cursor.instant {
+    transition: opacity 300ms ease, transform 120ms ease;
+  }
+
+  /* ---------- Footer ---------- */
+
+  .page-foot {
+    max-width: 1120px;
+    margin: 30px auto 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .page-foot code {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+  }
+
+  @media (max-width: 860px) {
+    .review-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 760px) {
+    .wizard { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .screen { padding: 18px; }
+    .wizard { margin: -18px; }
+    .wizard-main { padding: 20px 18px 16px; }
+    .panel-stack { min-height: 0; }
+    .choice-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <symbol id="i-file" viewBox="0 0 24 24">
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 3v5h5"/>
+    <path d="M9 13h6M9 17h6"/>
+  </symbol>
+  <symbol id="i-tags" viewBox="0 0 24 24">
+    <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/>
+    <circle cx="7.5" cy="7.5" r="1.5"/>
+  </symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24">
+    <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/>
+    <circle cx="12" cy="10" r="2.5"/>
+  </symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24">
+    <path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.4l-1.8-4.9L5 9.7l5.2-1.8z"/>
+    <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>
+  </symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24">
+    <rect x="3" y="5" width="18" height="16" rx="2"/>
+    <path d="M8 3v4M16 3v4M3 10h18"/>
+  </symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24">
+    <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <path d="M3 9h18"/>
+    <circle cx="16.5" cy="14" r="1.2"/>
+  </symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24">
+    <path d="M4 7h8M16 7h4M4 12h4M12 12h8M4 17h10M18 17h2"/>
+    <circle cx="14" cy="7" r="2"/>
+    <circle cx="10" cy="12" r="2"/>
+    <circle cx="16" cy="17" r="2"/>
+  </symbol>
+  <symbol id="i-list" viewBox="0 0 24 24">
+    <path d="M3 6l2 2 3-3M3 13l2 2 3-3M11 7h10M11 14h10M11 20h10"/>
+  </symbol>
+  <symbol id="i-target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="12" cy="12" r="1"/>
+  </symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24">
+    <path d="M9 4h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+    <path d="M9 4V3h6v1M9 13l2 2 4-4"/>
+  </symbol>
+  <symbol id="i-car" viewBox="0 0 24 24">
+    <path d="M5 16l1.6-5.2A2 2 0 0 1 8.5 9h7a2 2 0 0 1 1.9 1.8L19 16"/>
+    <rect x="4" y="15" width="16" height="4" rx="1.5"/>
+    <circle cx="7.5" cy="19" r="1"/>
+    <circle cx="16.5" cy="19" r="1"/>
+  </symbol>
+  <symbol id="i-trees" viewBox="0 0 24 24">
+    <path d="M12 3l5 7h-3l4 6H6l4-6H7z"/>
+    <path d="M12 16v5"/>
+  </symbol>
+  <symbol id="i-building" viewBox="0 0 24 24">
+    <rect x="5" y="3" width="14" height="18" rx="1"/>
+    <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>
+  </symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24">
+    <path d="M20 4C10 4 4 9 4 16c0 2 1 4 2 4 7 0 14-6 14-16z"/>
+    <path d="M6 18c3-6 7-9 12-10"/>
+  </symbol>
+  <symbol id="i-landmark" viewBox="0 0 24 24">
+    <path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18M12 3l9 5H3z"/>
+  </symbol>
+</svg>
+
+<header class="page-head">
+  <p class="eyebrow">ATHENAX · UI motion kit</p>
+  <h1>New scenario · all ten steps</h1>
+  <p class="lead">
+    The full wizard walkthrough: name, type, area, changes, horizon, budget, factors, assumptions,
+    KPIs and review. One 30-second loop, no dependencies and no network requests.
+  </p>
+</header>
+
+<main>
+  <div class="snippet-head">
+    <span class="snippet-num">03</span>
+    <div>
+      <h2>New scenario · 10-step walkthrough</h2>
+      <p>Each step filled in sequence, from name to review and creation.</p>
+    </div>
+    <span class="loop-chip"><span class="pulse-dot"></span> 30s loop</span>
+  </div>
+
+  <div class="window" id="w-form">
+    <div class="chrome">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">athenax.app/policies/new</span>
+      <span class="chrome-right">EL</span>
+    </div>
+    <div class="screen">
+      <div class="wizard">
+        <aside class="rail">
+          <p class="rail-title">Νέο σενάριο</p>
+          <div class="rail-body">
+            <span class="rail-line" aria-hidden="true"></span>
+            <span class="rail-line rail-line-active" id="rail-progress" aria-hidden="true"></span>
+            <ol>
+              <li class="current"><span class="r-dot" aria-hidden="true"></span>Όνομα</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Τύπος</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Περιοχή</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Αλλαγές</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Ορίζοντας</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Προϋπολογισμός</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Παράγοντες</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Υποθέσεις</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Δείκτες</li>
+              <li><span class="r-dot" aria-hidden="true"></span>Έλεγχος</li>
+            </ol>
+          </div>
+        </aside>
+
+        <div class="wizard-main">
+          <div class="wizard-top">
+            <span id="wiz-step">Βήμα 1 / 10</span>
+            <span id="wiz-state">Υποχρεωτικό</span>
+          </div>
+
+          <div class="wizard-title">
+            <span class="icon-badge" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <use id="wiz-icon-use" href="#i-file"/>
+              </svg>
+            </span>
+            <div>
+              <h3 id="wiz-title">Όνομα</h3>
+              <p id="wiz-inst">Δώστε ένα σύντομο, συγκεκριμένο όνομα. Θα το βλέπετε σε όλη τη διαδικασία.</p>
+            </div>
+          </div>
+
+          <div class="req">
+            <span class="req-badge" id="wiz-badge">Απαιτείται</span>
+            <p><b>Τι χρειάζεται:</b> <span id="wiz-req">Όνομα σεναρίου με τουλάχιστον 3 χαρακτήρες.</span></p>
+          </div>
+
+          <div class="panel-stack">
+
+            <section class="panel active" data-panel="0">
+              <label class="field-label">Όνομα σεναρίου</label>
+              <div class="field"><span class="typed" id="in-name"></span><span class="caret" aria-hidden="true"></span></div>
+              <p class="hint">Παράδειγμα: «Πράσινο δίκτυο Κυψέλης»</p>
+            </section>
+
+            <section class="panel" data-panel="1">
+              <div class="choice-grid">
+                <div class="choice" data-pick="1-mobility">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-car"/></svg></span>
+                  <span class="c-body"><span class="c-title">Κινητικότητα</span><span class="c-desc">Δρόμοι, πεζοδρόμια, ποδήλατα.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="1-green">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trees"/></svg></span>
+                  <span class="c-body"><span class="c-title">Πράσινο & πάρκα</span><span class="c-desc">Πάρκα, δέντρα, αστικό πράσινο.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="1-housing">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-building"/></svg></span>
+                  <span class="c-body"><span class="c-title">Στέγαση</span><span class="c-desc">Κατοικίες, προσιτή στέγη.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="1-environment">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg></span>
+                  <span class="c-body"><span class="c-title">Περιβάλλον</span><span class="c-desc">Κλίμα, ενέργεια, ρύπανση.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="1-services">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-landmark"/></svg></span>
+                  <span class="c-body"><span class="c-title">Υπηρεσίες</span><span class="c-desc">Ψηφιακές και δημοτικές υπηρεσίες.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="2">
+              <div class="choice-grid">
+                <div class="choice" data-pick="2-all">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-landmark"/></svg></span>
+                  <span class="c-body"><span class="c-title">Ολόκληρη η πόλη</span><span class="c-desc">Σε όλο τον δήμο.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="2-kypseli">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg></span>
+                  <span class="c-body"><span class="c-title">Κυψέλη</span><span class="c-desc">Ακτίνα 800 μ.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="2-exarchia">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg></span>
+                  <span class="c-body"><span class="c-title">Εξάρχεια</span><span class="c-desc">Ακτίνα 600 μ.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="2-pagkrati">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg></span>
+                  <span class="c-body"><span class="c-title">Παγκράτι</span><span class="c-desc">Ακτίνα 900 μ.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="2-other">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg></span>
+                  <span class="c-body"><span class="c-title">Άλλη περιοχή</span><span class="c-desc">Γράψτε τη διεύθυνση.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="3">
+              <label class="field-label">Τι αλλάζει;</label>
+              <div class="field area"><span class="typed" id="in-changes"></span><span class="caret" aria-hidden="true"></span></div>
+              <p class="hint">Σύντομη περιγραφή, χωρίς τεχνικούς όρους.</p>
+            </section>
+
+            <section class="panel" data-panel="4">
+              <div class="choice-grid">
+                <div class="choice" data-pick="4-6m">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></span>
+                  <span class="c-body"><span class="c-title">6 μήνες</span><span class="c-desc">Γρήγορο πιλοτικό.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="4-1y">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></span>
+                  <span class="c-body"><span class="c-title">1 έτος</span><span class="c-desc">Ετήσιος κύκλος.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="4-3y">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></span>
+                  <span class="c-body"><span class="c-title">3 χρόνια</span><span class="c-desc">Μεσοπρόθεσμος σχεδιασμός.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="4-5y">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-calendar"/></svg></span>
+                  <span class="c-body"><span class="c-title">5 χρόνια</span><span class="c-desc">Στρατηγικός ορίζοντας.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="5">
+              <label class="field-label">Διαθέσιμος προϋπολογισμός</label>
+              <div class="field budget">
+                <span class="prefix">€</span>
+                <span class="typed" id="in-budget"></span>
+                <span class="caret" aria-hidden="true"></span>
+              </div>
+              <p class="hint">Προαιρετικό. Βοηθά στον έλεγχο βιωσιμότητας.</p>
+            </section>
+
+            <section class="panel" data-panel="6">
+              <div class="choice-grid">
+                <div class="choice" data-pick="6-suggested">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-spark"/></svg></span>
+                  <span class="c-body"><span class="c-title">Προτεινόμενοι</span><span class="c-desc">Το AI προτείνει παράγοντες για την κατηγορία.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+                <div class="choice" data-pick="6-custom">
+                  <span class="c-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sliders"/></svg></span>
+                  <span class="c-body"><span class="c-title">Προσαρμοσμένοι</span><span class="c-desc">Ορίστε μόνοι σας τιμές και εύρη.</span></span>
+                  <span class="c-tick" aria-hidden="true">✓</span>
+                </div>
+              </div>
+              <div class="chips" id="factor-chips">
+                <span class="chips-label">Παράγοντες που θα χρησιμοποιηθούν</span>
+                <div class="chip-row">
+                  <span class="chip">park_count <i>· 25</i></span>
+                  <span class="chip">trees_planted <i>· 1.200</i></span>
+                  <span class="chip">maintenance_budget <i>· 80.000 €</i></span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel" data-panel="7">
+              <label class="field-label">Υποθέσεις</label>
+              <div class="field area"><span class="typed" id="in-assumptions"></span><span class="caret" aria-hidden="true"></span></div>
+              <p class="hint">Μία υπόθεση ανά γραμμή.</p>
+            </section>
+
+            <section class="panel" data-panel="8">
+              <label class="field-label">Δείκτες επιτυχίας</label>
+              <div class="field area"><span class="typed" id="in-kpis"></span><span class="caret" aria-hidden="true"></span></div>
+              <p class="hint">Ένας δείκτης ανά γραμμή.</p>
+            </section>
+
+            <section class="panel" data-panel="9">
+              <div class="review-grid">
+                <div class="review-item"><p class="r-label">Όνομα</p><p class="r-value">Πράσινο δίκτυο Κυψέλης</p></div>
+                <div class="review-item"><p class="r-label">Κατηγορία</p><p class="r-value">Πράσινο & πάρκα</p></div>
+                <div class="review-item"><p class="r-label">Περιοχή</p><p class="r-value">Κυψέλη</p></div>
+                <div class="review-item"><p class="r-label">Αλλαγές</p><p class="r-value">Φύτευση 120 δέντρων, νέοι διάδρομοι πεζών.</p></div>
+                <div class="review-item"><p class="r-label">Ορίζοντας</p><p class="r-value">1 έτος</p></div>
+                <div class="review-item"><p class="r-label">Προϋπολογισμός</p><p class="r-value">450.000 €</p></div>
+                <div class="review-item"><p class="r-label">Παράγοντες</p><p class="r-value">park_count, trees_planted, maintenance_budget</p></div>
+                <div class="review-item"><p class="r-label">Υποθέσεις</p><p class="r-value">2 γραμμές</p></div>
+                <div class="review-item"><p class="r-label">Δείκτες</p><p class="r-value">2 γραμμές</p></div>
+              </div>
+            </section>
+
+          </div>
+
+          <div class="wizard-foot">
+            <div class="foot-left">
+              <button class="btn ghost" id="wiz-back" type="button" disabled>← Πίσω</button>
+            </div>
+            <div class="foot-right">
+              <button class="btn ghost" type="button">Ακύρωση</button>
+              <button class="btn primary" id="wiz-next" type="button">Επόμενο →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="creating" id="creating">
+        <span class="spinner" aria-hidden="true"></span>
+        <p id="create-label">Δημιουργώ το σενάριο…</p>
+        <div class="create-track"><i id="create-bar"></i></div>
+        <span class="create-sub">Δημιουργία αρχείου, παραγόντων και βασικής ανάλυσης.</span>
+      </div>
+
+      <svg class="cursor" id="wiz-cursor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 2l14 9-6 1.6L9.5 19 4 2z" fill="#eef2ff" stroke="#050a1e" stroke-width="1.2"/>
+      </svg>
+    </div>
+  </div>
+</main>
+
+<footer class="page-foot">
+  30 000 ms loop · <code>?t=15000</code> freezes a frame · reduced-motion users see the review step.
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  const CYCLE = 30000;
+  const STEP_MS = 2800;
+  const STEP_COUNT = 10;
+  const CREATE_AT = 28300;
+  const CREATE_END = 29400;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+
+  const STATUS = {
+    required: { state: "Υποχρεωτικό", badge: "Απαιτείται" },
+    optional: { state: "Προαιρετικό", badge: "Προαιρετικό" },
+    recommended: { state: "Προτείνεται", badge: "Προτείνεται" }
+  };
+
+  const STEPS = [
+    {
+      label: "Όνομα",
+      icon: "file",
+      status: "required",
+      instruction: "Δώστε ένα σύντομο, συγκεκριμένο όνομα. Θα το βλέπετε σε όλη τη διαδικασία.",
+      requirement: "Όνομα σεναρίου με τουλάχιστον 3 χαρακτήρες."
+    },
+    {
+      label: "Τύπος",
+      icon: "tags",
+      status: "required",
+      instruction: "Επιλέξτε την κατηγορία που ταιριάζει καλύτερα. Καθορίζει το μοντέλο και τους προτεινόμενους παράγοντες.",
+      requirement: "Μία κατηγορία σεναρίου."
+    },
+    {
+      label: "Περιοχή",
+      icon: "pin",
+      status: "optional",
+      instruction: "Πού εφαρμόζεται το σενάριο; Επιλέξτε περιοχή ή ολόκληρη την πόλη.",
+      requirement: "Περιοχή ή «Ολόκληρη η πόλη»."
+    },
+    {
+      label: "Αλλαγές",
+      icon: "spark",
+      status: "recommended",
+      instruction: "Περιγράψτε με απλά λόγια τι αλλάζει. Το AI θα το μετατρέψει σε παραμέτρους.",
+      requirement: "Σύντομη περιγραφή των αλλαγών."
+    },
+    {
+      label: "Ορίζοντας",
+      icon: "calendar",
+      status: "required",
+      instruction: "Σε πόσο χρόνο θέλετε να φανούν τα αποτελέσματα;",
+      requirement: "Χρονικός ορίζοντας (6 μήνες – 5 χρόνια)."
+    },
+    {
+      label: "Προϋπολογισμός",
+      icon: "wallet",
+      status: "optional",
+      instruction: "Προαιρετικό. Βοηθά να ελέγξουμε αν το κόστος χωράει στα διαθέσιμα χρήματα.",
+      requirement: "Ποσό σε ευρώ."
+    },
+    {
+      label: "Παράγοντες",
+      icon: "sliders",
+      status: "required",
+      instruction: "Πώς θέλετε να ορίσετε τους παράγοντες του μοντέλου;",
+      requirement: "Τουλάχιστον ένας παράγοντας με έγκυρο εύρος."
+    },
+    {
+      label: "Υποθέσεις",
+      icon: "list",
+      status: "optional",
+      instruction: "Προαιρετικό. Γράψτε μία υπόθεση ανά γραμμή.",
+      requirement: "Μία υπόθεση ανά γραμμή."
+    },
+    {
+      label: "Δείκτες",
+      icon: "target",
+      status: "optional",
+      instruction: "Προαιρετικό. Γράψτε έναν δείκτη επιτυχίας ανά γραμμή.",
+      requirement: "Ένας δείκτης ανά γραμμή."
+    },
+    {
+      label: "Έλεγχος",
+      icon: "clipboard",
+      status: "required",
+      instruction: "Ελέγξτε τα στοιχεία και δημιουργήστε το σενάριο.",
+      requirement: "Έλεγχος όλων των πεδίων πριν τη δημιουργία."
+    }
+  ];
+
+  const NAME = "Πράσινο δίκτυο Κυψέλης";
+  const CHANGES = "Φύτευση 120 δέντρων και νέοι διάδρομοι πεζών γύρω από την πλατεία Κυψέλης.";
+  const BUDGET = "450000";
+  const ASSUMPTIONS = "Η χρηματοδότηση καλύπτεται από τον δημοτικό προϋπολογισμό.\nΔεν απαιτούνται απαλλοτριώσεις.";
+  const KPIS = "Αύξηση πρασίνου ανά κάτοικο κατά 15%.\nΜείωση θερμοκρασίας επιφάνειας κατά 1,2°C.";
+
+  const el = {
+    wForm: $("w-form"),
+    step: $("wiz-step"),
+    state: $("wiz-state"),
+    badge: $("wiz-badge"),
+    req: $("wiz-req"),
+    title: $("wiz-title"),
+    inst: $("wiz-inst"),
+    icon: $("wiz-icon-use"),
+    panels: Array.from(document.querySelectorAll("[data-panel]")),
+    rail: Array.from(document.querySelectorAll(".rail li")),
+    railProgress: $("rail-progress"),
+    back: $("wiz-back"),
+    next: $("wiz-next"),
+    cursor: $("wiz-cursor"),
+    creating: $("creating"),
+    createBar: $("create-bar"),
+    createLabel: $("create-label"),
+    inName: $("in-name"),
+    inChanges: $("in-changes"),
+    inBudget: $("in-budget"),
+    inAssumptions: $("in-assumptions"),
+    inKpis: $("in-kpis"),
+    chips: $("factor-chips")
+  };
+
+  const picks = [
+    ["1-green", 4000],
+    ["2-kypseli", 6800],
+    ["4-1y", 12400],
+    ["6-suggested", 18000]
+  ].map(([key, at]) => ({ node: document.querySelector('[data-pick="' + key + '"]'), at }));
+
+  const cursorAt = [
+    [58, 47],
+    [68, 54],
+    [66, 54],
+    [58, 55],
+    [66, 52],
+    [55, 48],
+    [64, 58],
+    [58, 55],
+    [58, 55],
+    [84, 86]
+  ];
+
+  const clamp01 = (value) => Math.max(0, Math.min(1, value));
+  const between = (t, start, end) => clamp01((t - start) / (end - start));
+  const typed = (text, t, start, end) =>
+    text.slice(0, Math.ceil(text.length * between(t, start, end)));
+
+  let lastStep = -1;
+
+  function render(t) {
+    const step = Math.min(STEP_COUNT - 1, Math.floor(t / STEP_MS));
+
+    el.inName.textContent = typed(NAME, t, 300, 2100);
+    el.inChanges.textContent = typed(CHANGES, t, 8700, 10800);
+    el.inBudget.textContent = typed(BUDGET, t, 14300, 16100);
+    el.inAssumptions.textContent = typed(ASSUMPTIONS, t, 19900, 21900);
+    el.inKpis.textContent = typed(KPIS, t, 22700, 24700);
+
+    for (const pick of picks) {
+      if (pick.node) pick.node.classList.toggle("selected", t >= pick.at);
+    }
+    el.chips.classList.toggle("show", t >= 18200);
+
+    if (step !== lastStep) {
+      lastStep = step;
+      const current = STEPS[step];
+      const meta = STATUS[current.status];
+      el.step.textContent = "Βήμα " + (step + 1) + " / " + STEP_COUNT;
+      el.state.textContent = meta.state;
+      el.badge.textContent = meta.badge;
+      el.badge.className = "req-badge " + current.status;
+      el.req.textContent = current.requirement;
+      el.title.textContent = current.label;
+      el.inst.textContent = current.instruction;
+      el.icon.setAttribute("href", "#i-" + current.icon);
+      el.panels.forEach((panel, index) => {
+        panel.classList.toggle("active", index === step);
+      });
+      el.rail.forEach((item, index) => {
+        item.classList.toggle("current", index === step);
+        item.classList.toggle("done", index < step);
+      });
+      el.railProgress.style.transform = "scaleY(" + step / (STEP_COUNT - 1) + ")";
+      el.back.disabled = step === 0;
+      el.next.textContent = step === STEP_COUNT - 1 ? "Δημιουργία σεναρίου" : "Επόμενο →";
+    }
+
+    const phase = t % STEP_MS;
+    const boundaryPress = step < STEP_COUNT - 1 && phase > STEP_MS - 160;
+    el.next.classList.toggle("pressed", boundaryPress || (t >= 28050 && t < 28400));
+
+    const creating = t >= CREATE_AT;
+    el.creating.classList.toggle("show", creating);
+    if (creating) {
+      const progress = between(t, CREATE_AT, CREATE_END);
+      el.createBar.style.width = (progress * 100).toFixed(1) + "%";
+      el.createLabel.textContent = progress >= 1 ? "Έτοιμο" : "Δημιουργώ το σενάριο…";
+    }
+
+    const pos = cursorAt[step];
+    el.cursor.classList.toggle("instant", t < 400);
+    el.cursor.style.left = pos[0] + "%";
+    el.cursor.style.top = pos[1] + "%";
+    el.cursor.style.opacity = reduced || creating || t < 250 ? "0" : "1";
+    el.cursor.classList.toggle(
+      "click",
+      (t >= 3900 && t < 4060) ||
+      (t >= 6700 && t < 6860) ||
+      (t >= 12300 && t < 12460) ||
+      (t >= 17900 && t < 18060) ||
+      (t >= 28050 && t < 28210)
+    );
+
+    el.wForm.classList.toggle("reset", t > 29650);
+  }
+
+  if (reduced) {
+    render(27000);
+    return;
+  }
+
+  const tParam = new URLSearchParams(window.location.search).get("t");
+  const frozen = tParam === null ? NaN : Number(tParam);
+  if (Number.isFinite(frozen) && frozen >= 0) {
+    render(frozen % CYCLE);
+    return;
+  }
+
+  const start = performance.now();
+  function frame(now) {
+    render((now - start) % CYCLE);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
