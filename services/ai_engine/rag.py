@@ -149,8 +149,13 @@ def retrieve(query: str, records: list[dict], *, limit: int = 40) -> list[dict]:
     if limit <= 0 or not records:
         return []
 
+    pinned = [record for record in records if record.get("pinned")]
+    rest = [record for record in records if not record.get("pinned")]
+    if not rest:
+        return pinned[:limit]
+
     scored: list[tuple[float, int, dict]] = []
-    for index, record in enumerate(records):
+    for index, record in enumerate(rest):
         text = record_text(record)
         score = keyword_score(query or "", text)
         embed = _embed_score(query or "", text)
@@ -159,4 +164,5 @@ def retrieve(query: str, records: list[dict], *, limit: int = 40) -> list[dict]:
         scored.append((score, index, record))
 
     scored.sort(key=lambda item: (-item[0], item[1]))
-    return [record for _, _, record in scored[:limit]]
+    room = max(0, limit - len(pinned))
+    return pinned[:limit] + [record for _, _, record in scored[:room]]

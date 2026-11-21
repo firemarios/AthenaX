@@ -21,7 +21,7 @@ import {
 } from "@/_shared/ui";
 
 const STR = {
-  title: { el: "Νέα πολιτική", en: "New policy" },
+  title: { el: "Νέο σενάριο", en: "New scenario" },
   desc: {
     el: "Συμπληρώστε τα βασικά στοιχεία, προσθέστε παραμέτρους, υποθέσεις και δείκτες απόδοσης (KPI).",
     en: "Fill in the basics, then add parameters, assumptions and key performance indicators.",
@@ -34,8 +34,8 @@ const STR = {
   },
   fDesc: { el: "Περιγραφή", en: "Description" },
   fDescPh: {
-    el: "Περιγράψτε σύντομα την πολιτική και τον στόχο της…",
-    en: "Briefly describe the policy and its goal…",
+    el: "Περιγράψτε σύντομα το σενάριο και τον στόχο του…",
+    en: "Briefly describe the scenario and its goal…",
   },
   fChanges: { el: "Αλλαγές σε ελεύθερο κείμενο", en: "Free-text changes" },
   fChangesPh: {
@@ -86,10 +86,10 @@ const STR = {
     en: "One indicator per line — e.g. “coverage within 300 m”.",
   },
   addKpi: { el: "Προσθήκη δείκτη", en: "Add indicator" },
-  submit: { el: "Δημιουργία πολιτικής", en: "Create policy" },
+  submit: { el: "Δημιουργία σεναρίου", en: "Create scenario" },
   saving: { el: "Αποθήκευση…", en: "Saving…" },
   cancel: { el: "Ακύρωση", en: "Cancel" },
-  back: { el: "← Πίσω στις πολιτικές", en: "← Back to policies" },
+  back: { el: "← Πίσω στα σενάρια", en: "← Back to scenarios" },
 };
 
 const BASE_FACTORS: FactorRow[] = [
@@ -196,7 +196,7 @@ export default function NewPolicyPage() {
     const res = await doPost<Policy>("/v1/policies", payload);
     setSaving(false);
     if (res.error || !res.data) {
-      setError(res.error ?? t({ el: "Αποτυχία δημιουργίας πολιτικής.", en: "Failed to create the policy." }));
+      setError(res.error ?? t({ el: "Αποτυχία δημιουργίας σεναρίου.", en: "Failed to create the scenario." }));
       return;
     }
     router.push(`/policies/${res.data.id}`);
@@ -208,7 +208,7 @@ export default function NewPolicyPage() {
         title={t(STR.title)}
         description={t(STR.desc)}
         breadcrumbs={[
-          { label: t({ el: "Πολιτικές", en: "Policies" }), href: "/policies" },
+          { label: t({ el: "Σενάρια", en: "Scenarios" }), href: "/policies" },
           { label: t(STR.title) },
         ]}
       />

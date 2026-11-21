@@ -41,6 +41,18 @@ sources:
       q: "Αθήνα"
       rows: 50
 
+  - name: athens_sandbox
+    display_name: "AthensGov Sandbox API — Δήμος Αθηναίων"
+    source_type: open_data
+    base_url: "https://athensgov.cityofathens.gr/sandbox/"
+    endpoint_url: "https://athensgov.cityofathens.gr/sandbox/openapi.json"
+    license: "Δοκιμαστικά δεδομένα — Δήμος Αθηναίων"
+    update_frequency: daily
+    reliability: 0.9
+    enabled: true
+    priority: P0
+    config: {}
+
   - name: kimdis
     display_name: "ΚΗΜΔΗΣ — Συμβάσεις και προμήθειες"
     source_type: govtech

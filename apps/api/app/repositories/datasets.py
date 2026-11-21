@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from app.repositories.common import as_json, iso, mem_get, mem_list, mem_put, new_id
+from app.scope import is_athens_row
 
 logger = logging.getLogger("athenax.repositories.datasets")
 
@@ -108,6 +109,7 @@ async def list_datasets(
     page: int = 1,
     page_size: int = 20,
     sort: str | None = "freshness",
+    athens_only: bool = True,
 ) -> tuple[list[dict[str, Any]], int, bool]:
     """(Dataset[], total, degraded) with filters + pagination (contract §2)."""
     rows: list[dict[str, Any]] = []
@@ -119,6 +121,9 @@ async def list_datasets(
         rows, degraded = _all_rows()
         degraded = True
 
+    if athens_only:
+        rows = [row for row in rows if is_athens_row(row)]
+
     filtered = [row for row in rows if _matches(row, q, source_id, tag)]
     filtered = _sort_rows(filtered, sort)
     total = len(filtered)
@@ -128,7 +133,7 @@ async def list_datasets(
 
 
 async def search_relevant_datasets(
-    query: str, *, limit: int = 6
+    query: str, *, limit: int = 6, athens_only: bool = True
 ) -> list[dict[str, Any]]:
     """Ingested datasets ranked for the Ask pipeline (DB, keyword + topic matching)."""
     from services.ai_engine.lexicon import relevance
@@ -138,6 +143,9 @@ async def search_relevant_datasets(
     except Exception as exc:  # noqa: BLE001
         logger.debug("search_relevant_datasets: DB μη διαθέσιμη (%s)", exc)
         return []
+
+    if athens_only:
+        rows = [row for row in rows if is_athens_row(row)]
 
     scored: list[tuple[float, int, dict[str, Any]]] = []
     for index, row in enumerate(rows):
@@ -174,6 +182,52 @@ async def search_relevant_datasets(
             }
         )
     return results
+
+
+async def dataset_catalog(*, athens_only: bool = True) -> list[dict[str, Any]]:
+    """Compact catalog of every dataset shown on the Data page (DB → memory).
+
+    Used as mandatory grounding for both Ask the City and the simulation planner.
+    Never raises.
+    """
+    try:
+        rows = await _db_rows()
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("dataset_catalog: DB μη διαθέσιμη (%s) — ενδομοική αποθήκευση", exc)
+        rows = list(mem_list("datasets"))
+
+    if athens_only:
+        rows = [row for row in rows if is_athens_row(row)]
+
+    rows = sorted(
+        rows,
+        key=lambda row: (str(row.get("source_id") or ""), str(row.get("title") or "").lower()),
+    )
+    catalog: list[dict[str, Any]] = []
+    for row in rows:
+        quality = as_json(row.get("quality"), {}) or {}
+        catalog.append(
+            {
+                "id": str(row.get("id") or ""),
+                "title": str(row.get("title") or "Χωρίς τίτλο"),
+                "description": row.get("description"),
+                "provider": row.get("provider") or row.get("source_name"),
+                "source_name": row.get("source_name") or row.get("provider"),
+                "source_id": row.get("source_id"),
+                "source_url": row.get("source_url") or "",
+                "category": row.get("category"),
+                "format": row.get("format"),
+                "license": row.get("license"),
+                "last_updated": row.get("last_updated"),
+                "tags": list(as_json(row.get("tags"), []) or []),
+                "quality": {
+                    "completeness": quality.get("completeness"),
+                    "freshness": quality.get("freshness"),
+                    "validation_status": quality.get("validation_status"),
+                },
+            }
+        )
+    return catalog
 
 
 async def get_dataset(dataset_id: str) -> dict[str, Any] | None:

@@ -12,6 +12,7 @@ import type {
 } from "@athenax/types";
 import { API_BASE } from "@athenax/api-client";
 import { useApi } from "@/_shared/hooks";
+import { ScenarioOptimization } from "@/_shared/ai-report";
 import { deltaTone, downloadBlob, fmtConfidence, fmtDelta, fmtNum } from "@/_shared/format";
 import {
   PageFallback,
@@ -29,10 +30,10 @@ const STR = {
   loading: { el: "Φόρτωση αναφοράς επιπτώσεων…", en: "Loading impact report…" },
   notFound: { el: "Η αναφορά επιπτώσεων δεν βρέθηκε", en: "Impact report not found" },
   notFoundDesc: {
-    el: "Η προσομοίωση ενδέχεται να μην έχει ολοκληρωθεί ή το αναγνωριστικό δεν είναι έγκυρο. Δείτε τις διαθέσιμες πολιτικές για να ξεκινήσετε μια νέα προσομοίωση.",
-    en: "The simulation may not have completed, or the identifier is invalid. Browse the policies to start a new simulation.",
+    el: "Η προσομοίωση ενδέχεται να μην έχει ολοκληρωθεί ή το αναγνωριστικό δεν είναι έγκυρο. Δείτε τα διαθέσιμα σενάρια για να ξεκινήσετε μια νέα προσομοίωση.",
+    en: "The simulation may not have completed, or the identifier is invalid. Browse the scenarios to start a new simulation.",
   },
-  toPolicies: { el: "Προς τις πολιτικές", en: "Go to policies" },
+  toPolicies: { el: "Προς τα σενάρια", en: "Go to scenarios" },
   summary: { el: "Σύνοψη", en: "Summary" },
   baseline: { el: "Βάση", en: "Baseline" },
   value: { el: "Τιμή", en: "Value" },
@@ -369,6 +370,7 @@ function ImpactDetailView() {
   }
 
   const data = report.data;
+  const optimization = data.optimization ?? run.data?.results?.ai?.optimization ?? null;
 
   return (
     <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6">
@@ -386,7 +388,7 @@ function ImpactDetailView() {
                 href={`/policies/${run.data.policy_id}`}
                 className={btnSecondary}
               >
-                {t({ el: "Πολιτική", en: "Policy" })}
+                {t({ el: "Σενάριο", en: "Scenario" })}
               </Link>
             ) : null}
             <Link href={`/simulations/${data.run_id}`} className={btnSecondary}>
@@ -403,6 +405,20 @@ function ImpactDetailView() {
             {t(data.summary)}
           </p>
         </SectionCard>
+
+        {optimization ? (
+          <SectionCard
+            title={t({ el: "Βελτιστοποίηση σεναρίου", en: "Scenario optimization" })}
+          >
+            <p className={`mb-3 text-sm ${mutedText}`}>
+              {t({
+                el: "Αρνητικά του σεναρίου και προτάσεις για να το βελτιώσουμε.",
+                en: "The scenario's negatives and suggestions to improve it.",
+              })}
+            </p>
+            <ScenarioOptimization optimization={optimization} />
+          </SectionCard>
+        ) : null}
 
         {run.data?.results?.sensitivity ? (
           <SensitivityTornado sensitivity={run.data.results.sensitivity} />

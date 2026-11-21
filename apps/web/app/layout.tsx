@@ -31,20 +31,20 @@ export const metadata: Metadata = {
   applicationName: "ATHENAX",
   title: "ATHENAX — Wisdom Meets the Future",
   description:
-    "Το ATHENAX συνδέει δημόσια δεδομένα και GovTech πληροφορίες, σε βάση αποδείξεων. Κατανοείς την πόλη και δοκιμάζεις καλύτερες πολιτικές.",
+    "Το ATHENAX συνδέει δημόσια δεδομένα και GovTech πληροφορίες, σε βάση αποδείξεων. Κατανοείς την πόλη και δοκιμάζεις καλύτερα σενάρια.",
   keywords: [
     "ATHENAX",
     "GovTech",
     "open data",
     "δημόσια δεδομένα",
-    "πολιτικές",
+    "σενάρια",
     "ψηφιακή πόλη",
     "Αθήνα",
   ],
   openGraph: {
     title: "ATHENAX — Wisdom Meets the Future",
     description:
-      "Open data, GovTech intelligence and policy experimentation with provenance and evidence in every answer.",
+      "Open data, GovTech intelligence and scenario experimentation with provenance and evidence in every answer.",
     siteName: "ATHENAX",
     type: "website",
   },
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ATHENAX — Wisdom Meets the Future",
     description:
-      "Open data, GovTech intelligence and policy experimentation with provenance and evidence in every answer.",
+      "Open data, GovTech intelligence and scenario experimentation with provenance and evidence in every answer.",
   },
 };
 

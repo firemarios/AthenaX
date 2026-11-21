@@ -34,10 +34,10 @@ import {
 } from "@/_shared/ui";
 
 const STR = {
-  back: { el: "← Πίσω στις πολιτικές", en: "← Back to policies" },
+  back: { el: "← Πίσω στα σενάρια", en: "← Back to scenarios" },
   elements: { el: "Στοιχεία", en: "Details" },
   factors: { el: "Μεταβαλλόμενοι παράγοντες", en: "Changing factors" },
-  changes: { el: "Αλλαγές πολιτικής", en: "Policy changes" },
+  changes: { el: "Αλλαγές σεναρίου", en: "Scenario changes" },
   parameters: { el: "Παράμετροι", en: "Parameters" },
   budget: { el: "Προϋπολογισμός", en: "Budget" },
   simulationArea: { el: "Περιοχή προσομοίωσης", en: "Simulation location" },
@@ -48,7 +48,7 @@ const STR = {
   },
   assumptions: { el: "Υποθέσεις", en: "Assumptions" },
   kpis: { el: "Δείκτες απόδοσης", en: "Performance indicators" },
-  variants: { el: "Παραλλαγές πολιτικής", en: "Policy variants" },
+  variants: { el: "Παραλλαγές σεναρίου", en: "Scenario variants" },
   newVariant: { el: "Νέα παραλλαγή", en: "New variant" },
   variantTitle: { el: "Τίτλος παραλλαγής", en: "Variant title" },
   variantTitlePh: { el: "π.χ. Εναλλακτική με υψηλότερη συχνότητα", en: "e.g. Alternative with higher frequency" },
@@ -73,8 +73,8 @@ const STR = {
   },
   runs: { el: "Ιστορικό προσομοιώσεων", en: "Simulation history" },
   runsDesc: {
-    el: "Όλες οι εκτελέσεις για αυτή την πολιτική, με τα πιο πρόσφατα πρώτα. Ανοίξτε μία για πλήρη αποτελέσματα.",
-    en: "Every run for this policy, newest first. Open one for the full results.",
+    el: "Όλες οι εκτελέσεις για αυτό το σενάριο, με τα πιο πρόσφατα πρώτα. Ανοίξτε μία για πλήρη αποτελέσματα.",
+    en: "Every run for this scenario, newest first. Open one for the full results.",
   },
   noRuns: { el: "Δεν έχουν εκτελεστεί προσομοιώσεις ακόμη.", en: "No simulations have been run yet." },
   openRun: { el: "Άνοιγμα", en: "Open" },
@@ -85,8 +85,8 @@ const STR = {
     el: "Δεν υπάρχει ακόμη εκτελεσμένη προσομοίωση με αναφορά επιπτώσεων.",
     en: "No completed simulation with an impact report yet.",
   },
-  loading: { el: "Φόρτωση πολιτικής…", en: "Loading policy…" },
-  notFound: { el: "Η πολιτική δεν βρέθηκε.", en: "The policy was not found." },
+  loading: { el: "Φόρτωση σεναρίου…", en: "Loading scenario…" },
+  notFound: { el: "Το σενάριο δεν βρέθηκε.", en: "The scenario was not found." },
   none: { el: "—", en: "—" },
   emptyList: { el: "Καμία καταχώρηση.", en: "No entries." },
   created: { el: "Δημιουργήθηκε", en: "Created" },
@@ -109,8 +109,8 @@ const RUN_STATUS_LABELS: Record<string, { el: string; en: string }> = {
 
 const AI_STEPS: { el: string; en: string }[] = [
   {
-    el: "Διαβάζω την πολιτική και το ελεύθερο κείμενο",
-    en: "Reading the policy and free text",
+    el: "Διαβάζω το σενάριο και το ελεύθερο κείμενο",
+    en: "Reading the scenario and free text",
   },
   {
     el: "Επιλέγω το κατάλληλο μοντέλο",
@@ -269,7 +269,7 @@ function PolicyDetailView() {
         title={data.title}
         description={data.description ?? undefined}
         breadcrumbs={[
-          { label: t({ el: "Πολιτικές", en: "Policies" }), href: "/policies" },
+          { label: t({ el: "Σενάρια", en: "Scenarios" }), href: "/policies" },
           { label: data.title },
         ]}
         actions={

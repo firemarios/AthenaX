@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from app.city_sources import ATHENS_SANDBOX_URL, sandbox_source
 from app.deps import get_request_id
 from app.envelope import DB_DOWN_NOTE, build_meta, ok
 from app.repositories import datasets as datasets_repo
@@ -14,6 +15,7 @@ from app.repositories.common import new_id, utcnow_iso
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from services.ai_engine.lexicon import relevance
 from services.ai_engine.policy_planner import plan_policy_simulation
 from services.ai_engine.report_composer import compose_simulation_report
 from services.data_ingestion.snapshot import build_snapshot, summarise
@@ -73,6 +75,16 @@ async def _build_grounding(
             if isinstance(src, dict) and src.get("name")
         ]
 
+    grounding.setdefault("sources", [])
+    grounding["sources"] = [
+        sandbox_source(),
+        *[
+            src
+            for src in grounding["sources"]
+            if isinstance(src, dict) and str(src.get("url")) != ATHENS_SANDBOX_URL
+        ],
+    ]
+
     query = " ".join(
         part
         for part in (
@@ -83,35 +95,75 @@ async def _build_grounding(
         )
         if part
     )
-    if query:
-        try:
-            rows = await datasets_repo.search_relevant_datasets(query, limit=5)
-            grounding["datasets"] = [
-                {
-                    "title": str(row.get("title") or ""),
-                    "provider": row.get("provider"),
-                    "url": row.get("source_url") or None,
-                }
-                for row in rows
-            ]
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("grounding datasets skipped: %s", exc)
 
     try:
-        items, _, _ = await sources_repo.list_sources()
-        grounding["source_registry"] = [
-            {
-                "name": str(item.get("name") or item.get("id") or ""),
-                "provider": item.get("provider"),
-                "url": item.get("base_url") or None,
-                "license": item.get("license"),
-                "status": item.get("status"),
-            }
-            for item in items[:12]
-            if isinstance(item, dict)
-        ]
+        source_items, _, _ = await sources_repo.list_sources()
     except Exception as exc:  # noqa: BLE001
         logger.debug("grounding registry skipped: %s", exc)
+        source_items = []
+    base_urls = {
+        str(item.get("id") or ""): str(item.get("base_url") or "")
+        for item in source_items
+        if isinstance(item, dict)
+    }
+    grounding["source_registry"] = [
+        {
+            "name": str(item.get("name") or item.get("id") or ""),
+            "provider": item.get("provider"),
+            "url": item.get("base_url") or None,
+            "license": item.get("license"),
+            "status": item.get("status"),
+            "dataset_count": item.get("dataset_count"),
+        }
+        for item in source_items
+        if isinstance(item, dict)
+    ]
+    sandbox = sandbox_source()
+    grounding["source_registry"] = [
+        {
+            "name": sandbox["name"],
+            "provider": sandbox["provider"],
+            "url": sandbox["url"],
+            "license": sandbox["license"],
+            "status": "ok",
+            "dataset_count": None,
+        },
+        *[
+            src
+            for src in grounding["source_registry"]
+            if isinstance(src, dict) and str(src.get("url")) != ATHENS_SANDBOX_URL
+        ],
+    ]
+
+    try:
+        catalog = await datasets_repo.dataset_catalog()
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("grounding datasets skipped: %s", exc)
+        catalog = []
+    if catalog:
+        ordered = sorted(
+            catalog,
+            key=lambda row: (-relevance(query, row), str(row.get("title") or "").lower()),
+        )
+        grounding["datasets"] = [
+            {
+                "id": row.get("id"),
+                "title": str(row.get("title") or ""),
+                "description": (str(row.get("description") or "")[:180] or None),
+                "provider": row.get("provider"),
+                "source_id": row.get("source_id"),
+                "url": row.get("source_url")
+                or base_urls.get(str(row.get("source_id") or ""))
+                or None,
+                "category": row.get("category"),
+                "format": row.get("format"),
+                "tags": list(row.get("tags") or [])[:8],
+                "last_updated": row.get("last_updated"),
+            }
+            for row in ordered
+        ]
+        grounding["dataset_count"] = len(ordered)
+        grounding["data_page"] = "/data"
 
     try:
         runs, _, _ = await simulations_repo.list_runs()
@@ -158,9 +210,11 @@ def _grounding_summary(grounding: dict[str, Any]) -> dict[str, Any]:
         ],
         "datasets": [
             row.get("title")
-            for row in (grounding.get("datasets") or [])[:5]
+            for row in (grounding.get("datasets") or [])[:8]
             if isinstance(row, dict) and row.get("title")
         ],
+        "dataset_count": len(grounding.get("datasets") or []),
+        "data_page": grounding.get("data_page"),
         "comparables": len(grounding.get("comparables") or []),
     }
 
@@ -486,6 +540,7 @@ async def _run_simulation(
                     economics=results.get("economics"),
                     passport=passport,
                     warnings=warnings,
+                    grounding=grounding,
                 )
                 if composed:
                     ai_plan.update(composed)

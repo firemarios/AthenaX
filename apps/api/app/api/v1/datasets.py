@@ -26,10 +26,17 @@ async def list_datasets(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     sort: str = Query("freshness"),
+    athens_only: bool = Query(True),
 ):
     """Dataset[] + meta.total/page/page_size (search q across title/description)."""
     items, total, degraded = await datasets_repo.list_datasets(
-        q=q, source_id=source_id, tag=tag, page=page, page_size=page_size, sort=sort
+        q=q,
+        source_id=source_id,
+        tag=tag,
+        page=page,
+        page_size=page_size,
+        sort=sort,
+        athens_only=athens_only,
     )
     meta = build_meta(get_request_id(request), total=total, page=page, page_size=page_size)
     if degraded:

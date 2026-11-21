@@ -14,9 +14,12 @@ async def list_sources(
     request: Request,
     source_type: str | None = Query(None, alias="type"),
     status: str | None = Query(None),
+    athens_only: bool = Query(False),
 ):
     """Source[] + meta.total (DB → YAML catalog fallback, contract §9.3)."""
-    items, total, degraded = await sources_repo.list_sources(source_type=source_type, status=status)
+    items, total, degraded = await sources_repo.list_sources(
+        source_type=source_type, status=status, athens_only=athens_only
+    )
     meta = build_meta(get_request_id(request), total=total)
     if degraded:
         meta["limitations"] = [DB_DOWN_NOTE]

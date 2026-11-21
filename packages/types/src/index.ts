@@ -227,6 +227,11 @@ export interface AIImpactEstimate {
   note?: { el: string; en: string };
 }
 
+export interface AIOptimization {
+  negatives: { el: string; en: string }[];
+  improvements: { el: string; en: string }[];
+}
+
 export interface AISimulationPlan {
   ai_used: boolean;
   model: string;
@@ -251,6 +256,7 @@ export interface AISimulationPlan {
   sections?: AIReportSection[];
   metrics?: AIEstimatedMetric[];
   impact?: AIImpactEstimate[];
+  optimization?: AIOptimization;
 }
 
 export interface Policy {
@@ -426,6 +432,7 @@ export interface ImpactReport {
   summary: { el: string; en: string };
   reach?: SnapshotReach;
   snapshot?: SimulationSnapshot | null;
+  optimization?: AIOptimization;
 }
 
 export interface Proposal {

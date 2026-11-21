@@ -44,7 +44,7 @@ export default function AppError({
           {t({ el: "Αρχική", en: "Home" })}
         </Link>
         <Link href="/policies" className={btnSecondary}>
-          {t({ el: "Πολιτικές", en: "Policies" })}
+          {t({ el: "Σενάρια", en: "Scenarios" })}
         </Link>
       </div>
     </div>

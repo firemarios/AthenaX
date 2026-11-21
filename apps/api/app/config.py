@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     embedding_model: str = "nomic-embed-text"
     default_city: str = "Athens"
     max_ai_records: int = 200
+    max_ai_prompt_chars: int = 90000
     ui_locale_default: str = "el"
     s3_endpoint_url: str = ""
     s3_access_key: str = ""

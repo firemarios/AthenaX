@@ -28,22 +28,33 @@ SYSTEM_PROMPT = (
     "την ερώτηση ή δεν μπορεί να υποστηρίξει κανέναν ισχυρισμό. (4) Μην εφευρίσεις στοιχεία, αριθμούς, "
     "μελέτες ή πηγές. (5) Το summary πρέπει να περιλαμβάνει τους βασικούς αριθμούς μόνο αν υπάρχουν "
     "στα δεδομένα. (6) Στις limitations ανάφερε περιορισμούς όπως ελλιπή κάλυψη, παλαιότητα δεδομένων "
-    "ή αβεβαιότητα πηγής."
+    "ή αβεβαιότητα πηγής. (7) Τα δεδομένα περιλαμβάνουν τον ΠΛΗΡΗ κατάλογο ATHENAX "
+    "(όλα τα σύνολα της σελίδας Δεδομένων). ΠΡΕΠΕΙ να βασίσεις την απάντηση σε αυτά και "
+    "να αναφέρεις τις σχετικές πηγές τους· μην απαντάς από γενική γνώση όταν υπάρχει "
+    "σχετική εγγραφή στον κατάλογο. Αν καμία εγγραφή του καταλόγου δεν αφορά την ερώτηση, "
+    "δήλωσέ το στα limitations. (8) Ο κατάλογος περιλαμβάνει πάντα το AthensGov Sandbox API "
+    "(https://athensgov.cityofathens.gr/sandbox/). Όταν η ερώτηση αφορά υπηρεσίες, εκδηλώσεις, "
+    "σημεία ενδιαφέροντος, έργα, ραντεβού ή αναφορές προβλημάτων του Δήμου Αθηναίων, "
+    "χρησιμοποίησέ το και ανάφερέ το στις πηγές."
 )
 
 USER_PROMPT_HEADER = "Ερώτηση χρήστη"
 USER_PROMPT_CITY = "Πόλη"
 USER_PROMPT_RECORDS = "Δεδομένα από τη βάση γνώσης (μόνο αυτές οι πηγές επιτρέπεται να αναφερθούν)"
 
-DEFAULT_MAX_CHARS = 12000
+DEFAULT_MAX_CHARS = 90000
 
 
 def _record_line(index: int, record: dict) -> str:
     title = _clean_text(str(record.get("title") or record.get("name") or "χωρίς τίτλο"))
     url = str(record.get("source_url") or record.get("url") or "")
     description = _clean_text(str(record.get("description") or record.get("summary") or ""))
-    if len(description) > 400:
-        description = description[:400] + "…"
+    try:
+        description_limit = int(record.get("description_limit") or 400)
+    except (TypeError, ValueError):
+        description_limit = 400
+    if description_limit > 0 and len(description) > description_limit:
+        description = description[:description_limit] + "…"
     source_name = str(record.get("source_name") or record.get("provider") or "")
     parts = [f"[{index}] {title}"]
     if source_name:

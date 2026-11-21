@@ -111,6 +111,22 @@ def _coerce_answer(payload: dict) -> dict:
     }
 
 
+def _max_prompt_chars() -> int:
+    """Prompt budget: settings override, then the module default. Never raises."""
+    try:
+        from app.config import get_settings
+
+        value = getattr(get_settings(), "max_ai_prompt_chars", DEFAULT_MAX_CHARS)
+        return int(value or DEFAULT_MAX_CHARS)
+    except Exception:  # noqa: BLE001 — services may run without the app
+        return DEFAULT_MAX_CHARS
+
+
+def _fallback_sources(records: list[dict]) -> list[dict]:
+    """Cited-source fallback, capped so a large catalog cannot flood the answer."""
+    return evidence.build_sources(records)[:24]
+
+
 def _filter_sources(parsed_sources: list[dict], records: list[dict], fallback: list[dict]) -> list[dict]:
     """Keep only URLs actually present in the provided records (dedup by url)."""
     allowed = {s["url"] for s in evidence.build_sources(records)}
@@ -138,7 +154,7 @@ async def answer_question(
         logger.warning("retrieve failed; falling back to raw records", exc_info=True)
         retrieved = records
 
-    fallback_sources = evidence.build_sources(retrieved)
+    fallback_sources = _fallback_sources(retrieved)
 
     try:
         active_provider = provider
@@ -149,7 +165,7 @@ async def answer_question(
                 active_provider = get_provider(get_settings())
             except Exception:  # noqa: BLE001 — service layer may run without the app
                 active_provider = get_provider(None)
-        user_prompt = build_user_prompt(question or "", city or "", retrieved, max_chars=DEFAULT_MAX_CHARS)
+        user_prompt = build_user_prompt(question or "", city or "", retrieved, max_chars=_max_prompt_chars())
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
@@ -197,7 +213,7 @@ async def answer_question_stream(
     except Exception:  # noqa: BLE001
         logger.warning("retrieve failed; falling back to raw records", exc_info=True)
         retrieved = records
-    fallback_sources = evidence.build_sources(retrieved)
+    fallback_sources = _fallback_sources(retrieved)
 
     try:
         active_provider = provider
@@ -209,7 +225,7 @@ async def answer_question_stream(
             except Exception:  # noqa: BLE001
                 active_provider = get_provider(None)
         user_prompt = build_user_prompt(
-            question or "", city or "", retrieved, max_chars=DEFAULT_MAX_CHARS
+            question or "", city or "", retrieved, max_chars=_max_prompt_chars()
         )
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},

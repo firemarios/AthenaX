@@ -196,8 +196,8 @@ function ResearchDetailView() {
             <EmptyState
               title={t(STR.noExperiments)}
               description={t({
-                el: "Εκτελέστε προσομοιώσεις από μια πολιτική και ενσωματώστε τες εδώ.",
-                en: "Run simulations from a policy and attach them here.",
+                el: "Εκτελέστε προσομοιώσεις από ένα σενάριο και ενσωματώστε τες εδώ.",
+                en: "Run simulations from a scenario and attach them here.",
               })}
             />
           ) : (

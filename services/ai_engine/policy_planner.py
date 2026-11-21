@@ -26,7 +26,7 @@ BASE_TAX_EUR_PER_BUILDING = 1_600.0
 MAX_NEW_BUILDINGS = 20_000
 PLANNER_TIMEOUT_SECONDS = 150.0
 
-_PLAN_CACHE_VERSION = "v1"
+_PLAN_CACHE_VERSION = "v2"
 
 _CHART_TYPES = {"bar", "line", "donut"}
 _CHART_FORMATS = {"number", "currency", "percent"}
@@ -125,15 +125,25 @@ Rules:
   placeholders just to fill the schema.
 - Numeric parameters must respect the catalog min/max. Do not invent locations.
 - Write report text in Greek (el) and English (en), concise but specific.
-- Ground every number in the supplied `grounding` object. Use its `area_profile`
-  (population, facilities, parks, area_km2), `observed` counts, `benchmarks`,
-  `datasets` and `comparables` before relying on general knowledge. Never invent
-  population, counts, areas or unit costs that contradict those values.
+- You have the FULL AthenaX data catalog in `grounding.datasets`: every dataset
+  shown on the Data page, with `dataset_count`, `sources`, `source_registry`,
+  `benchmarks`, `observed`, `area_profile` and `comparables`.
+- You MUST use this catalog. Base every number, assumption and claim on
+  `grounding` before relying on general knowledge. Never invent population,
+  counts, areas or unit costs that contradict those values.
+- You MUST cite the sources you relied on in `grounding_used`, using the dataset
+  titles or URLs from `grounding.datasets` (or names from `grounding.sources` /
+  `grounding.source_registry`). Never claim a source that is not in the catalog.
+- The catalog always includes the AthensGov Sandbox API
+  (https://athensgov.cityofathens.gr/sandbox/), which exposes the municipality's
+  services, events, POIs, projects and reports. Use and cite it when the policy
+  touches municipal services, events, POIs, projects or citizen requests.
+- If no catalog dataset is relevant to the policy, say so explicitly in
+  `assumptions` and keep the plan conservative.
 - If `grounding.snapshot_mode` is "snapshot", state that real data were used in the
   assumptions. If it is "synthetic", state that the area data are synthetic.
 - Prefer the benefit and benefit-cost ratio of the most similar entries in
   `grounding.comparables` unless the supplied benchmarks justify a different value.
-- List the source names or URLs you actually relied on in `grounding_used`.
 - Keep findings and risks to at most 3 each, and assumptions to at most 3.
 - Do not include markdown fences or prose outside the JSON object.
 - Return a complete, valid JSON object; never stop mid-string.
@@ -221,6 +231,50 @@ def _string_list(value: Any, *, limit: int = 12) -> list[str]:
             seen.add(text)
             items.append(text)
     return items
+
+
+def _enforce_grounding_used(items: list[str], grounding: dict[str, Any]) -> list[str]:
+    """Force the plan to cite the supplied data catalog when one was provided."""
+    datasets = [
+        row for row in (grounding.get("datasets") or []) if isinstance(row, dict)
+    ]
+    if not datasets:
+        return items
+
+    allowed: set[str] = set()
+    for row in datasets:
+        for key in ("title", "url"):
+            value = str(row.get(key) or "").strip().lower()
+            if value:
+                allowed.add(value)
+    for key in ("sources", "source_registry"):
+        for row in grounding.get(key) or []:
+            if not isinstance(row, dict):
+                continue
+            for field in ("name", "url"):
+                value = str(row.get(field) or "").strip().lower()
+                if value:
+                    allowed.add(value)
+
+    kept: list[str] = []
+    for item in items:
+        text = str(item).strip().lower()
+        if not text:
+            continue
+        if any(
+            text == candidate
+            or (len(text) >= 4 and text in candidate)
+            or (len(candidate) >= 4 and candidate in text)
+            for candidate in allowed
+        ):
+            kept.append(item)
+    if not kept:
+        kept = [
+            str(row.get("title") or "").strip()
+            for row in datasets[:3]
+            if str(row.get("title") or "").strip()
+        ]
+    return kept[:8]
 
 
 def _cache_dir() -> Path:
@@ -456,6 +510,25 @@ def _normalise_sections(raw_sections: Any) -> list[dict[str, Any]]:
                 section["description"] = description
         sections.append(section)
     return sections
+
+
+def _normalise_optimization(raw_optimization: Any) -> dict[str, Any] | None:
+    """Scenario optimisation: what goes wrong and how to improve the scenario."""
+    if not isinstance(raw_optimization, dict):
+        return None
+    negatives = _localized_list(
+        raw_optimization.get("negatives")
+        or raw_optimization.get("drawbacks")
+        or raw_optimization.get("risks")
+    )[:6]
+    improvements = _localized_list(
+        raw_optimization.get("improvements")
+        or raw_optimization.get("recommendations")
+        or raw_optimization.get("actions")
+    )[:6]
+    if not negatives and not improvements:
+        return None
+    return {"negatives": negatives, "improvements": improvements}
 
 
 def _normalise_ai_metrics(raw_metrics: Any) -> list[dict[str, Any]]:
@@ -922,7 +995,9 @@ async def plan_policy_simulation(
             "factors": _normalise_factors(payload.get("factors"), factors, tax),
             "tax": tax,
             "benefit": _normalise_benefit(payload.get("benefit")),
-            "grounding_used": _string_list(payload.get("grounding_used"))[:8],
+            "grounding_used": _enforce_grounding_used(
+                _string_list(payload.get("grounding_used"))[:8], grounding or {}
+            ),
             "report": _normalise_report(payload.get("report"), model_name),
             "confidence": round(confidence, 2),
             "assumptions": _localized_list(payload.get("assumptions"))[:6],
@@ -930,6 +1005,7 @@ async def plan_policy_simulation(
             "sections": _normalise_sections(payload.get("sections")),
             "metrics": _normalise_ai_metrics(payload.get("metrics")),
             "impact": _normalise_ai_impact(payload.get("impact")),
+            "optimization": _normalise_optimization(payload.get("optimization")),
         }
         _write_cached_plan(cache_key, plan)
         return plan
@@ -958,5 +1034,6 @@ __all__ = [
     "_localized_list",
     "_normalise_ai_impact",
     "_normalise_ai_metrics",
+    "_normalise_optimization",
     "_normalise_sections",
 ]

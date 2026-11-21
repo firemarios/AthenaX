@@ -23,8 +23,8 @@ import {
 } from "@/_shared/ui";
 
 const STR = {
-  backPolicy: { el: "← Πίσω στην πολιτική", en: "← Back to policy" },
-  backList: { el: "← Πίσω στις πολιτικές", en: "← Back to policies" },
+  backPolicy: { el: "← Πίσω στο σενάριο", en: "← Back to scenario" },
+  backList: { el: "← Πίσω στα σενάρια", en: "← Back to scenarios" },
   run: { el: "Προσομοίωση", en: "Simulation" },
   model: { el: "Μοντέλο", en: "Model" },
   version: { el: "Έκδοση", en: "Version" },
@@ -107,8 +107,8 @@ const STR = {
 
 const RUN_STEPS: { el: string; en: string }[] = [
   {
-    el: "Διαβάζω την πολιτική και το ελεύθερο κείμενο",
-    en: "Reading the policy and free text",
+    el: "Διαβάζω το σενάριο και το ελεύθερο κείμενο",
+    en: "Reading the scenario and free text",
   },
   { el: "Επιλέγω το κατάλληλο μοντέλο", en: "Choosing the right model" },
   {
@@ -484,7 +484,7 @@ function SimulationDetailView() {
   const scenarioTitle = ai?.title
     ? t(ai.title)
     : data.policy_id
-      ? t({ el: "Προσομοίωση πολιτικής", en: "Policy simulation" })
+      ? t({ el: "Προσομοίωση σεναρίου", en: "Scenario simulation" })
       : `${t(STR.run)} · ${t(displayModel)}`;
 
   return (
@@ -495,11 +495,11 @@ function SimulationDetailView() {
           area ? ` · ${String(area)}` : ""
         }`}
         breadcrumbs={[
-          { label: t({ el: "Πολιτικές", en: "Policies" }), href: "/policies" },
+          { label: t({ el: "Σενάρια", en: "Scenarios" }), href: "/policies" },
           ...(data.policy_id
             ? [
                 {
-                  label: t({ el: "Πολιτική", en: "Policy" }),
+                  label: t({ el: "Σενάριο", en: "Scenario" }),
                   href: `/policies/${data.policy_id}`,
                 },
               ]

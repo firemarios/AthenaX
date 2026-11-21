@@ -8,6 +8,7 @@ import pytest
 
 from services.ai_engine.policy_planner import (
     _fallback_model,
+    _normalise_optimization,
     _normalise_sections,
     plan_policy_simulation,
 )
@@ -64,7 +65,10 @@ def test_ai_query_happy_path(client, monkeypatch):
     assert body["data"]["summary"] == "Σύνοψη"
     meta = body["meta"]
     assert meta["record_count"] == 2
-    assert meta["sources"] == ["https://api.open-meteo.com/v1/forecast"]
+    assert meta["sources"] == [
+        "https://api.open-meteo.com/v1/forecast",
+        "https://athensgov.cityofathens.gr/sandbox/",
+    ]
     assert meta["ui"]["show_map"] is True
     assert meta["ui"]["empty_state"] is False
     assert meta["ui"]["alert"] is None
@@ -174,6 +178,30 @@ def test_impact_report(client):
     assert "summary" in body["data"]
 
     assert client.get("/v1/impact/nope").status_code == 404
+
+
+def test_impact_report_includes_scenario_optimization(client, monkeypatch):
+    async def _fake_run(run_id):
+        return {
+            "id": run_id,
+            "results": {
+                "metrics": {"cost_eur": 1000},
+                "ai": {
+                    "optimization": {
+                        "negatives": [{"el": "Υψηλό κόστος", "en": "High cost"}],
+                        "improvements": [{"el": "Φάσεις υλοποίησης", "en": "Phased rollout"}],
+                    }
+                },
+            },
+            "parameters": {},
+        }
+
+    monkeypatch.setattr("app.api.v1.impact.simulations_repo.get_run", _fake_run)
+    body = client.get("/v1/impact/run-with-optimization").json()
+    assert body["ok"] is True
+    optimization = body["data"]["optimization"]
+    assert optimization["negatives"][0]["en"] == "High cost"
+    assert optimization["improvements"][0]["en"] == "Phased rollout"
 
 
 def test_policy_factors_and_simulation_economics(client):
@@ -357,6 +385,21 @@ def test_report_sections_normalizer_drops_invalid_blocks():
     assert len(chart["labels"]) == len(chart["datasets"][0]["data"]) == 2
 
 
+def test_optimization_normalizer_accepts_aliases_and_drops_empty():
+    optimization = _normalise_optimization(
+        {
+            "drawbacks": [{"el": "Αύξηση κόστους", "en": "Higher cost"}],
+            "recommendations": [{"el": "Φάσεις υλοποίησης", "en": "Phased rollout"}],
+        }
+    )
+    assert optimization == {
+        "negatives": [{"el": "Αύξηση κόστους", "en": "Higher cost"}],
+        "improvements": [{"el": "Φάσεις υλοποίησης", "en": "Phased rollout"}],
+    }
+    assert _normalise_optimization({"negatives": []}) is None
+    assert _normalise_optimization(None) is None
+
+
 def test_report_composer_returns_flexible_sections():
     class _ComposerProvider:
         async def chat(self, messages, *, temperature=0.3, max_tokens=2048):
@@ -390,6 +433,10 @@ def test_report_composer_returns_flexible_sections():
                             "unit": "t",
                         }
                     ],
+                    "optimization": {
+                        "negatives": [{"el": "Υψηλό κόστος", "en": "High cost"}],
+                        "improvements": [{"el": "Φάσεις υλοποίησης", "en": "Phased rollout"}],
+                    },
                 }
             )
 
@@ -409,6 +456,8 @@ def test_report_composer_returns_flexible_sections():
     assert composed["title"]["en"] == "Pedestrianisation"
     assert composed["sections"][0]["blocks"][0]["kind"] == "kpis"
     assert composed["metrics"][0]["source"] == "ai"
+    assert composed["optimization"]["negatives"][0]["en"] == "High cost"
+    assert composed["optimization"]["improvements"][0]["en"] == "Phased rollout"
 
 
 def test_impact_merges_economics_and_ai_indicators():

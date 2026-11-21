@@ -31,8 +31,8 @@ import {
 const STR = {
   title: { el: "Κέντρο Ανοικτών Δεδομένων", en: "Open Data Hub" },
   desc: {
-    el: "Αναζήτηση συνόλων δεδομένων από δημόσιες πηγές με διαφάνεια ποιότητας, προέλευσης και άδειας χρήσης.",
-    en: "Search public datasets with transparent quality, provenance and licence information.",
+    el: "Σύνολα δεδομένων που τροφοδοτούν την Αθήνα, με διαφάνεια ποιότητας, προέλευσης και άδειας χρήσης.",
+    en: "Datasets that feed Athens, with transparent quality, provenance and licence information.",
   },
   search: { el: "Αναζήτηση συνόλων δεδομένων…", en: "Search datasets…" },
   filters: { el: "Φίλτρα", en: "Filters" },
@@ -104,7 +104,7 @@ function DataView() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
-  const sources = useApi<Source[]>("/v1/sources");
+  const sources = useApi<Source[]>("/v1/sources?athens_only=true");
 
   const datasetsPath = useMemo(
     () => buildDatasetsPath({ q, sourceId, tag, sort, page, pageSize }),

@@ -32,7 +32,7 @@ export function SearchBar({ placeholder, onSearch, initial }: SearchBarProps) {
   const resolvedPlaceholder =
     placeholder ??
     t({
-      el: "Ρώτα την πόλη… (Ctrl K)",
+      el: "Ρώτησε την πόλη… (Ctrl K)",
       en: "Ask the city… (Ctrl K)",
     });
 

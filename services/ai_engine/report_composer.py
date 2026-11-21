@@ -17,6 +17,7 @@ from services.ai_engine.policy_planner import (
     _localized,
     _normalise_ai_impact,
     _normalise_ai_metrics,
+    _normalise_optimization,
     _normalise_sections,
     _parse_json_answer,
 )
@@ -71,11 +72,22 @@ Return ONLY a JSON object with this shape:
      "name": "indicator_key", "label": {"el": "...", "en": "..."},
      "value": 12.3, "baseline": null, "unit": "%", "confidence": 0.6,
      "note": {"el": "...", "en": "..."}}
-  ]
+  ],
+  "optimization": {
+    "negatives": [{"el": "...", "en": "..."}],
+    "improvements": [{"el": "...", "en": "..."}]
+  }
 }
 
 Rules:
 - Use the ACTUAL metrics/economics for numbers. Never contradict them.
+- You have the full AthenaX data catalog in `grounding.datasets` (every dataset on
+  the Data page). Ground every qualitative claim in it, prefer its `area_profile`,
+  `sources` and `source_registry`, and cite the relevant dataset titles/URLs.
+  Never invent sources or contradict the catalog.
+- The catalog always includes the AthensGov Sandbox API
+  (https://athensgov.cityofathens.gr/sandbox/) for municipal services, events,
+  POIs, projects and citizen requests. Cite it when the report relies on them.
 - Report only what the selected model measures. Do not mention accessibility,
   walkability or pedestrian access unless the selected model is accessibility or the
   supplied metrics include such a measure.
@@ -85,12 +97,44 @@ Rules:
   Omit the KPI/chart/indicator instead.
 - Charts must use at most 6 labels and 3 datasets. Tables at most 6 columns and
   8 rows. Sections at most 5. Blocks at most 6 per section.
+- Always return `optimization` (Scenario optimisation). In `negatives` list 2-4
+  specific downsides, trade-offs or side effects that the ACTUAL metrics,
+  economics or uncertainty reveal (who loses, what gets worse, hidden cost,
+  distributional impact, implementation risk). In `improvements` list 2-4
+  concrete, actionable changes to the scenario (parameter values, phasing,
+  mitigation measures, complementary actions) and the expected effect of each.
+  Ground them in the catalog and actual metrics; do not repeat the risks block
+  verbatim. If the scenario is mostly positive, state residual risks and
+  safeguards instead of inventing failures.
 - Keep labels short. Write every label and text in Greek (el) and English (en).
 - "title" is a specific scenario name, not the technical model id.
 - No HTML, markdown, URLs or prose outside the JSON object.
 - Do not write reasoning or analysis. Output the JSON object immediately.
 - Return complete valid JSON; never stop mid-string.
 """
+
+
+def _compact_grounding(grounding: dict[str, Any] | None) -> dict[str, Any]:
+    data = grounding or {}
+    datasets = [row for row in (data.get("datasets") or []) if isinstance(row, dict)]
+    return {
+        "dataset_count": data.get("dataset_count") or len(datasets),
+        "data_page": data.get("data_page"),
+        "snapshot_mode": data.get("snapshot_mode"),
+        "area_profile": data.get("area_profile") or {},
+        "datasets": [
+            {
+                "title": row.get("title"),
+                "provider": row.get("provider"),
+                "url": row.get("url"),
+                "category": row.get("category"),
+                "tags": list(row.get("tags") or [])[:6],
+            }
+            for row in datasets
+        ],
+        "sources": data.get("sources") or [],
+        "source_registry": data.get("source_registry") or [],
+    }
 
 
 def _compact_policy(policy: dict[str, Any] | None, fallback_title: str) -> dict[str, Any]:
@@ -119,6 +163,7 @@ async def compose_simulation_report(
     passport: dict[str, Any] | None,
     warnings: list[str] | None = None,
     provider: Any = None,
+    grounding: dict[str, Any] | None = None,
     timeout: float = COMPOSER_TIMEOUT_SECONDS,
 ) -> dict[str, Any] | None:
     """Return flexible AI report fields, or None when composition is unavailable."""
@@ -138,6 +183,7 @@ async def compose_simulation_report(
                 "reason": plan.get("model_reason"),
                 "parameters": plan.get("parameters") or {},
             },
+            "grounding": _compact_grounding(grounding),
             "simulation": {
                 "metrics": metrics,
                 "baseline": baseline,
@@ -180,6 +226,9 @@ async def compose_simulation_report(
         impact = _normalise_ai_impact(payload.get("impact"))
         if impact:
             composed["impact"] = impact
+        optimization = _normalise_optimization(payload.get("optimization"))
+        if optimization:
+            composed["optimization"] = optimization
         return composed or None
     except Exception as exc:  # noqa: BLE001 — the report is optional
         logger.warning("report composer fallback: %s", exc)

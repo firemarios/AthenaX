@@ -15,6 +15,7 @@ import yaml
 from app.database import session_scope
 from app.models import DataSource
 from app.repositories.common import iso, repo_root
+from app.scope import ATHENS_SOURCE_IDS
 
 logger = logging.getLogger("athenax.repositories.sources")
 
@@ -134,7 +135,9 @@ async def enabled_connectors() -> dict[str, bool]:
 
 
 async def list_sources(
-    source_type: str | None = None, status: str | None = None
+    source_type: str | None = None,
+    status: str | None = None,
+    athens_only: bool = False,
 ) -> tuple[list[dict[str, Any]], int, bool]:
     """(sources, total, degraded). DB first, real YAML catalog fallback."""
     items: list[dict[str, Any]] = []
@@ -150,6 +153,8 @@ async def list_sources(
         degraded = False  # YAML catalog is the designed fallback (data still complete)
         items = [source_from_entry(entry) for entry in catalog_sources()]
 
+    if athens_only:
+        items = [item for item in items if str(item.get("id")) in ATHENS_SOURCE_IDS]
     if source_type:
         items = [item for item in items if item.get("source_type") == source_type]
     if status:

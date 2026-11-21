@@ -23,6 +23,7 @@ async def impact(run_id: str, request: Request):
     economics = results.get("economics") if results else None
     ai = results.get("ai") if results else None
     ai_impact = ai.get("impact") if isinstance(ai, dict) else None
+    optimization = ai.get("optimization") if isinstance(ai, dict) else None
     snapshot = results.get("snapshot") if results else None
     reach = snapshot.get("reach") if isinstance(snapshot, dict) else None
     reach = dict(reach) if isinstance(reach, dict) else {}
@@ -47,4 +48,6 @@ async def impact(run_id: str, request: Request):
     )
     report["run_id"] = run_id
     report["snapshot"] = snapshot if isinstance(snapshot, dict) else None
+    if isinstance(optimization, dict):
+        report["optimization"] = optimization
     return ok(report, build_meta(get_request_id(request)))

@@ -36,8 +36,8 @@ export const PRIMARY_LINKS: NavLink[] = [
   {
     href: "/ask",
     icon: MessagesSquare,
-    label: { el: "Ρώτα την Πόλη", en: "Ask the City" },
-    shortLabel: { el: "Ρώτα", en: "Ask" },
+    label: { el: "Ρώτησε την Πόλη", en: "Ask the City" },
+    shortLabel: { el: "Ρώτησε", en: "Ask" },
     description: {
       el: "Απαντήσεις με πηγές από τα δεδομένα της πόλης",
       en: "Answers with sources from the city's data",
@@ -47,12 +47,12 @@ export const PRIMARY_LINKS: NavLink[] = [
   {
     href: "/policies",
     icon: FileText,
-    label: { el: "Πολιτικές", en: "Policies" },
+    label: { el: "Σενάρια", en: "Scenarios" },
     description: {
-      el: "Δημιουργία, σύγκριση και προσομοίωση πολιτικών",
-      en: "Create, compare and simulate policies",
+      el: "Δημιουργία, σύγκριση και προσομοίωση σεναρίων",
+      en: "Create, compare and simulate scenarios",
     },
-    keywords: ["policies", "policy", "πολιτικες", "πολιτικη"],
+    keywords: ["scenarios", "scenario", "σενάρια", "σεναριο", "policies", "policy", "πολιτικες", "πολιτικη"],
   },
 ];
 
@@ -112,12 +112,12 @@ export const MORE_LINKS: NavLink[] = [
 export const NEW_POLICY_LINK: NavLink = {
   href: "/policies/new",
   icon: Plus,
-  label: { el: "Νέα πολιτική", en: "New policy" },
+  label: { el: "Νέο σενάριο", en: "New scenario" },
   description: {
-    el: "Ξεκινήστε μια νέα πολιτική από την αρχή",
-    en: "Start a new policy from scratch",
+    el: "Ξεκινήστε ένα νέο σενάριο από την αρχή",
+    en: "Start a new scenario from scratch",
   },
-  keywords: ["new", "create", "policy", "νεα", "δημιουργια"],
+  keywords: ["new", "create", "scenario", "policy", "νεο", "σεναριο", "δημιουργια"],
 };
 
 export const ALL_LINKS: NavLink[] = [...PRIMARY_LINKS, ...MORE_LINKS];
@@ -125,8 +125,8 @@ export const ALL_LINKS: NavLink[] = [...PRIMARY_LINKS, ...MORE_LINKS];
 export const MOBILE_LINKS: NavLink[] = [
   { href: "/", icon: Home, label: { el: "Αρχική", en: "Home" } },
   { href: "/data", icon: Database, label: { el: "Δεδομένα", en: "Data" } },
-  { href: "/ask", icon: MessagesSquare, label: { el: "Ρώτα", en: "Ask" } },
-  { href: "/policies", icon: FileText, label: { el: "Πολιτικές", en: "Policies" } },
+  { href: "/ask", icon: MessagesSquare, label: { el: "Ρώτησε", en: "Ask" } },
+  { href: "/policies", icon: FileText, label: { el: "Σενάρια", en: "Scenarios" } },
 ];
 
 export interface NavGroup {

@@ -24,7 +24,7 @@ export default function NotFound() {
           {t({ el: "Δεδομένα", en: "Data" })}
         </Link>
         <Link href="/policies" className={btnSecondary}>
-          {t({ el: "Πολιτικές", en: "Policies" })}
+          {t({ el: "Σενάρια", en: "Scenarios" })}
         </Link>
         <Link href="/simulations" className={btnSecondary}>
           {t({ el: "Προσομοιώσεις", en: "Simulations" })}

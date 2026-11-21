@@ -222,7 +222,7 @@ export function CommandPalette({
           id: "action-ask",
           group: t({ el: "Ενέργειες", en: "Actions" }),
           label: t({
-            el: `Ρώτα την πόλη: «${query.trim()}»`,
+            el: `Ρώτησε την πόλη: «${query.trim()}»`,
             en: `Ask the city: “${query.trim()}”`,
           }),
           description: t({
@@ -247,10 +247,10 @@ export function CommandPalette({
           id: "action-policies",
           group: t({ el: "Ενέργειες", en: "Actions" }),
           label: t({
-            el: `Αναζήτηση πολιτικών για «${query.trim()}»`,
+            el: `Αναζήτηση σεναρίων για «${query.trim()}»`,
             en: `Search policies for “${query.trim()}”`,
           }),
-          description: t({ el: "Πολιτικές", en: "Policies" }),
+          description: t({ el: "Σενάρια", en: "Scenarios" }),
           href: `/policies?q=${encodeURIComponent(query.trim())}`,
           icon: FileText,
         },

@@ -25,18 +25,18 @@ import {
 } from "@/_shared/terms";
 
 const STR = {
-  title: { el: "Εργαστήριο Πολιτικών", en: "Policy Lab" },
+  title: { el: "Σενάρια", en: "Scenarios" },
   desc: {
-    el: "Δημιουργήστε πολιτικές, ορίστε παραμέτρους και εκτελέστε προσομοιώσεις για να συγκρίνετε σενάρια πριν από την απόφαση.",
-    en: "Create policies, set parameters and run simulations to compare scenarios before deciding.",
+    el: "Δημιουργήστε σενάρια, ορίστε παραμέτρους και εκτελέστε προσομοιώσεις για να τα συγκρίνετε πριν από την απόφαση.",
+    en: "Create scenarios, set parameters and run simulations to compare them before deciding.",
   },
-  newPolicy: { el: "Νέα πολιτική", en: "New policy" },
-  count: { el: "πολιτικές", en: "policies" },
-  loading: { el: "Φόρτωση πολιτικών…", en: "Loading policies…" },
-  empty: { el: "Δεν υπάρχουν πολιτικές ακόμη", en: "No policies yet" },
+  newPolicy: { el: "Νέο σενάριο", en: "New scenario" },
+  count: { el: "σενάρια", en: "scenarios" },
+  loading: { el: "Φόρτωση σεναρίων…", en: "Loading scenarios…" },
+  empty: { el: "Δεν υπάρχουν σενάρια ακόμη", en: "No scenarios yet" },
   emptyDesc: {
-    el: "Ξεκινήστε δημιουργώντας την πρώτη σας πολιτική και προσθέστε παραμέτρους, υποθέσεις και δείκτες.",
-    en: "Start by creating your first policy and adding parameters, assumptions and KPIs.",
+    el: "Ξεκινήστε δημιουργώντας το πρώτο σας σενάριο και προσθέστε παραμέτρους, υποθέσεις και δείκτες.",
+    en: "Start by creating your first scenario and adding parameters, assumptions and KPIs.",
   },
   details: { el: "Λεπτομέρειες →", en: "Details →" },
   area: { el: "Περιοχή", en: "Area" },
@@ -45,12 +45,12 @@ const STR = {
   category: { el: "Κατηγορία", en: "Category" },
   status: { el: "Κατάσταση", en: "Status" },
   noCategory: { el: "Χωρίς κατηγορία", en: "Uncategorised" },
-  search: { el: "Αναζήτηση πολιτικών", en: "Search policies" },
+  search: { el: "Αναζήτηση σεναρίων", en: "Search scenarios" },
   searchPh: {
     el: "Αναζήτηση με τίτλο, κατηγορία ή περιοχή…",
     en: "Search by title, category or area…",
   },
-  noMatches: { el: "Δεν βρέθηκαν πολιτικές", en: "No policies found" },
+  noMatches: { el: "Δεν βρέθηκαν σενάρια", en: "No scenarios found" },
   noMatchesDesc: {
     el: "Δοκιμάστε διαφορετικό όρο αναζήτησης.",
     en: "Try a different search term.",

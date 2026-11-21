@@ -23,7 +23,7 @@ const STR = {
   },
   toSimulations: { el: "Μετάβαση στις προσομοιώσεις", en: "Go to simulations" },
   model: { el: "Μοντέλο", en: "Model" },
-  policy: { el: "Πολιτική", en: "Policy" },
+  policy: { el: "Σενάριο", en: "Scenario" },
   created: { el: "Εκτελέστηκε", en: "Executed" },
   view: { el: "Άνοιγμα αναφοράς →", en: "Open report →" },
   simulation: { el: "Προσομοίωση", en: "Simulation" },

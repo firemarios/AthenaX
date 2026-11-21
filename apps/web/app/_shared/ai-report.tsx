@@ -2,6 +2,7 @@
 
 import { Badge, StatCard, useI18n } from "@athenax/ui";
 import type {
+  AIOptimization,
   AIReportBlock,
   AIReportKpi,
   AIReportSection,
@@ -132,6 +133,54 @@ function Block({ block }: { block: AIReportBlock }) {
   );
 }
 
+export function ScenarioOptimization({ optimization }: { optimization: AIOptimization }) {
+  const { t } = useI18n();
+  const groups = [
+    {
+      key: "negatives",
+      title: { el: "Αρνητικά σεναρίου", en: "Scenario negatives" },
+      items: optimization.negatives,
+      box: "border-amber-200 bg-amber-50/40 dark:border-amber-900/60 dark:bg-amber-950/20",
+      titleCls: "text-amber-800 dark:text-amber-300",
+      dot: "bg-amber-500",
+    },
+    {
+      key: "improvements",
+      title: { el: "Τι να βελτιώσουμε", en: "What to improve" },
+      items: optimization.improvements,
+      box:
+        "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/60 dark:bg-emerald-950/20",
+      titleCls: "text-emerald-800 dark:text-emerald-300",
+      dot: "bg-emerald-500",
+    },
+  ].filter((group) => group.items.length > 0);
+  if (groups.length === 0) return null;
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {groups.map((group) => (
+        <div key={group.key} className={`rounded-xl border p-4 ${group.box}`}>
+          <h4 className={`mb-2 text-sm font-semibold ${group.titleCls}`}>{t(group.title)}</h4>
+          <ul className="space-y-1.5">
+            {group.items.map((item, index) => (
+              <li
+                key={index}
+                className="flex gap-2 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${group.dot}`}
+                />
+                <span>{t(item)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Section({ section }: { section: AIReportSection }) {
   const { t } = useI18n();
   return (
@@ -164,7 +213,8 @@ export function AIReportView({
 }) {
   const { t, lang } = useI18n();
   const sections = ai.sections ?? [];
-  if (sections.length === 0) return <AIPlanPanel ai={ai} />;
+  const optimization = ai.optimization;
+  if (sections.length === 0 && !optimization) return <AIPlanPanel ai={ai} />;
 
   return (
     <div className="space-y-5">
@@ -186,9 +236,28 @@ export function AIReportView({
         </p>
       ) : null}
 
+      {sections.length === 0 ? <AIPlanPanel ai={ai} /> : null}
+
       {sections.map((section, index) => (
         <Section key={`${section.title.en}-${index}`} section={section} />
       ))}
+
+      {optimization ? (
+        <section className="space-y-4 border-t border-zinc-200 pt-5 dark:border-zinc-800">
+          <div>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              {t({ el: "Βελτιστοποίηση σεναρίου", en: "Scenario optimization" })}
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              {t({
+                el: "Πού υστερεί το σενάριο και τι μπορούμε να αλλάξουμε για να το βελτιώσουμε.",
+                en: "Where the scenario falls short and what we can change to improve it.",
+              })}
+            </p>
+          </div>
+          <ScenarioOptimization optimization={optimization} />
+        </section>
+      ) : null}
 
       {ai.metrics && ai.metrics.length > 0 ? (
         <section className="space-y-3 border-t border-zinc-200 pt-5 dark:border-zinc-800">

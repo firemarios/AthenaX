@@ -11,6 +11,7 @@ import logging
 import math
 from typing import Any
 
+from app.city_sources import ATHENS_SANDBOX_URL, sandbox_record
 from app.config import get_settings
 from app.repositories import city as city_repo
 from app.repositories import datasets as datasets_repo
@@ -666,10 +667,95 @@ def build_meta(
     )
 
 
+CATALOG_RECORD_CHARS = 3200
+
+
+def _catalog_line(row: dict[str, Any]) -> str:
+    title = str(row.get("title") or "").strip()
+    provider = str(
+        row.get("provider") or row.get("source_name") or row.get("source_id") or ""
+    ).strip()
+    url = str(row.get("source_url") or "").strip()
+    category = str(row.get("category") or "").strip()
+    tags = ", ".join(str(tag) for tag in (row.get("tags") or [])[:6] if tag)
+    parts = [f"- {title}"]
+    if provider:
+        parts.append(f"πηγή: {provider}")
+    if url:
+        parts.append(f"url: {url}")
+    if category:
+        parts.append(f"κατηγορία: {category}")
+    if tags:
+        parts.append(f"ετικέτες: {tags}")
+    return " | ".join(parts)
+
+
+def _catalog_records(
+    catalog: list[dict[str, Any]], *, base_urls: dict[str, str] | None = None
+) -> list[dict[str, Any]]:
+    """Chunk the full Data-page catalog into pinned, citation-friendly records."""
+    if not catalog:
+        return []
+    base_urls = base_urls or {}
+    rows: list[dict[str, Any]] = []
+    for row in catalog:
+        if not isinstance(row, dict):
+            continue
+        enriched = dict(row)
+        if not enriched.get("source_url"):
+            enriched["source_url"] = base_urls.get(str(enriched.get("source_id") or ""), "")
+        rows.append(enriched)
+    if not rows:
+        return []
+
+    chunks: list[list[dict[str, Any]]] = []
+    current: list[dict[str, Any]] = []
+    used = 0
+    for row in rows:
+        line_len = len(_catalog_line(row)) + 1
+        if current and used + line_len > CATALOG_RECORD_CHARS:
+            chunks.append(current)
+            current = []
+            used = 0
+        current.append(row)
+        used += line_len
+    if current:
+        chunks.append(current)
+
+    total = len(chunks)
+    records: list[dict[str, Any]] = []
+    for index, chunk in enumerate(chunks, start=1):
+        resources = [
+            {"url": str(row.get("source_url")), "title": str(row.get("title") or "")}
+            for row in chunk
+            if str(row.get("source_url") or "").startswith(("http://", "https://"))
+        ]
+        records.append(
+            {
+                "title": f"Κατάλογος δεδομένων ATHENAX — μέρος {index}/{total}",
+                "description": "\n".join(_catalog_line(row) for row in chunk),
+                "description_limit": CATALOG_RECORD_CHARS + 600,
+                "provider": "ATHENAX Open Data Hub",
+                "source_name": "ATHENAX Data Catalog",
+                "source_url": resources[0]["url"] if resources else "",
+                "category": "data_catalog",
+                "tags": ["data catalog", "datasets", "δεδομένα", "πηγές"],
+                "pinned": True,
+                "resources": resources,
+                "extra": {
+                    "catalog_part": index,
+                    "catalog_parts": total,
+                    "dataset_count": len(rows),
+                },
+            }
+        )
+    return records
+
+
 async def _gather_context(
     question: str, city_name: str
 ) -> tuple[list[tuple[str, Any]], list[dict[str, Any]], list[str], list[str]]:
-    """Intent → connectors → DB govtech → bbox filter → truncate."""
+    """Intent → connectors → DB govtech → bbox filter → full data catalog → truncate."""
     settings = get_settings()
     enabled = await sources_repo.enabled_connectors()
     selected = select_connectors(question, enabled)
@@ -700,10 +786,38 @@ async def _gather_context(
                 source_urls.append("https://el.wikipedia.org")
 
     extra_limitations: list[str] = []
+    try:
+        source_items, _, _ = await sources_repo.list_sources()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("source registry for catalog: %s", exc)
+        source_items = []
+    base_urls = {
+        str(item.get("id") or ""): str(item.get("base_url") or "")
+        for item in source_items
+        if isinstance(item, dict)
+    }
+
+    try:
+        catalog = await datasets_repo.dataset_catalog()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("dataset catalog: %s", exc)
+        catalog = []
+    catalog_records = _catalog_records(catalog, base_urls=base_urls)
+    pinned = [sandbox_record(), *catalog_records]
+    if ATHENS_SANDBOX_URL not in source_urls:
+        source_urls.append(ATHENS_SANDBOX_URL)
+    if catalog_records:
+        for item in source_items:
+            url = str(item.get("base_url") or "").strip()
+            if url.startswith(("http://", "https://")) and url not in source_urls:
+                source_urls.append(url)
+
     max_records = int(settings.max_ai_records or 200)
-    if len(records) > max_records:
-        records = records[:max_records]
+    budget = max(0, max_records - len(pinned))
+    if len(records) > budget:
+        records = records[:budget]
         extra_limitations.append(f"truncated to {max_records}")
+    records = pinned + records
     return selected, records, source_urls, extra_limitations
 
 
@@ -728,16 +842,21 @@ def _finalize_meta(
     elif "llm unavailable" in limitations:
         alert = LLM_UNAVAILABLE_ALERT
 
+    data_records = [
+        record
+        for record in records
+        if not (isinstance(record, dict) and record.get("pinned"))
+    ]
     show_map = any(
         isinstance(record.get("geometry"), dict)
         or (record.get("lat") is not None and record.get("lon") is not None)
-        for record in records
+        for record in data_records
     )
 
     return build_meta(
         request_id,
         sources=source_urls,
-        record_count=len(records),
+        record_count=len(data_records),
         limitations=limitations,
         show_map=show_map,
         alert=alert,

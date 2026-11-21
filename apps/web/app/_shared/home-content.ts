@@ -60,15 +60,15 @@ export const EXAMPLE_QUESTIONS = [
 
 export const HERO = {
   eyebrow: {
-    el: "Open GovTech · Πειραματισμός πολιτικών",
-    en: "Open GovTech · Policy experimentation",
+    el: "Open GovTech · Πειραματισμός σεναρίων",
+    en: "Open GovTech · Scenario experimentation",
   },
   lead: {
     el: "Η Αθήνα που φανταζόμαστε.",
     en: "The city we envision.",
   },
   accent: {
-    el: "Η Αθήνα που δημηουργούμε.",
+    el: "Η Αθήνα που δημιουργούμε.",
     en: "The future we create.",
   },
   body: {
@@ -80,11 +80,11 @@ export const HERO = {
     en: "Try a question",
   },
   ctaPrimary: {
-    el: "Δημιούργησε πολιτική",
-    en: "Create a policy",
+    el: "Δημιούργησε σενάριο",
+    en: "Create a scenario",
   },
   ctaSecondary: {
-    el: "Ρώτα την πόλη",
+    el: "Ρώτησε την πόλη",
     en: "Ask the city",
   },
   scrollCue: {
@@ -100,8 +100,8 @@ export const HERO = {
     en: "Live model",
   },
   liveValue: {
-    el: "Σήματα πόλης → αντίκτυπος πολιτικής",
-    en: "City signals → policy impact",
+    el: "Σήματα πόλης → αντίκτυπος σεναρίου",
+    en: "City signals → scenario impact",
   },
   drag: {
     el: "Σύρε για εξερεύνηση",
@@ -189,7 +189,7 @@ export const CHAPTERS: HomeChapter[] = [
       en: "Natural-language questions with grounded answers. The camera dives into a district and sources become tags.",
     },
     href: "/ask",
-    linkLabel: { el: "Ρώτα την πόλη", en: "Ask the city" },
+    linkLabel: { el: "Ρώτησε την πόλη", en: "Ask the city" },
   },
   {
     id: "S.02.03",
@@ -197,8 +197,8 @@ export const CHAPTERS: HomeChapter[] = [
     tag: { el: "Σενάρια", en: "Scenarios" },
     title: { el: "Προσομοιώνουμε", en: "Simulate" },
     body: {
-      el: "Σενάρια πολιτικής με παραμέτρους και αβεβαιότητα. Εναλλακτικές μάζες και επίπεδα επιπτώσεων εμφανίζονται πάνω στην πόλη.",
-      en: "Policy scenarios with parameters and uncertainty. Alternate massing and impact layers appear over the city.",
+      el: "Σενάρια με παραμέτρους και αβεβαιότητα. Εναλλακτικές μάζες και επίπεδα επιπτώσεων εμφανίζονται πάνω στην πόλη.",
+      en: "Scenarios with parameters and uncertainty. Alternate massing and impact layers appear over the city.",
     },
     href: "/simulations",
     linkLabel: { el: "Τρέξε προσομοίωση", en: "Run a simulation" },
@@ -248,7 +248,7 @@ export const MODULES: HomeModule[] = [
   {
     href: "/ask",
     icon: Sparkles,
-    title: { el: "Ρώτα την Πόλη", en: "Ask the City" },
+    title: { el: "Ρώτησε την Πόλη", en: "Ask the City" },
     description: {
       el: "Ερωτήσεις με πηγές και αποδείξεις",
       en: "Questions backed by cited sources",
@@ -257,10 +257,10 @@ export const MODULES: HomeModule[] = [
   {
     href: "/policies",
     icon: ScrollText,
-    title: { el: "Πολιτικές", en: "Policies" },
+    title: { el: "Σενάρια", en: "Scenarios" },
     description: {
-      el: "Σχεδιασμός πολιτικών και παραλλαγές",
-      en: "Policy design and variants",
+      el: "Σχεδιασμός σεναρίων και παραλλαγές",
+      en: "Scenario design and variants",
     },
   },
   {
@@ -411,13 +411,13 @@ export const PRICING: HomePlan[] = [
     price: { el: "€49", en: "€49" },
     period: { el: "/ μήνα", en: "/ month" },
     summary: {
-      el: "Για ομάδες ανάλυσης και σχεδιασμού πολιτικών.",
-      en: "For analysis and policy design teams.",
+      el: "Για ομάδες ανάλυσης και σχεδιασμού σεναρίων.",
+      en: "For analysis and scenario design teams.",
     },
     features: [
       { el: "Απεριόριστες ερωτήσεις", en: "Unlimited questions" },
       { el: "Όλοι οι σύνδετες και οι πηγές", en: "All connectors and sources" },
-      { el: "Παραλλαγές πολιτικών", en: "Policy variants" },
+      { el: "Παραλλαγές σεναρίων", en: "Scenario variants" },
       { el: "Αναφορές αντίκτυπου", en: "Impact reports" },
     ],
     cta: { el: "Αναβάθμιση", en: "Upgrade" },
@@ -450,14 +450,14 @@ export const PRICING: HomePlan[] = [
 export const FINALE = {
   eyebrow: { el: "S.06 · Ξεκινήστε τώρα", en: "S.06 · Start now" },
   title: {
-    el: "Ρωτήστε την πόλη. Δοκιμάστε μια πολιτική.",
-    en: "Ask the city. Test a policy.",
+    el: "Ρωτήστε την πόλη. Δοκιμάστε ένα σενάριο.",
+    en: "Ask the city. Test a scenario.",
   },
   body: {
     el: "Ένα ερώτημα αρκεί για να δείτε πώς τα δεδομένα γίνονται απόφαση — με πηγές, σενάρια και μετρήσιμο αντίκτυπο.",
     en: "One question is enough to see how data becomes a decision — with sources, scenarios and measurable impact.",
   },
-  primary: { el: "Ρώτα την πόλη", en: "Ask the city" },
+  primary: { el: "Ρώτησε την πόλη", en: "Ask the city" },
   secondary: { el: "Δες προσομοιώσεις", en: "View simulations" },
 };
 
